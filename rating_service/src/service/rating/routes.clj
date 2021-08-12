@@ -1,0 +1,1 @@
+(ns service.rating.routes)
