@@ -1,6 +1,6 @@
-(ns service.auth.core-test
+(ns service.session.system-test
   (:require [clojure.test :refer :all]
-            [service.auth.core :refer :all]))
+            [service.session.system :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."

@@ -1,0 +1,21 @@
+{:local {:book    "http://127.0.0.1:3000"
+         :gateway "http://127.0.0.1:3001"
+         :library "http://127.0.0.1:3002"
+         :rating  "http://127.0.0.1:3003"
+         :return  "http://127.0.0.1:3004"
+         :session "http://127.0.0.1:3005"
+         :stats   "http://127.0.0.1:3006"}
+ :docker {:book    "http://book:3000"
+          :gateway "http://gateway:3000"
+          :library "http://library:3000"
+          :rating  "http://rating:3000"
+          :return  "http://return:3000"
+          :session "http://session:3000"
+          :stats   "http://stats:3000"}
+ :heroku {:book    ""
+          :gateway ""
+          :library ""
+          :rating  ""
+          :return  ""
+          :session ""
+          :stats   ""}}

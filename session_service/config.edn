@@ -1,0 +1,30 @@
+{:service.session.system/db
+ {:db-config #profile {:local {:dbtype "postgres"
+                               :host "localhost"
+                               :port 4005
+                               :dbname "session_db"
+                               :user "postgres"
+                               :password "postgres"}
+                       :docker {:dbtype "postgres"
+                                :host "postgres"
+                                :port 5432
+                                :dbname "session_db"
+                                :user "postgres"
+                                :password "postgres"}
+                       :heroku {:dbtype "postgres"
+                                :host ""
+                                :port 5432
+                                :dbname ""
+                                :user ""
+                                :password ""
+                                :uri ""}}}
+
+ :service.session.system/app
+ {:db #ig/ref :service.session.system/db
+  :services-uri #profile #include "../services_uri.edn"}
+
+ :service.session.system/server
+ {:app #ig/ref :service.session.system/app
+  :server-options #profile {:local {:port 3005}
+                            :docker {:port 3000}
+                            :heroku {:port #long #env "PORT"}}}}

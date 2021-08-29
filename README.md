@@ -1,5 +1,17 @@
 # Template for KP RSOI
 
+## docker
+
+```zsh
+docker build -t book --build-arg APPNAME=book_service .
+```
+```zsh
+docker run --name book -dp 3000:3000 book
+```
+```zsh
+docker rm -f book
+```
+
 ## Требования к программной реализации
 
 1. В соответствии с вариантом задания реализовать систему, состоящую из нескольких взаимодействующих друг с другом сервисов. 
