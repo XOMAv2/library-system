@@ -2,7 +2,8 @@
   (:require [buddy.auth.backends :as backends]
             [buddy.auth :refer [authenticated?]]
             [buddy.sign.jwt :as jwt]
-            [utilities.time :as time]))
+            [utilities.time :as time]
+            [clojure.spec.alpha :as s]))
   
 (def jwt-secret "JTW_SECRET")
 
@@ -43,9 +44,21 @@
          {:status 401
           :body {:message "Unauthorized"}})))))
 
+(def swagger-msg-obj
+  {:schema {:type "object"
+            :properties {:message {:type "string"}}
+            :required ["message"]}
+   :description ""})
+
+(s/def ::roles (s/nilable (s/and set?
+                                 not-empty
+                                 (s/every string?))))
+
 (def authorization-middleware
   {:name ::authorization-middleware
-   :compile (fn [{{security-defs :securityDefinitions} :swagger} _]
+   :spec (s/keys :req-un [::roles])
+   :compile (fn [{{security-defs :securityDefinitions} :swagger
+                  roles                                :roles} _]
               (merge
                (when security-defs
                  {:data {:swagger
@@ -54,12 +67,7 @@
                                          (map #(vector % []))
                                          (into {})
                                          (vector))
-                          :responses {401 {:schema {:type "object"
-                                                    :properties {:message {:type "string"}}
-                                                    :required ["message"]}
-                                           :description ""}
-                                      403 {:schema {:type "object"
-                                                    :properties {:message {:type "string"}}
-                                                    :required ["message"]}
-                                           :description ""}}}}})
-               {:wrap wrap-authorization}))})
+                          :responses (merge
+                                      (when roles {403 swagger-msg-obj})
+                                      {401 swagger-msg-obj})}}})
+               {:wrap #(wrap-authorization % roles)}))})

@@ -47,7 +47,8 @@
                              :handler (create-swagger-handler)}}]
      
      ["/users" {:swagger {:tags ["users"]}}
-      ["" {:get {:middleware [authorization-middleware]
+      ["" {:get {:roles nil
+                 :middleware [authorization-middleware]
                  :responses {200 {:body [:map [:users [:sequential schemas/user-out]]]}}
                  :handler handlers/get-all-users}
            :post {:services-uri services-uri
@@ -60,7 +61,8 @@
                                           [:type string?]
                                           [:message string?]]}}
                   :handler handlers/add-user}}]
-      ["/:uid" {:middleware [authorization-middleware]
+      ["/:uid" {:roles nil
+                :middleware [authorization-middleware]
 
                 :parameters {:path [:map [:uid uuid?]]}
 
