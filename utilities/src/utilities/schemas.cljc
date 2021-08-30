@@ -24,12 +24,15 @@
    [:email non-empty-string]
    [:role role]])
 
-(def user-in
+(def user-add
   [:map
    [:name non-empty-string]
    [:email non-empty-string]
    [:role role]
    [:password non-empty-string]])
+
+(def user-update
+  (mu/optional-keys user-add))
 
 (def token-pair
   [:map

@@ -16,7 +16,6 @@
             [utilities.muuntaja :refer [muuntaja-instance]]
             [utilities.schemas :as schemas :refer [message]]
             [clojure.spec.alpha :as s]
-            [malli.util]
             [utilities.auth :refer [authorization-middleware backend]]
             [buddy.auth.middleware :refer [wrap-authentication]]))
 
@@ -54,7 +53,7 @@
            :post {:services-uri services-uri
                   :middleware [services-uri-middleware]
 
-                  :parameters {:body schemas/user-in}
+                  :parameters {:body schemas/user-add}
                   :responses {201 {:body schemas/user-out
                                    :headers {"Location" {:schema {:type "string"}}}}
                               400 {:body [:map
@@ -71,7 +70,7 @@
                 :delete {:responses {200 {:body schemas/user-out}
                                      404 {:body message}}
                          :handler handlers/delete-user}
-                :patch {:parameters {:body (malli.util/optional-keys schemas/user-in)}
+                :patch {:parameters {:body schemas/user-update}
                         :responses {200 {:body schemas/user-out}
                                     400 {:body [:map
                                                 [:type string?]
