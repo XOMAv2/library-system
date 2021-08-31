@@ -39,6 +39,23 @@
    [:access-token non-empty-string]
    [:refresh-token non-empty-string]])
 
+(def stat-record-add
+  [:map
+   [:service non-empty-string]
+   [:operation non-empty-string]
+   [:send-time inst?]])
+
+(def stat-record-update
+  (mu/assoc stat-record-add :receive-time inst?))
+
+(def stat-record-out
+  [:map
+   [:uid uuid?]
+   [:service non-empty-string]
+   [:operation non-empty-string]
+   [:send-time inst?]
+   [:receive-time inst?]])
+
 (def db-config
   [:map
    [:dbtype [:enum "postgresql" "postgres"]]

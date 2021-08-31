@@ -1,1 +1,38 @@
-{}
+{:service.stats.system/db
+ {:db-config #profile {:local {:dbtype "postgres"
+                               :host "localhost"
+                               :port 4006
+                               :dbname "stats_db"
+                               :user "postgres"
+                               :password "postgres"}
+                       :docker {:dbtype "postgres"
+                                :host "postgres"
+                                :port 5432
+                                :dbname "stats_db"
+                                :user "postgres"
+                                :password "postgres"}
+                       :heroku {:dbtype "postgres"
+                                :host ""
+                                :port 5432
+                                :dbname ""
+                                :user ""
+                                :password ""
+                                :uri ""}}}
+
+ :service.stats.system/app
+ {:db #ig/ref :service.stats.system/db
+  :services-uri #profile #include "../services_uri.edn"}
+
+ :service.stats.system/server
+ {:app #ig/ref :service.stats.system/app
+  :server-options #profile {:local {:port 3006}
+                            :docker {:port 3000}
+                            :heroku {:port #long #env "PORT"}}}
+ 
+ :service.stats.system/rabbitmq
+ {:db #ig/ref :service.stats.system/db
+  :qname "utilities.api.stats"
+  :amqp-url #profile {:local "amqp://guest:guest@localhost:5672"
+                      :docker "amqp://guest:guest@rabbitmq:5672"
+                      :heroku ""}
+  :services-uri #ref [:service.stats.system/app :services-uri]}}

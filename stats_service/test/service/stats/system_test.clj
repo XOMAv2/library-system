@@ -1,6 +1,6 @@
-(ns service.stats.core-test
+(ns service.stats.system-test
   (:require [clojure.test :refer :all]
-            [service.stats.core :refer :all]))
+            [service.stats.system :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."
