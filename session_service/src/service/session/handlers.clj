@@ -5,21 +5,6 @@
             [utilities.auth :as auth]
             [buddy.hashers :as hashers]))
 
-(defn get-all-users
-  [{{{user-table :user} :tables} :db}]
-  (let [users (uops/-get-all user-table)]
-    {:status 200
-     :body {:users users}}))
-
-(defn get-user
-  [{{{:keys [uid]}      :path}   :parameters
-    {{user-table :user} :tables} :db}]
-  (if-let [user (uops/-get user-table uid)]
-    {:status 200
-     :body user}
-    {:status 404
-     :body {:message (str "User with uid `" uid "` is not found.")}}))
-
 (defn add-user
   [{{user               :body}    :parameters
     {{user-table :user} :tables}  :db
@@ -37,14 +22,20 @@
             :body {:type (type e)
                    :message (ex-message e)}}))))
 
-(defn delete-user
+(defn get-user
   [{{{:keys [uid]}      :path}   :parameters
     {{user-table :user} :tables} :db}]
-  (if-let [user (uops/-delete user-table uid)]
+  (if-let [user (uops/-get user-table uid)]
     {:status 200
      :body user}
     {:status 404
      :body {:message (str "User with uid `" uid "` is not found.")}}))
+
+(defn get-all-users
+  [{{{user-table :user} :tables} :db}]
+  (let [users (uops/-get-all user-table)]
+    {:status 200
+     :body {:users users}}))
 
 (defn update-user
   [{{{:keys [uid]}      :path
@@ -64,6 +55,15 @@
            {:status 400
             :body {:type (type e)
                    :message (ex-message e)}}))))
+
+(defn delete-user
+  [{{{:keys [uid]}      :path}   :parameters
+    {{user-table :user} :tables} :db}]
+  (if-let [user (uops/-delete user-table uid)]
+    {:status 200
+     :body user}
+    {:status 404
+     :body {:message (str "User with uid `" uid "` is not found.")}}))
 
 (defn get-tokens
   [{{{:keys [email password]} :body}   :parameters
