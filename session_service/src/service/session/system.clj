@@ -1,7 +1,7 @@
 (ns service.session.system
   (:require [org.httpkit.server :refer [run-server]]
             [service.session.router :refer [app]]
-            [utilities.core :refer [load-config]]
+            [utilities.config :refer [load-config]]
             [service.session.tables.user :refer [->UserTable -create -populate
                                                  UserTableOperations]]
             [integrant.core :as ig]

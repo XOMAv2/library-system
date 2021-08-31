@@ -1,17 +1,5 @@
 (ns utilities.core
-  (:require [integrant.core :as ig]
-            [aero.core :as aero]
-            [clojure.string]))
-
-(defmethod aero/reader 'ig/ref
-  [_ _ value]
-  (ig/ref value))
-
-(defn load-config
-  "Loading a configuration file from an edn-file with support for the #ig/rek tag
-   and tags defined in the aero library."
-  [filename opts]
-  (aero/read-config filename opts))
+  (:require [clojure.string]))
 
 (defn remove-trailing-slash [uri]
   (if (= \/ (last uri))
