@@ -27,6 +27,15 @@
          entity (sanitize entity)]
      entity)))
 
+(defn get-entity-by-keys
+  "Returns first of result entities with matching column values according to keys map."
+  ([db tname keys]
+   (get-entity-by-keys db tname keys identity))
+  ([db tname keys sanitize]
+   (-> (sql/find-by-keys db tname keys jdbc-opts)
+       (first)
+       (sanitize))))
+
 (defn get-all-entities
   "Returns collection of entities if table isn't empty, returns empty collection otherwise."
   ([db tname]

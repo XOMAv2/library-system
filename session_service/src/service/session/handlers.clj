@@ -68,7 +68,7 @@
 (defn get-tokens
   [{{{:keys [email password]} :body}   :parameters
     {{user-table :user}       :tables} :db}]
-  (if-let [user (uops/-find-by-email user-table email)]
+  (if-let [user (uops/-get-by-email user-table email)]
     (if (:valid (hashers/verify password
                                 (:password-hash user)
                                 {:limit #{:bcrypt+sha512}}))
