@@ -1,0 +1,210 @@
+version: "3"
+
+services:
+    book_db:
+        image: postgres
+        restart: always
+        container_name: book_db
+        ports: ["4000:5432"]
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: book_db
+        volumes: [book_volume:/var/lib/postgresql/data]
+        networks: 
+            - book_network
+    book:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+            args: {APPNAME: book_service}
+        depends_on: [book_db, stats]
+        container_name: book
+        ports: ["3000:3000"]
+        links: 
+            - book_db:postgres
+        networks:
+            - book_network
+            - service_network
+
+    gateway_db:
+        image: postgres
+        restart: always
+        container_name: gateway_db
+        ports: ["4001:5432"]
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: gateway_db
+        volumes: [gateway_volume:/var/lib/postgresql/data]
+        networks: 
+            - gateway_network
+    gateway:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+            args: {APPNAME: gateway_service}
+        depends_on: [gateway_db, stats, session, book, library, rating]
+        container_name: gateway
+        ports: ["3001:3000"]
+        links: [gateway_db:postgres]
+        networks: 
+            - gateway_network
+            - service_network
+            - session_network
+
+    library_db:
+        image: postgres
+        restart: always
+        container_name: library_db
+        ports: ["4002:5432"]
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: library_db
+        volumes: [library_volume:/var/lib/postgresql/data]
+        networks: 
+            - library_network
+    library:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+            args: {APPNAME: library_service}
+        depends_on: [library_db, stats]
+        container_name: library
+        ports: ["3002:3000"]
+        links: [library_db:postgres]
+        networks: 
+            - library_network
+            - service_network
+
+    rating_db:
+        image: postgres
+        restart: always
+        container_name: rating_db
+        ports: ["4003:5432"]
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: rating_db
+        volumes: [rating_volume:/var/lib/postgresql/data]
+        networks: 
+            - rating_network
+    rating:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+            args: {APPNAME: rating_service}
+        depends_on: [rating_db, stats]
+        container_name: rating
+        ports: ["3003:3000"]
+        links: [rating_db:postgres]
+        networks: 
+            - rating_network
+            - service_network
+
+    return_db:
+        image: postgres
+        restart: always
+        container_name: return_db
+        ports: ["4004:5432"]
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: return_db
+        volumes: [return_volume:/var/lib/postgresql/data]
+        networks: 
+            - return_network
+    return:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+            args: {APPNAME: return_service}
+        depends_on: [return_db, stats]
+        container_name: return
+        ports: ["3004:3000"]
+        links: [return_db:postgres]
+        networks: 
+            - return_network
+            - service_network
+    
+    session_db:
+        image: postgres
+        restart: always
+        container_name: session_db
+        ports: ["4005:5432"]
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: session_db
+        volumes: [session_volume:/var/lib/postgresql/data]
+        networks: 
+            - session_network
+    session:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+            args: {APPNAME: session_service}
+        depends_on: [session_db, stats]
+        container_name: session
+        ports: ["3005:3000"]
+        links: [session_db:postgres]
+        networks: 
+            - session_network
+        
+    stats_db:
+        image: postgres
+        restart: always
+        container_name: stats_db
+        ports: ["4006:5432"]
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: stats_db
+        volumes: [stats_volume:/var/lib/postgresql/data]
+        networks: 
+            - stats_network
+    stats:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+            args: {APPNAME: stats_service}
+        depends_on: [stats_db, rabbitmq]
+        container_name: stats
+        ports: ["3006:3000"]
+        links: [stats_db:postgres]
+        networks: 
+            - stats_network
+            - service_network
+            - session_network
+            - rabbitmq_network
+    
+    rabbitmq:
+        image: rabbitmq:3.9-management
+        container_name: rabbitmq
+        hostname: my-rabbit
+        ports: ["8080:15672", "5672:5672"]
+        volumes: [rabbitmq_volume:/var/lib/rabbitmq]
+        networks:
+            - rabbitmq_network
+        
+volumes:
+    book_volume: {}
+    gateway_volume: {}
+    library_volume: {}
+    rating_volume: {}
+    return_volume: {}
+    session_volume: {}
+    stats_volume: {}
+    rabbitmq_volume: {}
+
+networks:
+    service_network: {driver: bridge}
+    book_network: {driver: bridge}
+    gateway_network: {driver: bridge}
+    library_network: {driver: bridge}
+    rating_network: {driver: bridge}
+    return_network: {driver: bridge}
+    session_network: {driver: bridge}
+    stats_network: {driver: bridge}
+    rabbitmq_network: {driver: bridge}

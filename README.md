@@ -12,6 +12,12 @@ docker run --name book -dp 3000:3000 book
 docker rm -f book
 ```
 
+## RabbitMQ
+
+```zsh
+docker run -d --hostname my-rabbit --name some-rabbit -v rabbit:/var/lib/rabbitmq -p 8080:15672 -p 5672:5672 rabbitmq:3.9-management
+```
+
 ## Требования к программной реализации
 
 1. В соответствии с вариантом задания реализовать систему, состоящую из нескольких взаимодействующих друг с другом сервисов. 
