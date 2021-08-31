@@ -1,6 +1,6 @@
-(ns service.return.core-test
+(ns service.gateway.system-test
   (:require [clojure.test :refer :all]
-            [service.return.core :refer :all]))
+            [service.gateway.system :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."

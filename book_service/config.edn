@@ -1,1 +1,30 @@
-{}
+{:service.book.system/db
+ {:db-config #profile {:local {:dbtype "postgres"
+                               :host "localhost"
+                               :port 4000
+                               :dbname "book_db"
+                               :user "postgres"
+                               :password "postgres"}
+                       :docker {:dbtype "postgres"
+                                :host "postgres"
+                                :port 5432
+                                :dbname "book_db"
+                                :user "postgres"
+                                :password "postgres"}
+                       :heroku {:dbtype "postgres"
+                                :host ""
+                                :port 5432
+                                :dbname ""
+                                :user ""
+                                :password ""
+                                :uri ""}}}
+
+ :service.book.system/app
+ {:db #ig/ref :service.book.system/db
+  :services-uri #profile #include "../services_uri.edn"}
+
+ :service.book.system/server
+ {:app #ig/ref :service.book.system/app
+  :server-options #profile {:local {:port 3000}
+                            :docker {:port 3000}
+                            :heroku {:port #long #env "PORT"}}}}

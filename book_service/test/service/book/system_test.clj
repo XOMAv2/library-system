@@ -1,6 +1,6 @@
-(ns service.book.core-test
+(ns service.book.system-test
   (:require [clojure.test :refer :all]
-            [service.book.core :refer :all]))
+            [service.book.system :refer :all]))
 
 (deftest a-test
   (testing "FIXME, I fail."
