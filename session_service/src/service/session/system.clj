@@ -52,11 +52,16 @@
 
 (defonce system (atom nil))
 
+(defn start-system [config]
+  (when @system (ig/halt! @system))
+  (->> config
+       (ig/init)
+       (reset! system)))
+
 (defn -main [profile & args]
   (->> {:profile (keyword profile)}
        (load-config "config.edn")
-       (ig/init)
-       (reset! system)))
+       (start-system)))
 
 #_(-main "local")
 #_(ig/halt! @system)
