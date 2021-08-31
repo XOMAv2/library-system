@@ -14,5 +14,6 @@
                  [metosin/muuntaja "0.6.8"]
                  [camel-snake-kebab "0.4.2"]
                  [buddy/buddy-auth "3.0.1"]
-                 [buddy/buddy-sign "3.4.1"]]
+                 [buddy/buddy-sign "3.4.1"]
+                 [com.novemberain/langohr "5.2.0"]]
   :repl-options {:init-ns utilities.core})
