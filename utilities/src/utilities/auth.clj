@@ -3,6 +3,8 @@
             [buddy.auth :refer [authenticated?]]
             [buddy.sign.jwt :as jwt]
             [utilities.time :as time]
+            [utilities.schemas :as schemas]
+            [malli.core :as m]
             [clojure.spec.alpha :as s]))
   
 (def jwt-secret "JTW_SECRET")
@@ -52,7 +54,7 @@
 
 (s/def ::roles (s/nilable (s/and set?
                                  not-empty
-                                 (s/every string?))))
+                                 (s/every (m/validator schemas/role)))))
 
 (def authorization-middleware
   {:name ::authorization-middleware
