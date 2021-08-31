@@ -65,3 +65,32 @@
     (delete-entity db tname id sanitize))
   (-delete-all [this]
     (delete-all-entities db tname sanitize)))
+
+(comment
+  (require '[utilities.config :refer [load-config]])
+
+  (def config
+    (load-config "config.edn" {:profile :local}))
+
+  (def db-config
+    (get-in config [:service.stats.system/db :db-config]))
+  
+  (def db
+    (jdbc/get-datasource db-config))
+
+  (def stat-record-table
+    (->StatRecordTable db))
+  
+  (add-entity db "stat_record" {:service "book"
+                                :operation "get"
+                                :send-time #inst "2020-11-09"})
+
+  (-get-all stat-record-table)
+  (-delete-all stat-record-table)
+  (-get-all-by-service stat-record-table "book")
+
+  (-add stat-record-table {:service "book"
+                           :operation "get"
+                           :send-time #inst "2020-11-09"
+                           :receive-time #inst "2020-11-09"})
+  )

@@ -62,3 +62,16 @@
     (update-entity db tname id entity))
   (-delete [this id]
     (delete-entity db tname id)))
+
+(comment
+  (require '[utilities.config :refer [load-config]])
+
+  (def db-config
+    (-> (load-config "config.edn" {:profile :local})
+        (get-in [:service.session.system/db :db-config])))
+
+  (def db
+    (jdbc/get-datasource db-config))
+
+  (def client-table (->ClientTable db))
+  )

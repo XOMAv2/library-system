@@ -60,3 +60,45 @@
     (update-entity db tname id entity sanitize))
   (-delete [this id]
     (delete-entity db tname id sanitize)))
+
+(comment
+  (require '[utilities.config :refer [load-config]])
+
+  (def db-config
+    (-> (load-config "config.edn" {:profile :local})
+        (get-in [:service.session.system/db :db-config])))
+
+  #_(def db
+    {:dbtype "postgres"
+     :host "localhost"
+     :port 4444
+     :dbname "session_db"
+     :user "postgres"
+     :password "postgres"})
+  
+  (def db
+    (jdbc/get-datasource db-config))
+
+  (def user-table (->UserTable db))
+
+  (jdbc/execute-one! db [(str "DROP TABLE " (name tname))])
+
+  (-create user-table)
+
+  (-populate user-table)
+
+  (-delete user-table #uuid "f1a1425c-e5f1-4591-a20f-1ccd4da3714f")
+
+  (-get-all user-table)
+
+  (-update user-table 14 {:name "Nikki"})
+
+  (-get-by-email user-table "lol322")
+
+  (try (-add user-table {:name "nil6"
+                         :email "lol2"
+                         :password-hash "lell"
+                         :role "role"})
+       (catch Exception e
+         [(type e) (ex-message e)]))
+  )

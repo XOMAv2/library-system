@@ -130,3 +130,50 @@
                    :body "{\"message\": \"No method matched for the specified uri.\"}"
                    :headers {"Content-Type" "application/json; charset=utf-8"}})
       #_#_:not-acceptable "(406) (handler returned nil)."}))))
+
+(comment
+  (require '[service.session.tables.user :refer [->UserTable]])
+
+  (def user-table (->UserTable {:dbtype "postgres"
+                                :host "localhost"
+                                :port 4005
+                                :dbname "session_db"
+                                :user "postgres"
+                                :password "postgres"}))
+
+  (def app-constructed
+    (app {:tables {:user user-table}}
+         {:session "uri"}))
+
+  (-> (app-constructed
+       {:uri "/api/users"
+        :request-method :get
+        :headers {"authorization" "Bearer eyJhbGciOiJIUzI1NiJ9.eyJ1aWQiOiIxNTEyMWRjMi1kMzk2LTQyMjQtYmZhNC1hZDVhOWQ4Yjk1ZTYiLCJyb2xlIjoiYWRtaW4iLCJleHAiOjE2MzI4MzE4Mjl9.YQT9i3TTvsWAAxyYv4sbNevhlXsciEDSisno7R1XXM4"
+                  "accept" "application/edn"
+                  "content-type" "application/edn"}})
+      (update :body slurp)
+      (update :body read-string))
+  
+  (malli.core/explain [:map [:users [:sequential schemas/user-out]]]
+                       {:users
+                        '({:uid #uuid "f1a1425c-e5f1-4591-a20f-1ccd4da3714f"
+                          :name "nil6"
+                          :email "lol2"
+                          :role "role"}
+                         {:uid #uuid "15121dc2-d396-4224-bfa4-ad5a9d8b95e6"
+                          :name "admin"
+                          :email "admin"
+                          :role "admin"})})
+  
+  (-> (app-constructed
+       {:uri "/api/auth/login"
+        :request-method :post
+        :body (str {:email "admin"
+                    :password "admin"})
+        :headers {"accept" "application/edn"
+                  "content-type" "application/edn"}})
+      (#(try (update % :body slurp)
+             (catch Exception _ %)))
+      (#(try (update % :body read-string)
+             (catch Exception _ %))))
+  )
