@@ -58,6 +58,36 @@
    [:send-time inst?]
    [:receive-time inst?]])
 
+(def user-limit-add
+  [:and
+   [:map
+    [:user-uid uuid?]
+    [:total-limit nat-int?]
+    [:available-limit nat-int?]]
+   [:fn (fn [{:keys [total-limit available-limit]}]
+          (<= available-limit total-limit))]])
+
+(def user-limit-update
+  [:and
+   [:map
+    [:user-uid {:optional true} uuid?]
+    [:total-limit {:optional true} nat-int?]
+    [:available-limit {:optional true} nat-int?]]
+   [:fn (fn [{:keys [total-limit available-limit]}]
+          (if (and total-limit available-limit)
+            (<= available-limit total-limit)
+            true))]])
+
+(def user-limit-out
+  [:and
+   [:map
+    [:uid uuid?]
+    [:user-uid uuid?]
+    [:total-limit nat-int?]
+    [:available-limit nat-int?]]
+   [:fn (fn [{:keys [total-limit available-limit]}]
+          (<= available-limit total-limit))]])
+
 (def db-config
   [:map
    [:dbtype [:enum "postgresql" "postgres"]]
