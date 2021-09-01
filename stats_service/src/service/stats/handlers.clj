@@ -32,15 +32,11 @@
      :body {:message (str "Statistical record with uid `" uid "` is not found.")}}))
 
 (defn get-all-stat-records
-  [{{{stat-record-table :stat-record} :tables} :db}]
-  (let [stat-records (srops/-get-all stat-record-table)]
-    {:status 200
-     :body {:stats stat-records}}))
-
-(defn get-all-stat-records-by-service
-  [{{{:keys [service]}                :path}   :parameters
+  [{{{:keys [service]}                :query}  :parameters
     {{stat-record-table :stat-record} :tables} :db}]
-  (let [stat-records (srops/-get-all-by-service stat-record-table service)]
+  (let [stat-records (if service
+                       (srops/-get-all-by-service stat-record-table service)
+                       (srops/-get-all stat-record-table))]
     {:status 200
      :body {:stats stat-records}}))
 

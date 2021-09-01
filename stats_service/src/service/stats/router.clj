@@ -50,7 +50,8 @@
                 
                 :roles #{"admin"}
                 :middleware [authorization-middleware]}
-      ["" {:get {:responses {200 {:body [:map [:stats [:sequential schemas/stat-record-out]]]}}
+      ["" {:get {:parameters {:query [:map [:service {:optional true} schemas/non-empty-string]]}
+                 :responses {200 {:body [:map [:stats [:sequential schemas/stat-record-out]]]}}
                  :handler handlers/get-all-stat-records}
            :post {:services-uri services-uri
                   :middleware [services-uri-middleware]
@@ -64,9 +65,7 @@
                   :handler handlers/add-stat-record}
            :delete {:responses {200 {:body [:map [:stats [:sequential schemas/stat-record-out]]]}}
                     :handler handlers/delete-all-stat-records}}]
-      ["/:uid" {:conflicting true
-                
-                :parameters {:path [:map [:uid uuid?]]}
+      ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
 
                 :get {:responses {200 {:body schemas/stat-record-out}
                                   404 {:body message}}
@@ -80,12 +79,7 @@
                                                 [:type string?]
                                                 [:message string?]]}
                                     404 {:body message}}
-                        :handler handlers/update-stat-record}}]
-      ["/:service" {:conflicting true
-                    
-                    :get {:parameters {:path [:map [:service schemas/non-empty-string]]}
-                          :responses {200 {:body [:map [:stats [:sequential schemas/stat-record-out]]]}}
-                          :handler handlers/get-all-stat-records-by-service}}]]
+                        :handler handlers/update-stat-record}}]]
 
      ["/auth" {:swagger {:tags ["auth"]}}
       ["/login" {:post {:parameters {:body [:map
