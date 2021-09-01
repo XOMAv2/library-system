@@ -88,6 +88,17 @@
    [:fn (fn [{:keys [total-limit available-limit]}]
           (<= available-limit total-limit))]])
 
+(def user-rating-add
+  [:map
+   [:user-uid uuid?]
+   [:rating nat-int?]])
+
+(def user-rating-update
+  (mu/optional-keys user-rating-add))
+
+(def user-rating-out
+  (mu/assoc user-rating-add :uid uuid?))
+
 (def db-config
   [:map
    [:dbtype [:enum "postgresql" "postgres"]]
