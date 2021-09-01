@@ -1,6 +1,6 @@
 (ns service.stats.handlers
   (:require [service.stats.tables.stat-record :as srops]
-            [service.stats.tables.client :as cops]
+            [utilities.tables.client :as cops]
             [utilities.core :refer [remove-trailing-slash update-vals]]
             [utilities.auth :as auth]
             [buddy.hashers :as hashers]

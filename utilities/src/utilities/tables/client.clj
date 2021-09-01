@@ -1,10 +1,7 @@
-(ns service.stats.tables.client
+(ns utilities.tables.client
   (:require [next.jdbc :as jdbc]
             [next.jdbc.sql :as sql]
-            [utilities.db :refer [add-entity get-entity get-entity-by-keys get-all-entities
-                                  update-entity delete-entity
-                                  create-table populate-table
-                                  jdbc-opts]]
+            [utilities.db :as udb]
             [buddy.hashers :as hashers]))
 
 (defprotocol ClientTableOperations
@@ -43,25 +40,25 @@
 (defrecord ClientTable [db]
   ClientTableOperations
   (-create [this]
-    (create-table db tname ["id            int GENERATED ALWAYS AS IDENTITY PRIMARY KEY"
-                            "uid           uuid NOT NULL UNIQUE"
-                            "client_id     text NOT NULL UNIQUE"
-                            "client_secret text NOT NULL"
-                            "role          text NOT NULL"]))
+    (udb/create-table db tname ["id            int GENERATED ALWAYS AS IDENTITY PRIMARY KEY"
+                                "uid           uuid NOT NULL UNIQUE"
+                                "client_id     text NOT NULL UNIQUE"
+                                "client_secret text NOT NULL"
+                                "role          text NOT NULL"]))
   (-populate [this]
-    (populate-table db tname clients))
+    (udb/populate-table db tname clients))
   (-add [this entity]
-    (add-entity db tname entity))
+    (udb/add-entity db tname entity))
   (-get [this id]
-    (get-entity db tname id))
+    (udb/get-entity db tname id))
   (-get-by-client-id [this client-id]
-    (get-entity-by-keys db tname {:client_id client-id}))
+    (udb/get-entity-by-keys db tname {:client_id client-id}))
   (-get-all [this]
-    (get-all-entities db tname))
+    (udb/get-all-entities db tname))
   (-update [this id entity]
-    (update-entity db tname id entity))
+    (udb/update-entity db tname id entity))
   (-delete [this id]
-    (delete-entity db tname id)))
+    (udb/delete-entity db tname id)))
 
 (comment
   (require '[utilities.config :refer [load-config]])
