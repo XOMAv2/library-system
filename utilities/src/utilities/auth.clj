@@ -6,7 +6,7 @@
             [utilities.schemas :as schemas]
             [malli.core :as m]
             [clojure.spec.alpha :as s]))
-  
+
 (def jwt-secret "JTW_SECRET")
 
 (def backend (backends/jws {:secret jwt-secret

@@ -17,13 +17,6 @@
    [string? {:decode/string clojure.string/lower-case}]
    [:enum "admin" "reader"]])
 
-(def user-out
-  [:map
-   [:uid uuid?]
-   [:name non-empty-string]
-   [:email non-empty-string]
-   [:role role]])
-
 (def user-add
   [:map
    [:name non-empty-string]
@@ -33,6 +26,13 @@
 
 (def user-update
   (mu/optional-keys user-add))
+
+(def user-out
+  [:map
+   [:uid uuid?]
+   [:name non-empty-string]
+   [:email non-empty-string]
+   [:role role]])
 
 (def token-pair
   [:map
@@ -46,7 +46,9 @@
    [:send-time inst?]])
 
 (def stat-record-update
-  (mu/assoc stat-record-add :receive-time inst?))
+  (-> stat-record-add
+      (mu/assoc :receive-time inst?)
+      (mu/optional-keys)))
 
 (def stat-record-out
   [:map

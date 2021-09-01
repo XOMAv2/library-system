@@ -1,7 +1,7 @@
 (ns service.stats.handlers
   (:require [service.stats.tables.stat-record :as srops]
             [utilities.tables.client :as cops]
-            [utilities.core :refer [remove-trailing-slash update-vals]]
+            [utilities.core :refer [remove-trailing-slash]]
             [utilities.auth :as auth]
             [buddy.hashers :as hashers]
             [utilities.time :as time]))
@@ -83,7 +83,7 @@
       {:status 200
        :body {:token (auth/sign-jwt-refresh (select-keys client [:uid :role]))}}
       {:status 401
-       :body {:message "Incorrect client's secret."}})
+       :body {:message "Incorrect client secret."}})
     {:status 404
      :body {:message (str "Client with id `" client-id "` is not found.")}}))
 

@@ -4,10 +4,7 @@
             [utilities.schemas :as schemas]
             [malli.core :as m]
             [malli.transform :as mt]
-            [utilities.db :refer [add-entity get-entity get-entity-by-keys get-all-entities
-                                  update-entity delete-entity
-                                  create-table populate-table
-                                  jdbc-opts]]))
+            [utilities.db :as udb]))
 
 (defprotocol UserTableOperations
   (-create [this]
@@ -40,26 +37,26 @@
 (defrecord UserTable [db]
   UserTableOperations
   (-create [this]
-    (create-table db tname ["id            int GENERATED ALWAYS AS IDENTITY PRIMARY KEY"
-                            "uid           uuid NOT NULL UNIQUE"
-                            "name          text NOT NULL"
-                            "email         text NOT NULL UNIQUE"
-                            "password_hash text NOT NULL"
-                            "role          text NOT NULL"]))
+    (udb/create-table db tname ["id            int GENERATED ALWAYS AS IDENTITY PRIMARY KEY"
+                                "uid           uuid NOT NULL UNIQUE"
+                                "name          text NOT NULL"
+                                "email         text NOT NULL UNIQUE"
+                                "password_hash text NOT NULL"
+                                "role          text NOT NULL"]))
   (-populate [this]
-    (populate-table db tname []))
+    (udb/populate-table db tname []))
   (-add [this entity]
-    (add-entity db tname entity sanitize))
+    (udb/add-entity db tname entity sanitize))
   (-get [this id]
-    (get-entity db tname id sanitize))
+    (udb/get-entity db tname id sanitize))
   (-get-by-email [this email]
-    (get-entity-by-keys db tname {:email email} sanitize))
+    (udb/get-entity-by-keys db tname {:email email} sanitize))
   (-get-all [this]
-    (get-all-entities db tname sanitize))
+    (udb/get-all-entities db tname sanitize))
   (-update [this id entity]
-    (update-entity db tname id entity sanitize))
+    (udb/update-entity db tname id entity sanitize))
   (-delete [this id]
-    (delete-entity db tname id sanitize)))
+    (udb/delete-entity db tname id sanitize)))
 
 (comment
   (require '[utilities.config :refer [load-config]])
