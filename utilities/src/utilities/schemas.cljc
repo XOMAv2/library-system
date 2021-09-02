@@ -1,6 +1,7 @@
 (ns utilities.schemas
   (:require [clojure.string]
             [malli.core :as m]
+            [malli.transform :as mt]
             [malli.util :as mu]))
 
 (def non-empty-string
@@ -98,6 +99,27 @@
 
 (def user-rating-out
   (mu/assoc user-rating-add :uid uuid?))
+
+(def book-add
+  [:map
+   [:name non-empty-string]
+   [:authors [:sequential non-empty-string]]
+   [:genres [:sequential non-empty-string]]
+   [:description non-empty-string]
+   [:price nat-int?]])
+
+(def book-update
+  (mu/optional-keys book-add))
+
+(def book-out
+  (mu/assoc book-add :uid uuid?))
+
+(def book-query
+  (let [->vector #(if (vector? %) % [%])]
+    (-> book-add
+        (mu/optional-keys)
+        (mu/update :authors mu/update-properties assoc :decode/string ->vector)
+        (mu/update :genres mu/update-properties assoc :decode/string ->vector))))
 
 (def db-config
   [:map

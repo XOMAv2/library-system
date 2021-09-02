@@ -1,119 +1,75 @@
 (ns service.book.system
-  (:require [reitit.ring :as ring]
-            [reitit.coercion.spec]
-            [reitit.swagger :as swagger]
-            [reitit.swagger-ui :as swagger-ui]
-            [reitit.ring.coercion :as coercion]
-            [reitit.dev.pretty :as pretty]
-            [reitit.ring.middleware.muuntaja :as muuntaja]
-            [reitit.ring.middleware.exception :as exception]
-            [reitit.ring.middleware.multipart :as multipart]
-            [reitit.ring.middleware.parameters :as parameters]
-            #_"Uncomment to use"
-            #_[reitit.ring.middleware.dev :as dev]
-            #_[reitit.ring.spec :as spec]
-            #_[spec-tools.spell :as spell]
-            [org.httpkit.server :refer [run-server]]
-            [muuntaja.core :as m]
-            [clojure.java.io :as io]
-            [utilities.core :as utils])
+  (:require [org.httpkit.server :refer [run-server]]
+            [service.book.router :refer [app]]
+            [utilities.config :refer [load-config]]
+            [service.book.tables.book :as bops
+             :refer [->BookTable BookTableOperations]]
+            [utilities.tables.client :as cops
+             :refer [->ClientTable ClientTableOperations]]
+            [integrant.core :as ig]
+            [clojure.spec.alpha :as s]
+            [malli.core :as m]
+            [utilities.schemas :as schemas])
   (:gen-class))
 
-(def app
-  (ring/ring-handler
-   (ring/router
-    [["/swagger.json"
-      {:get {:no-doc true
-             :swagger {:info {:title "my-api"
-                              :description "with reitit-ring"}}
-             :handler (swagger/create-swagger-handler)}}]
+#_"ig/init-key"
 
-     ["/files"
-      {:swagger {:tags ["files"]}}
+(defmethod ig/init-key :service.book.system/db [_ {:keys [db-config]}]
+  (let [book-table (->BookTable db-config)
+        _ (bops/-create book-table)
+        _ (bops/-populate book-table)
+        client-table (->ClientTable db-config)
+        _ (cops/-create client-table)
+        _ (cops/-populate client-table)]
+    {:tables {:book book-table
+              :client client-table}}))
 
-      ["/upload"
-       {:post {:summary "upload a file"
-               :parameters {:multipart {:file multipart/temp-file-part}}
-               :responses {200 {:body {:name string?, :size int?}}}
-               :handler (fn [{{{:keys [file]} :multipart} :parameters}]
-                          {:status 200
-                           :body {:name (:filename file)
-                                  :size (:size file)}})}}]
+(defmethod ig/init-key :service.book.system/app [_ {:keys [db services-uri]}]
+  (app db services-uri))
 
-      ["/download"
-       {:get {:summary "downloads a file"
-              :swagger {:produces ["image/png"]}
-              :handler (fn [_]
-                         {:status 200
-                          :headers {"Content-Type" "image/png"}
-                          :body (-> "reitit.png"
-                                    (io/resource)
-                                    (io/input-stream))})}}]]
+(defmethod ig/init-key :service.book.system/server [_ {:keys [app server-options]}]
+  (run-server app server-options))
 
-     ["/math"
-      {:swagger {:tags ["math"]}}
+#_"ig/halt-key!"
 
-      ["/plus"
-       {:get {:summary "plus with spec query parameters"
-              :parameters {:query {:x int?, :y int?}}
-              :responses {200 {:body {:total int?}}}
-              :handler (fn [{{{:keys [x y]} :query} :parameters}]
-                         {:status 200
-                          :body {:total (+ x y)}})}
-        :post {:summary "plus with spec body parameters"
-               :parameters {:body {:x int?, :y int?}}
-               :responses {200 {:body {:total int?}}}
-               :handler (fn [{{{:keys [x y]} :body} :parameters}]
-                          {:status 200
-                           :body {:total (+ x y)}})}}]]]
+(defmethod ig/halt-key! :service.book.system/server [_ server]
+  (server :timeout 100))
 
-    {;;:reitit.middleware/transform dev/print-request-diffs ;; pretty diffs
-       ;;:validate spec/validate ;; enable spec validation for route data
-       ;;:reitit.spec/wrap spell/closed ;; strict top-level validation
-     :exception pretty/exception
-     :data {:coercion reitit.coercion.spec/coercion
-            :muuntaja m/instance
-            :middleware [;; swagger feature
-                         swagger/swagger-feature
-                           ;; query-params & form-params
-                         parameters/parameters-middleware
-                           ;; content-negotiation
-                         muuntaja/format-negotiate-middleware
-                           ;; encoding response body
-                         muuntaja/format-response-middleware
-                           ;; exception handling
-                         exception/exception-middleware
-                           ;; decoding request body
-                         muuntaja/format-request-middleware
-                           ;; coercing response bodys
-                         coercion/coerce-response-middleware
-                           ;; coercing request parameters
-                         coercion/coerce-request-middleware
-                           ;; multipart
-                         multipart/multipart-middleware]}})
-   (ring/routes
-    (swagger-ui/create-swagger-ui-handler
-     {:path "/swagger"
-      :url "/swagger.json"
-      :config {:validatorUrl nil
-               :operationsSorter "alpha"}})
-    (ring/create-default-handler))))
+#_"ig/pre-init-spec"
 
-(defonce server (atom nil))
+(s/def ::db-config (m/validator schemas/db-config))
+(s/def ::db (m/validator
+             [:map
+              [:tables [:map
+                        [:book [:fn (fn [x] (satisfies? BookTableOperations x))]]
+                        [:client [:fn (fn [x] (satisfies? ClientTableOperations x))]]]]]))
+(s/def ::services-uri (m/validator schemas/services-uri))
+(s/def ::app fn?)
+(s/def ::server-options (m/validator schemas/server-options))
 
-(defn start []
-  (reset! server (run-server #'app {:port 3300}))
-  (println "server running in port 3000"))
+(defmethod ig/pre-init-spec :service.book.system/db [_]
+  (s/keys :req-un [::db-config]))
 
-(defn stop []
-  (when-not (nil? @server)
-    (@server :timeout 100) ; 100ms
-    (reset! server nil)))
+(defmethod ig/pre-init-spec :service.book.system/app [_]
+  (s/keys :req-un [::db ::services-uri]))
 
-(comment
-  (start)
-  (stop)
-  )
+(defmethod ig/pre-init-spec :service.book.system/server [_]
+  (s/keys :req-un [::app ::server-options]))
 
-(defn -main [& args]
-  (start))
+#_"system init & halt!"
+
+(defonce system (atom nil))
+
+(defn start-system [config]
+  (when @system (ig/halt! @system))
+  (->> config
+       (ig/init)
+       (reset! system)))
+
+(defn -main [profile & args]
+  (->> {:profile (keyword profile)}
+       (load-config "config.edn")
+       (start-system)))
+
+#_(-main "local")
+#_(ig/halt! @system)
