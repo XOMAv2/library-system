@@ -44,7 +44,7 @@
   ([db tname sanitize]
    (let [query (str "SELECT * FROM " (name tname))]
      (->> (jdbc/execute! db [query] jdbc-opts)
-          (map #(sanitize %))))))
+          (map sanitize)))))
 
 (defn get-all-entities-by-keys
   "Returns all of result entities with matching column values according to keys map."
@@ -52,7 +52,7 @@
    (get-all-entities-by-keys db tname keys identity))
   ([db tname keys sanitize]
    (->> (sql/find-by-keys db tname keys jdbc-opts)
-        (map #(sanitize %)))))
+        (map sanitize))))
 
 (defn update-entity
   "Returns updated entity if it's found, returns nil otherwise.
@@ -84,7 +84,7 @@
   ([db tname sanitize]
    (let [query (str "DELETE FROM " (name tname))]
      (->> (jdbc/execute! db [query] jdbc-opts)
-          (map #(sanitize %))))))
+          (map sanitize)))))
 
 (defn create-table
   "Returns nil if table is created or already exists, throws exception otherwise."

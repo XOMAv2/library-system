@@ -6,9 +6,9 @@
             [buddy.hashers :as hashers]))
 
 (defn add-user-limit
-  [{{user-limit                     :body}    :parameters
-    {{user-limit-table :user-limit} :tables}  :db
-    {service-uri                    :session} :services-uri}]
+  [{{user-limit                     :body}   :parameters
+    {{user-limit-table :user-limit} :tables} :db
+    {service-uri                    :return} :services-uri}]
   (try (let [user-limit (ulops/-add user-limit-table user-limit)]
          {:status 201
           :body user-limit

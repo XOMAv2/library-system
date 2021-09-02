@@ -14,7 +14,6 @@
                  [integrant "0.8.0"]
                  [buddy/buddy-auth "3.0.1"]
                  [buddy/buddy-hashers "1.8.1"]
-                 [com.novemberain/langohr "5.2.0"]
                  [org.clojure/math.numeric-tower "0.0.4"]]
   :main ^:skip-aot service.return.system
   :target-path "target/%s"

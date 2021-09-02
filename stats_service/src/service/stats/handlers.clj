@@ -7,9 +7,9 @@
             [utilities.time :as time]))
 
 (defn add-stat-record
-  [{{stat-record                      :body}    :parameters
-    {{stat-record-table :stat-record} :tables}  :db
-    {service-uri                      :session} :services-uri}]
+  [{{stat-record                      :body}   :parameters
+    {{stat-record-table :stat-record} :tables} :db
+    {service-uri                      :stats}  :services-uri}]
   (let [stat-record (assoc stat-record :receive-time (time/now))]
     (try (let [stat-record (srops/-add stat-record-table stat-record)]
            {:status 201

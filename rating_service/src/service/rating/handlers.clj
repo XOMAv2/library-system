@@ -6,9 +6,9 @@
             [buddy.hashers :as hashers]))
 
 (defn add-user-rating
-  [{{user-rating                      :body}    :parameters
-    {{user-rating-table :user-rating} :tables}  :db
-    {service-uri                      :session} :services-uri}]
+  [{{user-rating                      :body}   :parameters
+    {{user-rating-table :user-rating} :tables} :db
+    {service-uri                      :rating} :services-uri}]
   (try (let [user-rating (urops/-add user-rating-table user-rating)]
          {:status 201
           :body user-rating
