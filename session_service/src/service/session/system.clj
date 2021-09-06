@@ -26,9 +26,6 @@
 (defmethod ig/init-key :service.session.system/app [_ {:keys [db services services-uri]}]
   (app db services services-uri))
 
-(defmethod ig/init-key :service.session.system/app [_ {:keys [db services-uri]}]
-  (app db services-uri))
-
 (defmethod ig/init-key :service.session.system/server [_ {:keys [app server-options]}]
   (run-server app server-options))
 

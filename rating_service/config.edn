@@ -19,16 +19,16 @@
                                 :password ""
                                 :uri ""}}}
 
- :service.return.system/services
+ :service.rating.system/services
  {:stats {:qname "utilities.api.stats"
           :amqp-url #profile {:local "amqp://guest:guest@localhost:8081"
                               :docker "amqp://guest:guest@rabbitmq:5672"
                               :heroku ""}}
-  :services-uri #ref [:service.return.system/app :services-uri]}
+  :services-uri #ref [:service.rating.system/app :services-uri]}
 
  :service.rating.system/app
  {:db #ig/ref :service.rating.system/db
-  :services #ig/ref :service.return.system/services
+  :services #ig/ref :service.rating.system/services
   :services-uri #profile #include "../services_uri.edn"}
 
  :service.rating.system/server
