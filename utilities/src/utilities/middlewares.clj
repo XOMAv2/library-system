@@ -16,10 +16,11 @@
               (fn [handler]
                 (fn [request]
                   (let [request (assoc request :uid (java.util.UUID/randomUUID))
-                        operation (select-keys request [:uid :request-method
-                                                        :uri :headers :parameters])
+                        body (select-keys request [:uid :request-method
+                                                   :uri :headers :parameters])
                         stat-record {:service service
-                                     :operation (str operation)
+                                     :body (str body)
+                                     :content-type "application/edn; charset=utf-8"
                                      :send-time (time/now)}]
                     (-add-stat-record stats stat-record)
                     (handler request)))))})
@@ -32,10 +33,11 @@
               (fn [handler]
                 (fn [request]
                   (let [response (handler request)
-                        operation (merge (select-keys request [:uri])
-                                         (select-keys response [:status]))
+                        body (merge (select-keys request [:uid])
+                                    (select-keys response [:status]))
                         stat-record {:service service
-                                     :operation (str operation)
+                                     :body (str body)
+                                     :content-type "application/edn; charset=utf-8"
                                      :send-time (time/now)}]
                     (-add-stat-record stats stat-record)
                     response))))})

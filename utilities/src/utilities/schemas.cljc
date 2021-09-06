@@ -43,7 +43,8 @@
 (def stat-record-add
   [:map
    [:service non-empty-string]
-   [:operation non-empty-string]
+   [:body non-empty-string]
+   [:content-type {:optional true} non-empty-string]
    [:send-time inst?]])
 
 (def stat-record-update
@@ -55,7 +56,8 @@
   [:map
    [:uid uuid?]
    [:service non-empty-string]
-   [:operation non-empty-string]
+   [:body non-empty-string]
+   [:content-type non-empty-string]
    [:send-time inst?]
    [:receive-time inst?]])
 

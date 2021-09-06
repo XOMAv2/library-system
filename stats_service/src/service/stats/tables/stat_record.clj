@@ -43,7 +43,8 @@
     (udb/create-table db tname ["id           int GENERATED ALWAYS AS IDENTITY PRIMARY KEY"
                                 "uid          uuid NOT NULL UNIQUE"
                                 "service      text NOT NULL"
-                                "operation    text NOT NULL"
+                                "body         text NOT NULL"
+                                "content_type text NOT NULL"
                                 "send_time    timestamp NOT NULL"
                                 "receive_time timestamp NOT NULL"]))
   (-populate [this]
@@ -79,7 +80,8 @@
     (->StatRecordTable db))
   
   (udb/add-entity db "stat_record" {:service "book"
-                                    :operation "get"
+                                    :body "get"
+                                    :content-type "text/plain"
                                     :send-time #inst "2020-11-09"})
 
   (-get-all stat-record-table)
@@ -87,7 +89,8 @@
   (-get-all-by-service stat-record-table "book")
 
   (-add stat-record-table {:service "book"
-                           :operation "get"
+                           :body "get"
+                           :content-type "text/plain"
                            :send-time #inst "2020-11-09"
                            :receive-time #inst "2020-11-09"})
   )

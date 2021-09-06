@@ -10,7 +10,9 @@
   [{{stat-record                      :body}   :parameters
     {{stat-record-table :stat-record} :tables} :db
     {service-uri                      :stats}  :services-uri}]
-  (let [stat-record (assoc stat-record :receive-time (time/now))]
+  (let [stat-record (assoc stat-record :receive-time (time/now))
+        stat-record (merge {:content-type "text/plain"}
+                           stat-record)]
     (try (let [stat-record (srops/-add stat-record-table stat-record)]
            {:status 201
             :body stat-record
