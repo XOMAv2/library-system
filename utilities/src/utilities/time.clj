@@ -1,93 +1,140 @@
-(ns utilities.time)
+(ns utilities.time
+  (:refer-clojure :exclude [< <= > >=])
+  (:import [java.util Date]
+           [java.time LocalDateTime ZoneId ZonedDateTime Period Duration]))
+
+#_(set! *warn-on-reflection* false)
+#_(set! *warn-on-reflection* true)
 
 (defn now []
   (-> #_(.instant (java.time.Clock/systemUTC))
       (java.time.Instant/now)
-      (java.util.Date/from)))
+      (Date/from)))
 
-(defn date [year month day]
+(defn date [^Integer year ^Integer month ^Integer day]
   (-> (java.time.LocalDate/of year month day)
-      (.atStartOfDay (java.time.ZoneId/of "UTC"))
+      (.atStartOfDay (ZoneId/of "UTC"))
       (.toInstant)
-      (java.util.Date/from)))
+      (Date/from)))
 
-(defn datetime [year month day hour minute]
-  (-> (java.time.LocalDateTime/of year month day hour minute)
-      (.atZone (java.time.ZoneId/of "UTC"))
+(defn datetime [^Integer year ^Integer month ^Integer day
+                ^Integer hour ^Integer minute]
+  (-> (LocalDateTime/of year month day hour minute)
+      (.atZone (ZoneId/of "UTC"))
       (.toInstant)
-      (java.util.Date/from)))
+      (Date/from)))
 
-(defn year-start [d]
+(defn year-start [^Date d]
   (-> (.toInstant d)
-      (.atZone (java.time.ZoneId/of "UTC"))
+      (.atZone (ZoneId/of "UTC"))
       (.with (java.time.temporal.TemporalAdjusters/firstDayOfYear))
       (.toInstant)
-      (java.util.Date/from)))
+      (Date/from)))
 
-(defn month-start [d]
+(defn month-start [^Date d]
   (-> (.toInstant d)
-      (.atZone (java.time.ZoneId/of "UTC"))
+      (.atZone (ZoneId/of "UTC"))
       (.with (java.time.temporal.TemporalAdjusters/firstDayOfMonth))
       (.toInstant)
-      (java.util.Date/from)))
+      (Date/from)))
 
-(defn day-start [d]
+(defn day-start [^Date d]
   (-> (.toInstant d)
-      (.atZone (java.time.ZoneId/of "UTC"))
+      (.atZone (ZoneId/of "UTC"))
       (.toLocalDate)
-      (.atStartOfDay (java.time.ZoneId/of "UTC"))
+      (.atStartOfDay (ZoneId/of "UTC"))
       (.toInstant)
-      (java.util.Date/from)))
+      (Date/from)))
 
-(defn at-zone [datetime timezone]
+(defn at-zone [^Date datetime timezone]
   (-> (.toInstant datetime)
-      (java.time.LocalDateTime/ofInstant (java.time.ZoneId/of timezone))
-      (.atZone (java.time.ZoneId/of "UTC"))
+      (LocalDateTime/ofInstant (ZoneId/of timezone))
+      (.atZone (ZoneId/of "UTC"))
       (.toInstant)
-      (java.util.Date/from)))
+      (Date/from)))
 
 (defn years
   "Obtains a time-independent Period representing a number of years."
   [n]
-  (java.time.Period/ofYears n))
+  (Period/ofYears n))
 
 (defn months
   "Obtains a time-independent Period representing a number of months."
   [n]
-  (java.time.Period/ofMonths n))
+  (Period/ofMonths n))
 
 (defn weeks
   "Obtains a time-independent Period representing a number of weeks."
   [n]
-  (java.time.Period/ofWeeks n))
+  (Period/ofWeeks n))
 
 (defn days
   "Obtains a time-independent Period representing a number of days."
   [n]
-  (java.time.Period/ofDays n))
+  (Period/ofDays n))
 
 (defn hours
   "Obtains a time-based Duration representing a number of standard hours."
   [n]
-  (java.time.Duration/ofHours n))
+  (Duration/ofHours n))
 
 (defn minutes
   "Obtains a time-based Duration representing a number of standard minutes."
   [n]
-  (java.time.Duration/ofMinutes n))
+  (Duration/ofMinutes n))
 
-(defn add [date amount1 & amounts]
+(defn add [^Date date amount1 & amounts]
   (let [date (-> (.toInstant date)
-                 (.atZone (java.time.ZoneId/of "UTC")))
+                 (.atZone (ZoneId/of "UTC")))
         amounts (cons amount1 amounts)
-        date (reduce #(.plus % %2) date amounts)]
+        ^ZonedDateTime date (reduce #(.plus % %2) date amounts)]
     (-> (.toInstant date)
-        (java.util.Date/from))))
+        (Date/from))))
 
-(defn subtract [date amount1 & amounts]
+(defn subtract [^Date date amount1 & amounts]
   (let [date (-> (.toInstant date)
-                 (.atZone (java.time.ZoneId/of "UTC")))
+                 (.atZone (ZoneId/of "UTC")))
         amounts (cons amount1 amounts)
-        date (reduce #(.minus % %2) date amounts)]
+        ^ZonedDateTime date (reduce #(.minus % %2) date amounts)]
     (-> (.toInstant date)
-        (java.util.Date/from))))
+        (Date/from))))
+
+(defn <
+  ([^Date d1] true)
+  ([^Date d1 ^Date d2] (.before  d1 d2))
+  ([^Date d1 ^Date d2 & more]
+   (if (< d1 d2)
+     (if (next more)
+       (recur d2 (first more) (next more))
+       (< d2 (first more)))
+     false)))
+
+(defn <=
+  ([^Date d1] true)
+  ([^Date d1 ^Date d2] (or (.before d1 d2) (= d1 d2)))
+  ([^Date d1 ^Date d2 & more]
+   (if (<= d1 d2)
+     (if (next more)
+       (recur d2 (first more) (next more))
+       (<= d2 (first more)))
+     false)))
+
+(defn >
+  ([^Date d1] true)
+  ([^Date d1 ^Date d2] (.after d1 d2))
+  ([^Date d1 ^Date d2 & more]
+   (if (> d1 d2)
+     (if (next more)
+       (recur d2 (first more) (next more))
+       (> d2 (first more)))
+     false)))
+
+(defn >=
+  ([^Date d1] true)
+  ([^Date d1 ^Date d2] (or (.after d1 d2) (= d1 d2)))
+  ([^Date d1 ^Date d2 & more]
+   (if (>= d1 d2)
+     (if (next more)
+       (recur d2 (first more) (next more))
+       (>= d2 (first more)))
+     false)))
