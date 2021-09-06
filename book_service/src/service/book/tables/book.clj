@@ -58,13 +58,15 @@
 (defrecord BookTable [db]
   BookTableOperations
   (-create [this]
-    (udb/create-table db tname ["id          int GENERATED ALWAYS AS IDENTITY PRIMARY KEY"
-                                "uid         uuid NOT NULL UNIQUE"
-                                "name        text NOT NULL"
-                                "authors     text[] NOT NULL CHECK (array_position(authors, null) is null)"
-                                "genres      text[] NOT NULL CHECK (array_position(genres, null) is null)"
-                                "description text NOT NULL"
-                                "price       int NOT NULL CHECK (price >= 0)"]))
+    (udb/create-table
+     db tname
+     ["id          int GENERATED ALWAYS AS IDENTITY PRIMARY KEY"
+      "uid         uuid NOT NULL UNIQUE"
+      "name        text NOT NULL"
+      "authors     text[] NOT NULL CHECK (array_position(authors, null) is null)"
+      "genres      text[] NOT NULL CHECK (array_position(genres, null) is null)"
+      "description text NOT NULL"
+      "price       int NOT NULL CHECK (price >= 0)"]))
   (-populate [this]
     (udb/populate-table db tname []))
   (-add [this entity]

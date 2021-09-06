@@ -3,8 +3,7 @@
             [utilities.tables.client :as cops]
             [utilities.core :refer [remove-trailing-slash]]
             [utilities.auth :as auth]
-            [buddy.hashers :as hashers]
-            [utilities.time :as time]))
+            [buddy.hashers :as hashers]))
 
 (defn add-book
   [{{book               :body}    :parameters
