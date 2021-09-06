@@ -9,7 +9,9 @@
             [integrant.core :as ig]
             [clojure.spec.alpha :as s]
             [malli.core :as m]
-            [utilities.schemas :as schemas])
+            [utilities.core :refer [non-empty-string?]]
+            [utilities.schemas :as schemas]
+            [utilities.api.stats :refer [StatsAPI map->StatsService]])
   (:gen-class))
 
 #_"ig/init-key"
@@ -24,8 +26,11 @@
     {:tables {:book book-table
               :client client-table}}))
 
-(defmethod ig/init-key :service.book.system/app [_ {:keys [db services-uri]}]
-  (app db services-uri))
+(defmethod ig/init-key :service.book.system/services [_ {:keys [stats services-uri]}]
+  {:stats (map->StatsService stats)})
+
+(defmethod ig/init-key :service.book.system/app [_ {:keys [db services services-uri]}]
+  (app db services services-uri))
 
 (defmethod ig/init-key :service.book.system/server [_ {:keys [app server-options]}]
   (run-server app server-options))
@@ -43,15 +48,23 @@
               [:tables [:map
                         [:book [:fn (fn [x] (satisfies? BookTableOperations x))]]
                         [:client [:fn (fn [x] (satisfies? ClientTableOperations x))]]]]]))
+(s/def ::services (m/validator [:map
+                                [:stats [:fn (fn [x] (satisfies? StatsAPI x))]]]))
 (s/def ::services-uri (m/validator schemas/services-uri))
 (s/def ::app fn?)
 (s/def ::server-options (m/validator schemas/server-options))
+(s/def ::qname non-empty-string?)
+(s/def ::amqp-url non-empty-string?)
+(s/def ::stats (s/keys :req-un [::qname ::amqp-url]))
 
 (defmethod ig/pre-init-spec :service.book.system/db [_]
   (s/keys :req-un [::db-config]))
 
+(defmethod ig/pre-init-spec :service.book.system/services [_]
+  (s/keys :req-un [::stats ::services-uri]))
+
 (defmethod ig/pre-init-spec :service.book.system/app [_]
-  (s/keys :req-un [::db ::services-uri]))
+  (s/keys :req-un [::db ::services ::services-uri]))
 
 (defmethod ig/pre-init-spec :service.book.system/server [_]
   (s/keys :req-un [::app ::server-options]))

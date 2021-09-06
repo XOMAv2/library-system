@@ -18,9 +18,17 @@
                                 :user ""
                                 :password ""
                                 :uri ""}}}
+ 
+ :service.book.system/services
+ {:stats {:qname "utilities.api.stats"
+          :amqp-url #profile {:local "amqp://guest:guest@localhost:8081"
+                              :docker "amqp://guest:guest@rabbitmq:5672"
+                              :heroku ""}}
+  :services-uri #ref [:service.book.system/app :services-uri]}
 
  :service.book.system/app
  {:db #ig/ref :service.book.system/db
+  :services #ig/ref :service.book.system/services
   :services-uri #profile #include "../services_uri.edn"}
 
  :service.book.system/server

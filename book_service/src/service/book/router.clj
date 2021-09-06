@@ -11,6 +11,8 @@
                                                      format-request-middleware
                                                      format-response-middleware]]
             [reitit.ring.middleware.parameters :refer [parameters-middleware]]
+            [utilities.middlewares :refer [request->stats-middleware
+                                           response->stats-middleware]]
             [expound.alpha :refer [expound-str]]
             [service.book.handlers :as handlers]
             [utilities.muuntaja :refer [muuntaja-instance]]
@@ -37,7 +39,7 @@
 
 #_"TODO: swagger query params explode"
 
-(defn app [db services-uri]
+(defn app [db services services-uri]
   (ring/ring-handler
    (ring/router
     ["/api" {:swagger {:securityDefinitions {:apiAuth {:type "apiKey"
@@ -101,6 +103,8 @@
                          :responses {200 {}}
                          :handler handlers/verify-token}}]]]
     {:data {:db db
+            :services services
+            :stats/service "book"
             :coercion reitit.coercion.malli/coercion #_"Schemas closing, extra keys stripping, ..."
             #_"... transformers adding for json-body, path and query params."
             :muuntaja muuntaja-instance
@@ -113,6 +117,8 @@
                          format-request-middleware #_"Request body decoding."
                          coercion/coerce-response-middleware #_"Response bodys coercion."
                          coercion/coerce-request-middleware #_"Request parameters coercion."
+                         request->stats-middleware
+                         response->stats-middleware
                          [wrap-authentication backend] #_"Obtaining data from authorization header."]}
      #_#_:reitit.middleware/transform print-request-diffs #_"Middleware chain transformation."
      :validate reitit.ring.spec/validate #_"Routes structure validation."
