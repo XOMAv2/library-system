@@ -26,6 +26,7 @@ services:
         networks:
             - book_network
             - service_network
+            - rabbitmq_network
 
     gateway_db:
         image: postgres
@@ -52,6 +53,7 @@ services:
             - gateway_network
             - service_network
             - session_network
+            - rabbitmq_network
 
     library_db:
         image: postgres
@@ -77,6 +79,7 @@ services:
         networks: 
             - library_network
             - service_network
+            - rabbitmq_network
 
     rating_db:
         image: postgres
@@ -102,6 +105,7 @@ services:
         networks: 
             - rating_network
             - service_network
+            - rabbitmq_network
 
     return_db:
         image: postgres
@@ -127,6 +131,7 @@ services:
         networks: 
             - return_network
             - service_network
+            - rabbitmq_network
     
     session_db:
         image: postgres
@@ -151,6 +156,7 @@ services:
         links: [session_db:postgres]
         networks: 
             - session_network
+            - rabbitmq_network
         
     stats_db:
         image: postgres
@@ -183,7 +189,7 @@ services:
         image: rabbitmq:3.9-management
         container_name: rabbitmq
         hostname: my-rabbit
-        ports: ["8080:15672", "5672:5672"]
+        ports: ["8080:15672", "8081:5672"]
         volumes: [rabbitmq_volume:/var/lib/rabbitmq]
         networks:
             - rabbitmq_network

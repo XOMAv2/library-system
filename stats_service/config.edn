@@ -32,7 +32,7 @@
  :service.stats.system/rabbitmq
  {:db #ig/ref :service.stats.system/db
   :qname "utilities.api.stats"
-  :amqp-url #profile {:local "amqp://guest:guest@localhost:5672"
+  :amqp-url #profile {:local "amqp://guest:guest@localhost:8081"
                       :docker "amqp://guest:guest@rabbitmq:5672"
                       :heroku ""}
   :services-uri #ref [:service.stats.system/app :services-uri]}}
