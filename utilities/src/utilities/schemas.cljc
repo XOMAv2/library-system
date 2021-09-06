@@ -2,7 +2,9 @@
   (:require [clojure.string]
             [malli.core :as m]
             [malli.transform :as mt]
-            [malli.util :as mu]))
+            [malli.util :as mu]
+            #?(:clj [utilities.time :as time])
+            [#?(:clj clojure.core.match :cljs cljs.core.match) :refer [match]]))
 
 (def non-empty-string
   [:and
@@ -122,6 +124,111 @@
         (mu/optional-keys)
         (mu/update :authors mu/update-properties assoc :decode/string ->vector)
         (mu/update :genres mu/update-properties assoc :decode/string ->vector))))
+
+(def library-add
+  [:map
+   [:name non-empty-string]
+   [:address non-empty-string]
+   [:schedule [:sequential non-empty-string]]])
+
+(def library-update
+  (mu/optional-keys library-add))
+
+(def library-out
+  (mu/assoc library-add :uid uuid?))
+
+(def order-add
+  [:and
+   [:map
+    [:library-uid uuid?]
+    [:book-uid uuid?]
+    [:user-uid uuid?]
+    [:booking-date {:optional true} inst?]
+    [:receiving-date {:optional true} inst?]
+    [:return-date {:optional true} inst?]
+    [:condition {:optional true} non-empty-string]]
+   [:fn (fn [{:keys [booking-date receiving-date return-date condition]}]
+          (let [loe #?(:clj time/<= :cljs <=)]
+            (match (mapv some? [booking-date receiving-date return-date condition])
+              [false false false false] true
+              [true  false false false] true
+              [true  true  false false] (loe booking-date receiving-date)
+              [true  true  true  true]  (loe booking-date receiving-date return-date)
+              :else false)))]])
+
+(def order-update
+  [:and
+   [:map
+    [:library-uid {:optional true} uuid?]
+    [:book-uid {:optional true} [:maybe uuid?]]
+    [:user-uid {:optional true} [:maybe uuid?]]
+    [:booking-date {:optional true} inst?]
+    [:receiving-date {:optional true} inst?]
+    [:return-date {:optional true} inst?]
+    [:condition {:optional true} non-empty-string]]
+   [:fn (fn [{:keys [booking-date receiving-date return-date]}]
+          (let [loe #?(:clj time/<= :cljs <=)]
+            (match (mapv some? [booking-date receiving-date return-date])
+              [false true  true]  (loe receiving-date return-date)
+              [true  false true]  (loe booking-date return-date)
+              [true  true  false] (loe booking-date receiving-date)
+              [true  true  true]  (loe booking-date receiving-date return-date)
+              :else true)))]])
+
+(def order-out
+  [:and
+   [:map
+    [:uid uuid?]
+    [:library-uid [:maybe uuid?]]
+    [:book-uid [:maybe uuid?]]
+    [:user-uid [:maybe uuid?]]
+    [:booking-date inst?]
+    [:receiving-date [:maybe inst?]]
+    [:return-date [:maybe inst?]]
+    [:condition [:maybe non-empty-string]]]
+   [:fn (fn [{:keys [receiving-date return-date condition]}]
+          (let [loe #?(:clj time/<= :cljs <=)]
+            (match (mapv some? [receiving-date return-date condition])
+              [false false false] true
+              [true  false false] true
+              [true  true  true]  (loe receiving-date return-date)
+              :else false)))]])
+
+(def library-books-add
+  [:and
+   [:map
+    [:library-uid uuid?]
+    [:book-uid uuid?]
+    [:total-quantity nat-int?]
+    [:granted-quantity nat-int?]
+    [:is-available boolean?]]
+   [:fn (fn [{:keys [total-quantity granted-quantity]}]
+          (<= granted-quantity total-quantity))]])
+
+(def library-books-update
+  [:and
+   [:map
+    [:library-uid {:optional true} uuid?]
+    [:book-uid {:optional true} [:maybe uuid?]]
+    [:total-quantity {:optional true} nat-int?]
+    [:granted-quantity {:optional true} nat-int?]
+    [:is-available {:optional true} boolean?]]
+   [:fn (fn [{:keys [total-quantity granted-quantity]}]
+          (if (and total-quantity granted-quantity)
+            (<= granted-quantity total-quantity)
+            true))]])
+
+(def library-books-out
+  [:and
+   [:map
+    [:uid uuid?]
+    [:library-uid [:maybe uuid?]]
+    [:book-uid [:maybe uuid?]]
+    [:total-quantity nat-int?]
+    [:granted-quantity nat-int?]
+    [:is-available boolean?]]
+   [:fn (fn [{:keys [total-quantity granted-quantity]}]
+          (<= granted-quantity total-quantity))]])
 
 (def db-config
   [:map
