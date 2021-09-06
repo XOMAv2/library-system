@@ -41,3 +41,19 @@
                                      :send-time (time/now)}]
                     (-add-stat-record stats stat-record)
                     response))))})
+
+(defn key->request
+  "Adds a slot to the request using the assoc function."
+  [handler key value]
+  (fn [request]
+    (-> request
+        (assoc key value)
+        (handler))))
+
+(defn generated-key->request
+  "`generator` - function without arguments."
+  [handler key generator]
+  (fn [request]
+    (-> request
+        (assoc key (generator))
+        (handler))))
