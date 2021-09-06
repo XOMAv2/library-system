@@ -2,6 +2,12 @@
 
 ## docker
 
+### PostgreSQL
+```zsh
+docker run --name library2 -dp 4444:5432 -v library2_volume:/var/lib/postgresql/data -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=library_db postgres
+```
+
+### Service
 ```zsh
 docker build -t book --build-arg APPNAME=book_service .
 ```
@@ -12,10 +18,9 @@ docker run --name book -dp 3000:3000 book
 docker rm -f book
 ```
 
-## RabbitMQ
-
+### RabbitMQ
 ```zsh
-docker run -d --hostname my-rabbit --name some-rabbit -v rabbit:/var/lib/rabbitmq -p 8080:15672 -p 5672:5672 rabbitmq:3.9-management
+docker run -d --hostname my-rabbit --name rabbitmq2 -v rabbitmq_volume2:/var/lib/rabbitmq -p 8080:15672 -p 8081:5672 rabbitmq:3.9-management
 ```
 
 ## Требования к программной реализации
