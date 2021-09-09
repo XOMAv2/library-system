@@ -35,8 +35,7 @@
   (-get-all [this]
     "Returns collection of entities if table isn't empty, returns empty collection otherwise.")
   (-get-all-by-keys [this book]
-    "Returns collection of entities for specified service.
-     Returns empty collection if service contains no entities or service wasn't found.")
+    "Returns all of result entities with matching column values according to entity map.")
   (-update [this id entity]
     "Returns updated entity if it's found, returns nil otherwise.
      Throws exception if entity is malformed.")
