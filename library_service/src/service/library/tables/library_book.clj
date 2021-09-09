@@ -1,4 +1,4 @@
-(ns service.library.tables.library-books
+(ns service.library.tables.library-book
   (:require [next.jdbc :as jdbc]
             [next.jdbc.sql :as sql]
             [utilities.schemas :as schemas]
@@ -7,7 +7,7 @@
             [utilities.db :as udb]
             [service.library.tables.library :as library]))
 
-(defprotocol LibraryBooksTableOperations
+(defprotocol LibraryBookTableOperations
   (-create [this]
     "Returns nil if table is created or already exists, throws exception otherwise.")
   (-populate [this]
@@ -20,6 +20,8 @@
     "Returns entity if it's found, returns nil otherwise.")
   (-get-all [this]
     "Returns collection of entities if table isn't empty, returns empty collection otherwise.")
+  (-get-all-by-keys [this library-book]
+    "Returns all of result entities with matching column values according to entity map.")
   (-update [this id entity]
     "Returns updated entity if it's found, returns nil otherwise.
      Throws exception if entity is malformed.")
@@ -29,10 +31,10 @@
 (def ^:private tname :library_books)
 
 (def ^:private sanitize
-  (m/decoder schemas/library-books-out mt/strip-extra-keys-transformer))
+  (m/decoder schemas/library-book-out mt/strip-extra-keys-transformer))
 
-(defrecord LibraryBooksTable [db]
-  LibraryBooksTableOperations
+(defrecord LibraryBookTable [db]
+  LibraryBookTableOperations
   (-create [this]
     (let [colls ["id               int GENERATED ALWAYS AS IDENTITY PRIMARY KEY"
                  "uid              uuid NOT NULL UNIQUE"
@@ -58,6 +60,8 @@
     (udb/get-entity db tname id sanitize))
   (-get-all [this]
     (udb/get-all-entities db tname sanitize))
+  (-get-all-by-keys [this library-book]
+    (udb/get-all-entities-by-keys db tname library-book sanitize))
   (-update [this id entity]
     (udb/update-entity db tname id entity sanitize))
   (-delete [this id]
@@ -75,19 +79,19 @@
   (def db
     (jdbc/get-datasource db-config))
 
-  (def library-books-table
-    (->LibraryBooksTable db))
+  (def library-book-table
+    (->LibraryBookTable db))
 
-  (-create library-books-table)
+  (-create library-book-table)
 
-  (-add library-books-table {:library_uid #uuid "9e916041-daa0-448d-afb6-f1286df90393"
+  (-add library-book-table {:library_uid #uuid "9e916041-daa0-448d-afb6-f1286df90393"
                              :book-uid (java.util.UUID/randomUUID)
                              :total-quantity 100
                              :granted-quantity 1001
                              :is-available true})
 
-  (-get library-books-table #uuid "68cb327d-cf1f-4c57-8872-e4e8b2f20496")
-  (-delete library-books-table #uuid "8012998b-30a8-486d-af05-35274bda2282")
-  (-get-all library-books-table)
+  (-get library-book-table #uuid "68cb327d-cf1f-4c57-8872-e4e8b2f20496")
+  (-delete library-book-table #uuid "8012998b-30a8-486d-af05-35274bda2282")
+  (-get-all library-book-table)
   (jdbc/execute-one! db ["DROP TABLE library_books"])
   )

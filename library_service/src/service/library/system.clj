@@ -6,8 +6,8 @@
              :refer [->LibraryTable LibraryTableOperations]]
             [service.library.tables.order :as o-ops
              :refer [->OrderTable OrderTableOperations]]
-            [service.library.tables.library-books :as lb-ops
-             :refer [->LibraryBooksTable LibraryBooksTableOperations]]
+            [service.library.tables.library-book :as lb-ops
+             :refer [->LibraryBookTable LibraryBookTableOperations]]
             [utilities.tables.client :as c-ops
              :refer [->ClientTable ClientTableOperations]]
             [integrant.core :as ig]
@@ -24,9 +24,9 @@
   (let [library-table (->LibraryTable db-config)
         _ (l-ops/-create library-table)
         _ (l-ops/-populate library-table)
-        library-books-table (->LibraryBooksTable db-config)
-        _ (lb-ops/-create library-books-table)
-        _ (lb-ops/-populate library-books-table)
+        library-book-table (->LibraryBookTable db-config)
+        _ (lb-ops/-create library-book-table)
+        _ (lb-ops/-populate library-book-table)
         order-table (->OrderTable db-config)
         _ (o-ops/-create order-table)
         _ (o-ops/-populate order-table)
@@ -34,7 +34,7 @@
         _ (c-ops/-create client-table)
         _ (c-ops/-populate client-table)]
     {:tables {:library library-table
-              :library-books library-books-table
+              :library-book library-book-table
               :order order-table
               :client client-table}}))
 
@@ -59,7 +59,7 @@
              [:map
               [:tables [:map
                         [:library [:fn (fn [x] (satisfies? LibraryTableOperations x))]]
-                        [:library-books [:fn (fn [x] (satisfies? LibraryBooksTableOperations x))]]
+                        [:library-book [:fn (fn [x] (satisfies? LibraryBookTableOperations x))]]
                         [:order [:fn (fn [x] (satisfies? OrderTableOperations x))]]
                         [:client [:fn (fn [x] (satisfies? ClientTableOperations x))]]]]]))
 (s/def ::services (m/validator [:map

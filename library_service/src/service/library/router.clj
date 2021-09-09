@@ -14,8 +14,9 @@
             [utilities.middlewares :refer [request->stats-middleware
                                            response->stats-middleware]]
             [expound.alpha :refer [expound-str]]
-            [service.library.handlers.order :as o-handlers]
             [service.library.handlers.library :as l-handlers]
+            [service.library.handlers.library-book :as lb-handlers]
+            [service.library.handlers.order :as o-handlers]
             [service.library.handlers :as handlers]
             [utilities.muuntaja :refer [muuntaja-instance]]
             [utilities.schemas :as schemas :refer [message]]
@@ -104,6 +105,39 @@
                                                 [:message string?]]}
                                     404 {:body message}}
                         :handler l-handlers/update-library}}]]
+     
+     ["/library-books" {:swagger {:tags ["library-books"]}
+
+                 :roles #{"admin"}
+                 :middleware [authorization-middleware]}
+      ["" {:get {:parameters {:query schemas/library-book-query}
+                 :responses {200 {:body [:map [:library-books [:sequential schemas/library-book-out]]]}}
+                 :handler lb-handlers/get-all-library-books}
+           :post {:services-uri services-uri
+                  :middleware [services-uri-middleware]
+
+                  :parameters {:body schemas/library-book-add}
+                  :responses {201 {:body schemas/library-book-out
+                                   :headers {"Location" {:schema {:type "string"}}}}
+                              400 {:body [:map
+                                          [:type string?]
+                                          [:message string?]]}}
+                  :handler lb-handlers/add-library-book}}]
+      ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
+
+                :get {:responses {200 {:body schemas/library-book-out}
+                                  404 {:body message}}
+                      :handler lb-handlers/get-library-book}
+                :delete {:responses {200 {:body schemas/library-book-out}
+                                     404 {:body message}}
+                         :handler lb-handlers/delete-library-book}
+                :patch {:parameters {:body schemas/library-book-update}
+                        :responses {200 {:body schemas/library-book-out}
+                                    400 {:body [:map
+                                                [:type string?]
+                                                [:message string?]]}
+                                    404 {:body message}}
+                        :handler lb-handlers/update-library-book}}]]
 
      ["/orders" {:swagger {:tags ["orders"]}
 

@@ -163,14 +163,15 @@
 
 (def order-update
   [:and
-   [:map
-    [:library-uid {:optional true} uuid?]
-    [:book-uid {:optional true} [:maybe uuid?]]
-    [:user-uid {:optional true} [:maybe uuid?]]
-    [:booking-date {:optional true} inst?]
-    [:receiving-date {:optional true} inst?]
-    [:return-date {:optional true} inst?]
-    [:condition {:optional true} non-empty-string]]
+   (mu/optional-keys
+    [:map
+     [:library-uid uuid?]
+     [:book-uid [:maybe uuid?]]
+     [:user-uid [:maybe uuid?]]
+     [:booking-date inst?]
+     [:receiving-date inst?]
+     [:return-date inst?]
+     [:condition non-empty-string]])
    [:fn (fn [{:keys [booking-date receiving-date return-date]}]
           (let [loe #?(:clj time/<= :cljs <=)]
             (match (mapv some? [booking-date receiving-date return-date])
@@ -205,7 +206,7 @@
       (first)
       (mu/optional-keys)))
 
-(def library-books-add
+(def library-book-add
   [:and
    [:map
     [:library-uid uuid?]
@@ -216,20 +217,21 @@
    [:fn (fn [{:keys [total-quantity granted-quantity]}]
           (<= granted-quantity total-quantity))]])
 
-(def library-books-update
+(def library-book-update
   [:and
-   [:map
-    [:library-uid {:optional true} uuid?]
-    [:book-uid {:optional true} [:maybe uuid?]]
-    [:total-quantity {:optional true} nat-int?]
-    [:granted-quantity {:optional true} nat-int?]
-    [:is-available {:optional true} boolean?]]
+   (mu/optional-keys
+    [:map
+     [:library-uid uuid?]
+     [:book-uid [:maybe uuid?]]
+     [:total-quantity nat-int?]
+     [:granted-quantity nat-int?]
+     [:is-available boolean?]])
    [:fn (fn [{:keys [total-quantity granted-quantity]}]
           (if (and total-quantity granted-quantity)
             (<= granted-quantity total-quantity)
             true))]])
 
-(def library-books-out
+(def library-book-out
   [:and
    [:map
     [:uid uuid?]
@@ -240,6 +242,11 @@
     [:is-available boolean?]]
    [:fn (fn [{:keys [total-quantity granted-quantity]}]
           (<= granted-quantity total-quantity))]])
+
+(def library-book-query
+  [:map
+   [:library-uid {:optional true} uuid?]
+   [:book-uid {:optional true} uuid?]])
 
 (def db-config
   [:map
