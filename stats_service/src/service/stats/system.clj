@@ -2,9 +2,9 @@
   (:require [org.httpkit.server :refer [run-server]]
             [service.stats.router :refer [app]]
             [utilities.config :refer [load-config]]
-            [service.stats.tables.stat-record :as stops
+            [service.stats.tables.stat-record :as sr-ops
              :refer [->StatRecordTable StatRecordTableOperations]]
-            [utilities.tables.client :as cops
+            [utilities.tables.client :as c-ops
              :refer [->ClientTable ClientTableOperations]]
             [integrant.core :as ig]
             [clojure.spec.alpha :as s]
@@ -22,11 +22,11 @@
 
 (defmethod ig/init-key :service.stats.system/db [_ {:keys [db-config]}]
   (let [stat-record-table (->StatRecordTable db-config)
-        _ (stops/-create stat-record-table)
-        _ (stops/-populate stat-record-table)
+        _ (sr-ops/-create stat-record-table)
+        _ (sr-ops/-populate stat-record-table)
         client-table (->ClientTable db-config)
-        _ (cops/-create client-table)
-        _ (cops/-populate client-table)]
+        _ (c-ops/-create client-table)
+        _ (c-ops/-populate client-table)]
     {:tables {:stat-record stat-record-table
               :client client-table}}))
 

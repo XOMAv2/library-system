@@ -2,9 +2,9 @@
   (:require [org.httpkit.server :refer [run-server]]
             [service.return.router :refer [app]]
             [utilities.config :refer [load-config]]
-            [service.return.tables.user-limit :as ulops
+            [service.return.tables.user-limit :as ul-ops
              :refer [->UserLimitTable UserLimitTableOperations]]
-            [utilities.tables.client :as cops
+            [utilities.tables.client :as c-ops
              :refer [->ClientTable ClientTableOperations]]
             [integrant.core :as ig]
             [clojure.spec.alpha :as s]
@@ -18,11 +18,11 @@
 
 (defmethod ig/init-key :service.return.system/db [_ {:keys [db-config]}]
   (let [user-limit-table (->UserLimitTable db-config)
-        _ (ulops/-create user-limit-table)
-        _ (ulops/-populate user-limit-table)
+        _ (ul-ops/-create user-limit-table)
+        _ (ul-ops/-populate user-limit-table)
         client-table (->ClientTable db-config)
-        _ (cops/-create client-table)
-        _ (cops/-populate client-table)]
+        _ (c-ops/-create client-table)
+        _ (c-ops/-populate client-table)]
     {:tables {:user-limit user-limit-table
               :client client-table}}))
 

@@ -2,9 +2,9 @@
   (:require [org.httpkit.server :refer [run-server]]
             [service.rating.router :refer [app]]
             [utilities.config :refer [load-config]]
-            [service.rating.tables.user-rating :as uropt
+            [service.rating.tables.user-rating :as ur-ops
              :refer [->UserRatingTable UserRatingTableOperations]]
-            [utilities.tables.client :as cops
+            [utilities.tables.client :as c-ops
              :refer [->ClientTable ClientTableOperations]]
             [integrant.core :as ig]
             [clojure.spec.alpha :as s]
@@ -18,11 +18,11 @@
 
 (defmethod ig/init-key :service.rating.system/db [_ {:keys [db-config]}]
   (let [user-rating-table (->UserRatingTable db-config)
-        _ (uropt/-create user-rating-table)
-        _ (uropt/-populate user-rating-table)
+        _ (ur-ops/-create user-rating-table)
+        _ (ur-ops/-populate user-rating-table)
         client-table (->ClientTable db-config)
-        _ (cops/-create client-table)
-        _ (cops/-populate client-table)]
+        _ (c-ops/-create client-table)
+        _ (c-ops/-populate client-table)]
     {:tables {:user-rating user-rating-table
               :client client-table}}))
 

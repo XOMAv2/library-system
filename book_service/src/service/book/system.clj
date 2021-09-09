@@ -2,9 +2,9 @@
   (:require [org.httpkit.server :refer [run-server]]
             [service.book.router :refer [app]]
             [utilities.config :refer [load-config]]
-            [service.book.tables.book :as bops
+            [service.book.tables.book :as b-ops
              :refer [->BookTable BookTableOperations]]
-            [utilities.tables.client :as cops
+            [utilities.tables.client :as c-ops
              :refer [->ClientTable ClientTableOperations]]
             [integrant.core :as ig]
             [clojure.spec.alpha :as s]
@@ -18,11 +18,11 @@
 
 (defmethod ig/init-key :service.book.system/db [_ {:keys [db-config]}]
   (let [book-table (->BookTable db-config)
-        _ (bops/-create book-table)
-        _ (bops/-populate book-table)
+        _ (b-ops/-create book-table)
+        _ (b-ops/-populate book-table)
         client-table (->ClientTable db-config)
-        _ (cops/-create client-table)
-        _ (cops/-populate client-table)]
+        _ (c-ops/-create client-table)
+        _ (c-ops/-populate client-table)]
     {:tables {:book book-table
               :client client-table}}))
 

@@ -1,5 +1,5 @@
 (ns service.session.handlers
-  (:require [service.session.tables.user :as uops]
+  (:require [service.session.tables.user :as u-ops]
             [clojure.set :refer [rename-keys]]
             [utilities.core :refer [remove-trailing-slash]]
             [utilities.auth :as auth]
@@ -11,7 +11,7 @@
     {service-uri        :session} :services-uri}]
   (let [user (update user :password #(hashers/derive % {:alg :bcrypt+sha512}))
         user (rename-keys user {:password :password-hash})]
-    (try (let [user (uops/-add user-table user)]
+    (try (let [user (u-ops/-add user-table user)]
            {:status 201
             :body user
             :headers {"Location" (str (remove-trailing-slash service-uri)
@@ -25,7 +25,7 @@
 (defn get-user
   [{{{:keys [uid]}      :path}   :parameters
     {{user-table :user} :tables} :db}]
-  (if-let [user (uops/-get user-table uid)]
+  (if-let [user (u-ops/-get user-table uid)]
     {:status 200
      :body user}
     {:status 404
@@ -33,7 +33,7 @@
 
 (defn get-all-users
   [{{{user-table :user} :tables} :db}]
-  (let [users (uops/-get-all user-table)]
+  (let [users (u-ops/-get-all user-table)]
     {:status 200
      :body {:users users}}))
 
@@ -46,7 +46,7 @@
                    (update :password #(hashers/derive % {:alg :bcrypt+sha512}))
                    (rename-keys {:password :password-hash}))
                user)]
-    (try (if-let [user (uops/-update user-table uid user)]
+    (try (if-let [user (u-ops/-update user-table uid user)]
            {:status 200
             :body user}
            {:status 404
@@ -59,7 +59,7 @@
 (defn delete-user
   [{{{:keys [uid]}      :path}   :parameters
     {{user-table :user} :tables} :db}]
-  (if-let [user (uops/-delete user-table uid)]
+  (if-let [user (u-ops/-delete user-table uid)]
     {:status 200
      :body user}
     {:status 404
@@ -68,7 +68,7 @@
 (defn get-tokens
   [{{{:keys [email password]} :body}   :parameters
     {{user-table :user}       :tables} :db}]
-  (if-let [user (uops/-get-by-email user-table email)]
+  (if-let [user (u-ops/-get-by-email user-table email)]
     (if (:valid (hashers/verify password
                                 (:password-hash user)
                                 {:limit #{:bcrypt+sha512}}))
@@ -84,7 +84,7 @@
   [{{{:keys [refresh-token]} :body}   :parameters
     {{user-table :user}      :tables} :db}]
   (try (let [{:keys [uid]} (auth/unsign-jwt refresh-token)]
-         (if-let [user (uops/-get user-table uid)]
+         (if-let [user (u-ops/-get user-table uid)]
            {:status 200
             :body {:access-token (auth/sign-jwt-access (select-keys user [:uid :role]))
                    :refresh-token (auth/sign-jwt-refresh (select-keys user [:uid :role]))}}
