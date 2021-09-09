@@ -137,6 +137,11 @@
 (def library-out
   (mu/assoc library-add :uid uuid?))
 
+(def library-query
+  [:map
+   [:name {:optional true} non-empty-string]
+   [:address {:optional true} non-empty-string]])
+
 (def order-add
   [:and
    [:map
@@ -193,6 +198,12 @@
               [true  false false] true
               [true  true  true]  (loe receiving-date return-date)
               :else false)))]])
+
+(def order-query
+  (-> order-add
+      (m/children)
+      (first)
+      (mu/optional-keys)))
 
 (def library-books-add
   [:and

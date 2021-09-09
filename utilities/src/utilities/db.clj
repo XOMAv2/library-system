@@ -3,6 +3,13 @@
             [next.jdbc.sql :as sql]
             [next.jdbc.date-time]))
 
+(defn coll->sql-array [coll]
+  (->> (if (map? coll) (vals coll) coll)
+       (map #(try (name %) (catch Exception _ %)))
+       (map #(if (string? %) (str "\"" % "\"") (str %)))
+       (clojure.string/join ", ")
+       (format "'{%s}'")))
+
 (def jdbc-opts
   (merge jdbc/unqualified-snake-kebab-opts
          {:return-keys true}))

@@ -47,13 +47,6 @@
 (def ^:private sanitize
   (m/decoder schemas/book-out mt/strip-extra-keys-transformer))
 
-(defn coll->sql-array [coll]
-  (->> (if (map? coll) (vals coll) coll)
-       (map #(try (name %) (catch Exception _ %)))
-       (map #(if (string? %) (str "\"" % "\"") (str %)))
-       (clojure.string/join ", ")
-       (format "'{%s}'")))
-
 (defrecord BookTable [db]
   BookTableOperations
   (-create [this]
@@ -80,7 +73,7 @@
                                   :let [key (csk/->snake_case_string key)]]
                               (if (vector? value)
                                 #_"@> - contains all of '{}'; && - contains some of '{}'"
-                                (str key " @> " (coll->sql-array value))
+                                (str key " @> " (udb/coll->sql-array value))
                                 (str key " = " value)))
                             (clojure.string/join " AND ")
                             (str " WHERE ")))

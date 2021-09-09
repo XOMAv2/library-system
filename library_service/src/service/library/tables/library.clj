@@ -5,8 +5,10 @@
             [malli.core :as m]
             [malli.transform :as mt]
             [utilities.db :as udb]
+            [clojure.string]
             [next.jdbc.prepare :refer [SettableParameter]]
-            [next.jdbc.result-set :refer [ReadableColumn]])
+            [next.jdbc.result-set :refer [ReadableColumn]]
+            [camel-snake-kebab.core :as csk])
   (:import [java.sql Array PreparedStatement]))
 
 (extend-protocol SettableParameter
@@ -32,6 +34,8 @@
     "Returns entity if it's found, returns nil otherwise.")
   (-get-all [this]
     "Returns collection of entities if table isn't empty, returns empty collection otherwise.")
+  (-get-all-by-keys [this library]
+    "Returns all of result entities with matching column values according to entity map.")
   (-update [this id entity]
     "Returns updated entity if it's found, returns nil otherwise.
      Throws exception if entity is malformed.")
@@ -61,6 +65,20 @@
     (udb/get-entity db tname id sanitize))
   (-get-all [this]
     (udb/get-all-entities db tname sanitize))
+  (-get-all-by-keys [this library]
+    (let [conditions (when (not-empty library)
+                       (->> (for [[key value] library
+                                  :let [key (csk/->snake_case_string key)]]
+                              (if (vector? value)
+                                #_"@> - contains all of '{}'; && - contains some of '{}'"
+                                (str key " @> " (udb/coll->sql-array value))
+                                (str key " = " value)))
+                            (clojure.string/join " AND ")
+                            (str " WHERE ")))
+          query (str "SELECT * FROM " (name tname) conditions)]
+      (->> (jdbc/execute! db [query] udb/jdbc-opts)
+           (map sanitize)))
+    (udb/get-all-entities-by-keys db tname library sanitize))
   (-update [this id entity]
     (udb/update-entity db tname id entity sanitize))
   (-delete [this id]

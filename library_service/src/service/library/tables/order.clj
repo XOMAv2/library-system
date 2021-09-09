@@ -20,6 +20,8 @@
     "Returns entity if it's found, returns nil otherwise.")
   (-get-all [this]
     "Returns collection of entities if table isn't empty, returns empty collection otherwise.")
+  (-get-all-by-keys [this order]
+    "Returns all of result entities with matching column values according to entity map.")
   (-update [this id entity]
     "Returns updated entity if it's found, returns nil otherwise.
      Throws exception if entity is malformed.")
@@ -62,6 +64,8 @@
     (udb/get-entity db tname id sanitize))
   (-get-all [this]
     (udb/get-all-entities db tname sanitize))
+  (-get-all-by-keys [this order]
+    (udb/get-all-entities-by-keys db tname order sanitize))
   (-update [this id entity]
     (udb/update-entity db tname id entity sanitize))
   (-delete [this id]

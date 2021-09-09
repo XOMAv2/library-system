@@ -1,11 +1,33 @@
-(ns service.library.handlers)
+(ns service.library.handlers
+  (:require [utilities.tables.client :as cops]
+            [utilities.auth :as auth]
+            [buddy.hashers :as hashers]))
 
-"
-•	получение истории заказов пользователя;
-•	добавление заказа в историю;
-•	удаление заказа из истории;
-•	создание пустой истории для нового пользователя;
-•	удаление существующего пользователя и его истории;
-•	изменение лимита книг на руках пользователя;
-•	получение книжного лимита пользователя.
-"
+(defn get-token
+  [{{{:keys [client-id client-secret]} :body}   :parameters
+    {{client-table :client}            :tables} :db}]
+  (if-let [client (cops/-get-by-client-id client-table client-id)]
+    (if (:valid (hashers/verify client-secret
+                                (:client-secret client)
+                                {:limit #{:bcrypt+sha512}}))
+      {:status 200
+       :body {:token (auth/sign-jwt-refresh (select-keys client [:uid :role]))}}
+      {:status 401
+       :body {:message "Incorrect client secret."}})
+    {:status 404
+     :body {:message (str "Client with id `" client-id "` is not found.")}}))
+
+(defn refresh-token
+  [{{:keys [uid]}                    :identity
+    {{client-table :client} :tables} :db}]
+  (if-let [client (cops/-get client-table uid)]
+    {:status 200
+     :body {:token (auth/sign-jwt-refresh (select-keys client [:uid :role]))}}
+    {:status 404
+     :body {:message "Token credentials can't be found in the database."}}))
+
+(defn verify-token
+  []
+  {:status 200
+   :body ""
+   :headers {}})
