@@ -105,7 +105,7 @@
      :body {:message "Token credentials can't be found in the database."}}))
 
 (defn verify-token
-  []
+  [_]
   {:status 200
    :body ""
    :headers {}})
