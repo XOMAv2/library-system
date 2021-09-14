@@ -1,7 +1,6 @@
 (ns service.library.handlers.library
   (:require [service.library.tables.library :as l-ops]
-            [utilities.core :refer [remove-trailing-slash]]
-            [utilities.time :as time]))
+            [utilities.core :refer [remove-trailing-slash]]))
 
 (defn add-library
   [{{library                  :body}     :parameters
