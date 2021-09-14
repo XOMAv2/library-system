@@ -26,3 +26,13 @@
        (map (fn [[k v]]
               [k (apply f v more)]))
        (into {})))
+
+#?(:clj (defn parse-content-type
+          "Exctract MIME type from Content-Type header value."
+          [^String s]
+          (let [i (.indexOf s ";")]
+            (if (neg? i) s (.substring s 0 i))))
+   :cljs (defn parse-content-type
+           "Exctract MIME type from Content-Type header value."
+           [s]
+           (first (clojure.string/split s #";"))))

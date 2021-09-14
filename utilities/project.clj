@@ -16,5 +16,6 @@
                  [buddy/buddy-auth "3.0.1"]
                  [buddy/buddy-sign "3.4.1"]
                  [com.novemberain/langohr "5.2.0"]
-                 [org.clojure/core.match "1.0.0"]]
+                 [org.clojure/core.match "1.0.0"]
+                 [http-kit "2.5.3"]]
   :repl-options {:init-ns utilities.core})
