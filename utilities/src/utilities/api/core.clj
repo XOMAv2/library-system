@@ -5,7 +5,8 @@
             [clojure.string]
             [muuntaja.core :as muuntaja]
             [diehard.core]
-            [diehard.circuit-breaker]))
+            [diehard.circuit-breaker])
+  (:import [net.jodah.failsafe CircuitBreakerOpenException]))
 
 (def ^:private service-unavailable
   {:status 503
@@ -16,8 +17,8 @@
    Возвращает мапу с ключами :status и :body.
    В случае ошибки значение :status будет равно 503, а :body будет содержать сообщение об ошибке.
    В случае невозможности декодирования тела ответа значение ключа :body будет равно nil."
-  [req-options]
-  (let [response (http/request req-options)
+  [req-map]
+  (let [response (http/request req-map)
         {:keys [error status body headers]} @response]
     (if error
       service-unavailable
@@ -28,11 +29,11 @@
                (try (muuntaja/decode muuntaja-instance content-type body)
                     (catch Exception _ nil)))})))
 
-(defmacro cb-sync-request [cb req-options]
-  `(try (diehard.core/with-circuit-breaker ~cb
-          (sync-request ~req-options))
-        (catch net.jodah.failsafe.CircuitBreakerOpenException _#
-          ~service-unavailable)))
+(defn cb-sync-request [cb req-map]
+  (try (diehard.core/with-circuit-breaker cb
+         (sync-request req-map))
+       (catch CircuitBreakerOpenException _
+         service-unavailable)))
 
 (defn make-cb [options]
   (-> (dissoc options :fail-on :fail-if)
@@ -50,3 +51,14 @@
             #_"Delay to turn into :half-open state from :half-open."
             :delay-ms 10000})
   )
+
+(defmacro with-relogin
+  [[login-fn & {:keys [retry-count] :or {retry-count 3}}] & body]
+  (if (pos? retry-count)
+    `(let [response# (do ~@body)]
+       (if (= 401 (:status response#))
+         (do (~login-fn)
+             (with-relogin [~login-fn :retry-count ~(dec retry-count)]
+               ~@body))
+         response#))
+    `(do ~@body)))
