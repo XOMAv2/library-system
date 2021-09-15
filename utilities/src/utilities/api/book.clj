@@ -101,19 +101,15 @@
   (-get-all-books book-service)
 
   (-add-book book-service {:name "W&P3"
-                           :authors ["Nikki", "Igor", "L"]
+                           :authors ["Nikki" "Igor" "L"]
                            :genres []
                            :description "d"
                            :price 13})
-  
-  #_{:client-id "book"
-     :client-secret "book"
-     :circuit-breaker-options {:failure-threshold-ratio [3 6]
-                               :delay-ms 10000}}
-  
-  #_(-get-all-books book-service
+
+  (-get-all-books book-service
                   {:authors nil})
-  #_(-get-all-books book-service
+
+  (-get-all-books book-service
                   {:authors []})
 
   (-get-book book-service
@@ -121,4 +117,5 @@
 
   (-update-book book-service
                 #uuid "b3214095-163c-4190-a49a-a2ff25b4c445" {:description "des"})
+
   )

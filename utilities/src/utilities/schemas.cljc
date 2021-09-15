@@ -119,7 +119,9 @@
   (mu/assoc book-add :uid uuid?))
 
 (def book-query
-  (let [->vector #(if (vector? %) % [%])]
+  (let [->vector #(cond (and (string? %) (clojure.string/blank? %)) []
+                        (string? %) [%]
+                        :else %)]
     (-> book-add
         (mu/optional-keys)
         (mu/update :authors mu/update-properties assoc :decode/string ->vector)
