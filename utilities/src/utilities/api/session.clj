@@ -13,11 +13,6 @@
   (-refresh-tokens [this] "")
   (-verify-token [this] ""))
 
-#_(let [{a-token :access-token r-token :refresh-token} (-> this -get-tokens :body)]
-  (reset! access-token a-token)
-  (reset! refresh-token r-token))
-#_"TODO: Fix refresh and verify funcitons."
-
 (defrecord SessionService [uri
                            ^CircuitBreaker cb
                            ^clojure.lang.Atom access-token
@@ -31,19 +26,28 @@
                                    "Accept" "application/edn; charset=utf-8"}
                          :body (str user)}))
   (-get-user [this uid]
-    (with-relogin [#(->> this -get-tokens :body :access-token (reset! access-token))]
+    (with-relogin [#(let [{a-token :access-token
+                           r-token :refresh-token} (-> this -get-tokens :body)]
+                      (reset! access-token a-token)
+                      (reset! refresh-token r-token))]
       (cb-sync-request cb {:method :get
                            :url (str (remove-trailing-slash uri) "/api/users/" uid)
                            :headers {"Authorization" (str "Bearer " @access-token)
                                      "Accept" "application/edn; charset=utf-8"}})))
   (-get-all-users [this]
-    (with-relogin [#(->> this -get-tokens :body :access-token (reset! access-token))]
+    (with-relogin [#(let [{a-token :access-token
+                           r-token :refresh-token} (-> this -get-tokens :body)]
+                      (reset! access-token a-token)
+                      (reset! refresh-token r-token))]
       (cb-sync-request cb {:method :get
                            :url (str (remove-trailing-slash uri) "/api/users")
                            :headers {"Authorization" (str "Bearer " @access-token)
                                      "Accept" "application/edn; charset=utf-8"}})))
   (-update-user [this uid user]
-    (with-relogin [#(->> this -get-tokens :body :access-token (reset! access-token))]
+    (with-relogin [#(let [{a-token :access-token
+                           r-token :refresh-token} (-> this -get-tokens :body)]
+                      (reset! access-token a-token)
+                      (reset! refresh-token r-token))]
       (cb-sync-request cb {:method :patch
                            :url (str (remove-trailing-slash uri) "/api/users/" uid)
                            :headers {"Authorization" (str "Bearer " @access-token)
@@ -51,7 +55,10 @@
                                      "Accept" "application/edn; charset=utf-8"}
                            :body (str user)})))
   (-delete-user [this uid]
-    (with-relogin [#(->> this -get-tokens :body :access-token (reset! access-token))]
+    (with-relogin [#(let [{a-token :access-token
+                           r-token :refresh-token} (-> this -get-tokens :body)]
+                      (reset! access-token a-token)
+                      (reset! refresh-token r-token))]
       (cb-sync-request cb {:method :delete
                            :url (str (remove-trailing-slash uri) "/api/users/" uid)
                            :headers {"Authorization" (str "Bearer " @access-token)
@@ -65,16 +72,16 @@
                                      :password password})}))
   (-refresh-tokens [this]
     (cb-sync-request cb {:method :put
-                         :url (str (remove-trailing-slash uri) "​/api​/auth​/refresh")
+                         :url (str (remove-trailing-slash uri) "/api/auth/refresh")
                          :headers {"Content-Type" "application/edn; charset=utf-8"
                                    "Accept" "application/edn; charset=utf-8"}
-                         :body {:refresh-token @refresh-token}}))
+                         :body (str {:refresh-token @refresh-token})}))
   (-verify-token [this]
     (cb-sync-request cb {:method :post
                          :url (str (remove-trailing-slash uri) "/api/auth/verify")
                          :headers {"Content-type" "application/edn; charset=utf-8"
                                    "Accept" "application/edn; charset=utf-8"}
-                         :body {:access-token @access-token}})))
+                         :body (str {:access-token @access-token})})))
 
 (defn make-session-service [uri cb-options email password]
   (->SessionService uri (make-cb cb-options) (atom nil) (atom nil) email password))
@@ -98,6 +105,8 @@
 
   (-verify-token session-service)
 
+  #_"TODO: Fix refreshing."
+  #_"{:status 401, :body {:message \"Token seems corrupt or manipulated.\"}}"
   (-refresh-tokens session-service)
 
   (-get-all-users session-service)
