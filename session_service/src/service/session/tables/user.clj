@@ -18,7 +18,8 @@
   (-get [this id]
     "Returns entity if it's found, returns nil otherwise.")
   (-get-by-email [this email]
-    "Returns entity if it's found, returns nil otherwise.")
+    "Function for internal use without sanitizing.
+     Returns entity if it's found, returns nil otherwise.")
   (-get-all [this]
     "Returns collection of entities if table isn't empty, returns empty collection otherwise.")
   (-update [this id entity]
@@ -50,7 +51,7 @@
   (-get [this id]
     (udb/get-entity db tname id sanitize))
   (-get-by-email [this email]
-    (udb/get-entity-by-keys db tname {:email email} sanitize))
+    (udb/get-entity-by-keys db tname {:email email}))
   (-get-all [this]
     (udb/get-all-entities db tname sanitize))
   (-update [this id entity]
