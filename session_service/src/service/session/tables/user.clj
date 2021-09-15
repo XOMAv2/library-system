@@ -4,7 +4,8 @@
             [utilities.schemas :as schemas]
             [malli.core :as m]
             [malli.transform :as mt]
-            [utilities.db :as udb]))
+            [utilities.db :as udb]
+            [buddy.hashers :as hashers]))
 
 (defprotocol UserTableOperations
   (-create [this]
@@ -45,7 +46,10 @@
                                 "password_hash text NOT NULL"
                                 "role          text NOT NULL"]))
   (-populate [this]
-    (udb/populate-table db tname []))
+    (udb/populate-table
+     db tname
+     (->> [{:name "admin" :email "admin@admin.com" :role "admin" :password-hash "admin"}]
+          (mapv #(update % :password-hash hashers/derive {:alg :bcrypt+sha512})))))
   (-add [this entity]
     (udb/add-entity db tname entity sanitize))
   (-get [this id]
