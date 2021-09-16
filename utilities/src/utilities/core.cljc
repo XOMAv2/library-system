@@ -36,3 +36,19 @@
            "Exctract MIME type from Content-Type header value."
            [s]
            (first (clojure.string/split s #";"))))
+
+(defn- editable? [coll]
+  #?(:clj (instance? clojure.lang.IEditableCollection coll)
+     :cljs (satisfies? cljs.core.IEditableCollection coll)))
+
+(defn- reduce-map [f coll]
+  (let [coll' (if (record? coll) (into {} coll) coll)]
+    (if (editable? coll')
+      (persistent! (reduce-kv (f assoc!) (transient (empty coll')) coll'))
+      (reduce-kv (f assoc) (empty coll') coll'))))
+
+#_"https://github.com/weavejester/medley"
+(defn map-keys
+  "Maps a function over the keys of an associative collection."
+  [f coll]
+  (reduce-map (fn [xf] (fn [m k v] (xf m (f k) v))) coll))
