@@ -122,5 +122,4 @@
                                 :price 34})
 
   (-get-all book-table)
-  (-delete-all book-table)
   )
