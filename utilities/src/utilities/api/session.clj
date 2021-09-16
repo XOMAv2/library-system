@@ -105,8 +105,6 @@
 
   (-verify-token session-service)
 
-  #_"TODO: Fix refreshing."
-  #_"{:status 401, :body {:message \"Token seems corrupt or manipulated.\"}}"
   (-refresh-tokens session-service)
 
   (-get-all-users session-service)

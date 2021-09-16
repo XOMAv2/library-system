@@ -83,7 +83,8 @@
 (defn refresh-tokens
   [{{{:keys [refresh-token]} :body}   :parameters
     {{user-table :user}      :tables} :db}]
-  (try (let [{:keys [uid]} (auth/unsign-jwt refresh-token)]
+  (try (let [{:keys [uid]} (auth/unsign-jwt refresh-token)
+             uid (java.util.UUID/fromString uid)]
          (if-let [user (u-ops/-get user-table uid)]
            {:status 200
             :body {:access-token (auth/sign-jwt-access (select-keys user [:uid :role]))
