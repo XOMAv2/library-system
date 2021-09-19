@@ -1,6 +1,8 @@
 (ns utilities.api.return
   (:require [utilities.core :refer [remove-trailing-slash]]
-            [utilities.api.core :refer [cb-sync-request with-relogin make-cb]])
+            [utilities.api.core
+             :refer [cb-sync-request with-relogin make-cb make-request]
+             :rename {make-request mr}])
   (:import [net.jodah.failsafe CircuitBreaker]))
 
 (defprotocol ReturnAPI
@@ -24,78 +26,17 @@
                           ^clojure.lang.Atom token
                           client-id client-secret]
   ReturnAPI
-  (-add-user-limit [this user-limit]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :post
-                           :url (str (remove-trailing-slash uri) "/api/limits")
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Content-Type" "application/edn; charset=utf-8"
-                                     "Accept" "application/edn; charset=utf-8"}
-                           :body (str user-limit)})))
-  (-get-user-limit [this uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :get
-                           :url (str (remove-trailing-slash uri) "/api/limits/" uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-get-user-limit-by-user-uid [this user-uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :get
-                           :url (str (remove-trailing-slash uri) "/api/limits/user-uid/" user-uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-get-all-user-limits [this]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :get
-                           :url (str (remove-trailing-slash uri) "/api/limits")
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-update-user-limit [this uid user-limit]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :patch
-                           :url (str (remove-trailing-slash uri) "/api/limits/" uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Content-Type" "application/edn; charset=utf-8"
-                                     "Accept" "application/edn; charset=utf-8"}
-                           :body (str user-limit)})))
-  (-update-total-limit-by-user-uid [this user-uid delta]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :patch
-                           :url (str (remove-trailing-slash uri)
-                                     "/api/limits/user-uid/" user-uid "/total-limit/" delta)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-update-available-limit-by-user-uid [this user-uid delta]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :patch
-                           :url (str (remove-trailing-slash uri)
-                                     "/api/limits/user-uid/" user-uid "/available-limit/" delta)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-delete-user-limit [this uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :delete
-                           :url (str (remove-trailing-slash uri) "/api/limits/" uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-delete-user-limit-by-user-uid [this user-uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :delete
-                           :url (str (remove-trailing-slash uri) "/api/limits/user-uid/" user-uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-restore-user-limit [this uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :post
-                           :url (str (remove-trailing-slash uri) "/api/limits/" uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-restore-user-limit-by-user-uid [this user-uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :post
-                           :url (str (remove-trailing-slash uri) "/api/limits/user-uid/" user-uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
+  (-add-user-limit [this user-limit]               (mr :post "/api/limits" user-limit))
+  (-get-user-limit [this uid]                      (mr :get (str "/api/limits/" uid)))
+  (-get-user-limit-by-user-uid [this user-uid]     (mr :get (str "/api/limits/user-uid/" user-uid)))
+  (-get-all-user-limits [this]                     (mr :get "/api/limits"))
+  (-update-user-limit [this uid user-limit]        (mr :patch (str "/api/limits/" uid) user-limit))
+  (-update-total-limit-by-user-uid [this user-uid delta] (mr :patch (str "/api/limits/user-uid/" user-uid "/total-limit/" delta)))
+  (-update-available-limit-by-user-uid [this user-uid delta] (mr :patch (str "/api/limits/user-uid/" user-uid "/available-limit/" delta)))
+  (-delete-user-limit [this uid]                   (mr :delete (str "/api/limits/" uid)))
+  (-delete-user-limit-by-user-uid [this user-uid]  (mr :delete (str "/api/limits/user-uid/" user-uid)))
+  (-restore-user-limit [this uid]                  (mr :post (str "/api/limits/" uid)))
+  (-restore-user-limit-by-user-uid [this user-uid] (mr :post (str "/api/limits/user-uid/" user-uid)))
   (-get-token [this]
     (cb-sync-request cb {:method :post
                          :url (str (remove-trailing-slash uri) "/api/auth/login")

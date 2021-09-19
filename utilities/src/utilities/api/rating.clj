@@ -1,6 +1,8 @@
 (ns utilities.api.rating
   (:require [utilities.core :refer [remove-trailing-slash]]
-            [utilities.api.core :refer [cb-sync-request with-relogin make-cb]])
+            [utilities.api.core
+             :refer [cb-sync-request with-relogin make-cb make-request]
+             :rename {make-request mr}])
   (:import [net.jodah.failsafe CircuitBreaker]))
 
 (defprotocol RatingAPI
@@ -23,71 +25,16 @@
                           ^clojure.lang.Atom token
                           client-id client-secret]
   RatingAPI
-  (-add-user-rating [this user-rating]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :post
-                           :url (str (remove-trailing-slash uri) "/api/ratings")
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Content-Type" "application/edn; charset=utf-8"
-                                     "Accept" "application/edn; charset=utf-8"}
-                           :body (str user-rating)})))
-  (-get-user-rating [this uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :get
-                           :url (str (remove-trailing-slash uri) "/api/ratings/" uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-get-user-rating-by-user-uid [this user-uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :get
-                           :url (str (remove-trailing-slash uri) "/api/ratings/user-uid/" user-uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-get-all-user-ratings [this]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :get
-                           :url (str (remove-trailing-slash uri) "/api/ratings")
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-update-user-rating [this uid user-rating]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :patch
-                           :url (str (remove-trailing-slash uri) "/api/ratings/" uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Content-Type" "application/edn; charset=utf-8"
-                                     "Accept" "application/edn; charset=utf-8"}
-                           :body (str user-rating)})))
-  (-update-rating-by-user-uid [this user-uid delta]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :patch
-                           :url (str (remove-trailing-slash uri)
-                                     "/api/ratings/user-uid/" user-uid "/rating/" delta)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-delete-user-rating [this uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :delete
-                           :url (str (remove-trailing-slash uri) "/api/ratings/" uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-delete-user-rating-by-user-uid [this user-uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :delete
-                           :url (str (remove-trailing-slash uri) "/api/ratings/user-uid/" user-uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-restore-user-rating [this uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :post
-                           :url (str (remove-trailing-slash uri) "/api/ratings/" uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-restore-user-rating-by-user-uid [this user-uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :post
-                           :url (str (remove-trailing-slash uri) "/api/ratings/user-uid/" user-uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
+  (-add-user-rating [this user-rating]              (mr :post "/api/ratings" user-rating))
+  (-get-user-rating [this uid]                      (mr :get (str "/api/ratings/" uid)))
+  (-get-user-rating-by-user-uid [this user-uid]     (mr :get (str "/api/ratings/user-uid/" user-uid)))
+  (-get-all-user-ratings [this]                     (mr :get "/api/ratings"))
+  (-update-user-rating [this uid user-rating]       (mr :patch (str "/api/ratings/" uid) user-rating))
+  (-update-rating-by-user-uid [this user-uid delta] (mr :patch (str "/api/ratings/user-uid/" user-uid "/rating/" delta)))
+  (-delete-user-rating [this uid]                   (mr :delete (str "/api/ratings/" uid)))
+  (-delete-user-rating-by-user-uid [this user-uid]  (mr :delete (str "/api/ratings/user-uid/" user-uid)))
+  (-restore-user-rating [this uid]                  (mr :post (str "/api/ratings/" uid)))
+  (-restore-user-rating-by-user-uid [this user-uid] (mr :post (str "/api/ratings/user-uid/" user-uid)))
   (-get-token [this]
     (cb-sync-request cb {:method :post
                          :url (str (remove-trailing-slash uri) "/api/auth/login")

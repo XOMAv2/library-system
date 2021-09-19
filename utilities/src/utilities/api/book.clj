@@ -1,6 +1,6 @@
 (ns utilities.api.book
   (:require [utilities.core :refer [remove-trailing-slash]]
-            [utilities.api.core :refer [cb-sync-request with-relogin make-cb]])
+            [utilities.api.core :refer [cb-sync-request with-relogin make-cb make-request]])
   (:import [net.jodah.failsafe CircuitBreaker]))
 
 (defprotocol BookAPI
@@ -19,53 +19,13 @@
                         ^clojure.lang.Atom token
                         client-id client-secret]
   BookAPI
-  (-add-book [this book]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :post
-                           :url (str (remove-trailing-slash uri) "/api/books")
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Content-Type" "application/edn; charset=utf-8"
-                                     "Accept" "application/edn; charset=utf-8"}
-                           :body (str book)})))
-  (-get-book [this uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :get
-                           :url (str (remove-trailing-slash uri) "/api/books/" uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-get-all-books [this]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :get
-                           :url (str (remove-trailing-slash uri) "/api/books")
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-get-all-books [this book]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :get
-                           :url (str (remove-trailing-slash uri) "/api/books")
-                           :query-params book
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-update-book [this uid book]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :patch
-                           :url (str (remove-trailing-slash uri) "/api/books/" uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Content-Type" "application/edn; charset=utf-8"
-                                     "Accept" "application/edn; charset=utf-8"}
-                           :body (str book)})))
-  (-delete-book [this uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :delete
-                           :url (str (remove-trailing-slash uri) "/api/books/" uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
-  (-restore-book [this uid]
-    (with-relogin [#(->> this -get-token :body :token (reset! token))]
-      (cb-sync-request cb {:method :post
-                           :url (str (remove-trailing-slash uri) "/api/books/" uid)
-                           :headers {"Authorization" (str "Bearer " @token)
-                                     "Accept" "application/edn; charset=utf-8"}})))
+  (-add-book [this book]        (make-request :post "/api/books" book))
+  (-get-book [this uid]         (make-request :get (str "/api/books/" uid)))
+  (-get-all-books [this]        (make-request :get "/api/books"))
+  (-get-all-books [this book]   (make-request :get "/api/books" nil book))
+  (-update-book [this uid book] (make-request :patch (str "/api/books/" uid) book))
+  (-delete-book [this uid]      (make-request :delete (str "/api/books/" uid)))
+  (-restore-book [this uid]     (make-request :post (str "/api/books/" uid)))
   (-get-token [this]
     (cb-sync-request cb {:method :post
                          :url (str (remove-trailing-slash uri) "/api/auth/login")
