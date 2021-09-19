@@ -122,7 +122,13 @@
                               400 {:body [:map
                                           [:type string?]
                                           [:message string?]]}}
-                  :handler lb-handlers/add-library-book}}]
+                  :handler lb-handlers/add-library-book}
+           :delete {:parameters {:query schemas/library-book-query}
+                    :responses {200 {:body [:map [:library-books [:sequential schemas/library-book-out]]]}}
+                    :handler lb-handlers/delete-all-library-books}
+           :put {:parameters {:query schemas/library-book-query}
+                 :responses {200 {:body [:map [:library-books [:sequential schemas/library-book-out]]]}}
+                 :handler lb-handlers/restore-all-library-books}}]
       ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
 
                 :get {:responses {200 {:body schemas/library-book-out}

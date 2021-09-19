@@ -58,6 +58,14 @@
     {:status 404
      :body {:message (str "Library-book relation with uid `" uid "` is not found.")}}))
 
+(defn delete-all-library-books
+  [{{library-book                       :query}  :parameters
+    {{library-book-table :library-book} :tables} :db}]
+  (let [library-book (-> library-book-table
+                         (lb-ops/-delete-all-by-keys (or library-book {})))]
+    {:status 200
+     :body {:library-books library-book}}))
+
 (defn restore-library-book
   [{{{:keys [uid]}                      :path}   :parameters
     {{library-book-table :library-book} :tables} :db}]
@@ -66,3 +74,11 @@
      :body library-book}
     {:status 404
      :body {:message (str "Library-book relation with uid `" uid "` is not found.")}}))
+
+(defn restore-all-library-books
+  [{{library-book                       :query}  :parameters
+    {{library-book-table :library-book} :tables} :db}]
+  (let [library-book (-> library-book-table
+                         (lb-ops/-restore-all-by-keys (or library-book {})))]
+    {:status 200
+     :body {:library-books library-book}}))

@@ -29,7 +29,11 @@
      Throws exception if entity is malformed.")
   (-delete [this id]
     "Returns deleted entity if it's found, returns nil otherwise.")
+  (-delete-all-by-keys [this library-book]
+    "")
   (-restore [this id]
+    "")
+  (-restore-all-by-keys [this library-book]
     ""))
 
 (def ^:private tname :library_books)
@@ -71,8 +75,12 @@
     (crud/update-entity db tname id entity sanitize))
   (-delete [this id]
     (crud/delete-entity db tname id sanitize))
+  (-delete-all-by-keys [this library-book]
+    (crud/delete-all-entities-by-keys db tname library-book sanitize))
   (-restore [this id]
-    (crud/restore-entity db tname id sanitize)))
+    (crud/restore-entity db tname id sanitize))
+  (-restore-all-by-keys [this library-book]
+    (crud/restore-all-entities-by-keys db tname library-book sanitize)))
 
 (comment
   (require '[utilities.config :refer [load-config]])
@@ -101,5 +109,5 @@
   (-delete library-book-table #uuid "8012998b-30a8-486d-af05-35274bda2282")
   (-get-all library-book-table)
   (jdbc/execute-one! db ["DROP TABLE library_books"])
-  
+
   )

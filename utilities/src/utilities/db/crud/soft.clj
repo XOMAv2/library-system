@@ -122,6 +122,20 @@
      (->> (jdbc/execute! db query jdbc-opts)
           (map sanitize)))))
 
+(defn delete-all-entities-by-keys
+  ""
+  ([db tname keys]
+   (delete-all-entities-by-keys db tname keys identity))
+  ([db tname keys sanitize]
+   (let [exprs (if-let [es (-> keys map->honey-sql-exprs seq)]
+                 (conj (vec es) [:= :is-deleted false])
+                 [:= :is-deleted false])
+         query (h/format {:update tname
+                          :set {:is-deleted true}
+                          :where exprs})]
+     (->> (jdbc/execute! db query jdbc-opts)
+          (map sanitize)))))
+
 (defn restore-entity
   ""
   ([db tname id]
@@ -135,3 +149,17 @@
                                   [:= pk-name id]]})]
      (-> (jdbc/execute-one! db query jdbc-opts)
          (sanitize)))))
+
+(defn restore-all-entities-by-keys
+  ""
+  ([db tname keys]
+   (restore-all-entities-by-keys db tname keys identity))
+  ([db tname keys sanitize]
+   (let [exprs (if-let [es (-> keys map->honey-sql-exprs seq)]
+                 (conj (vec es) [:= :is-deleted true])
+                 [:= :is-deleted true])
+         query (h/format {:update tname
+                          :set {:is-deleted false}
+                          :where exprs})]
+     (->> (jdbc/execute! db query jdbc-opts)
+          (map sanitize)))))
