@@ -61,6 +61,15 @@
     {:status 404
      :body {:message (str "Book with uid `" uid "` is not found.")}}))
 
+(defn restore-book
+  [{{{:keys [uid]}      :path}   :parameters
+    {{book-table :book} :tables} :db}]
+  (if-let [book (b-ops/-restore book-table uid)]
+    {:status 200
+     :body book}
+    {:status 404
+     :body {:message (str "Book with uid `" uid "` is not found.")}}))
+
 (defn get-token
   [{{{:keys [client-id client-secret]} :body}   :parameters
     {{client-table :client}            :tables} :db}]

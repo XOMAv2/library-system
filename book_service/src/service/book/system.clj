@@ -26,11 +26,14 @@
     {:tables {:book book-table
               :client client-table}}))
 
-(defmethod ig/init-key :service.book.system/services [_ {:keys [stats services-uri]}]
+(defmethod ig/init-key :service.book.system/services [_ {:keys [stats]}]
   {:stats (map->StatsService stats)})
 
-(defmethod ig/init-key :service.book.system/app [_ {:keys [db services services-uri]}]
-  (app db services services-uri))
+(defmethod ig/init-key :service.book.system/app [_ {:keys [db services services-uri client-id]}]
+  (app {:db db
+        :services services
+        :services-uri services-uri
+        :client-id client-id}))
 
 (defmethod ig/init-key :service.book.system/server [_ {:keys [app server-options]}]
   (run-server app server-options))
@@ -51,6 +54,7 @@
 (s/def ::services (m/validator [:map
                                 [:stats [:fn (fn [x] (satisfies? StatsAPI x))]]]))
 (s/def ::services-uri (m/validator schemas/services-uri))
+(s/def ::client-id non-empty-string?)
 (s/def ::app fn?)
 (s/def ::server-options (m/validator schemas/server-options))
 (s/def ::qname non-empty-string?)
@@ -61,10 +65,10 @@
   (s/keys :req-un [::db-config]))
 
 (defmethod ig/pre-init-spec :service.book.system/services [_]
-  (s/keys :req-un [::stats ::services-uri]))
+  (s/keys :req-un [::stats]))
 
 (defmethod ig/pre-init-spec :service.book.system/app [_]
-  (s/keys :req-un [::db ::services ::services-uri]))
+  (s/keys :req-un [::db ::services ::services-uri ::client-id]))
 
 (defmethod ig/pre-init-spec :service.book.system/server [_]
   (s/keys :req-un [::app ::server-options]))

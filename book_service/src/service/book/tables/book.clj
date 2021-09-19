@@ -5,22 +5,7 @@
             [malli.core :as m]
             [malli.transform :as mt]
             [utilities.db.core :as udb]
-            [utilities.db.crud.hard :as crud]
-            [clojure.string]
-            [next.jdbc.prepare :refer [SettableParameter]]
-            [next.jdbc.result-set :refer [ReadableColumn]]
-            [camel-snake-kebab.core :as csk])
-  (:import [java.sql Array PreparedStatement]))
-
-(extend-protocol SettableParameter
-  clojure.lang.PersistentVector
-  (set-parameter [^clojure.lang.PersistentVector v ^PreparedStatement ps ^long i]
-    (.setObject ps i (into-array String v))))
-
-(extend-protocol ReadableColumn
-  Array
-  (read-column-by-label [^Array v _] (vec (.getArray v)))
-  (read-column-by-index [^Array v _ _] (vec (.getArray v))))
+            [utilities.db.crud.soft :as crud]))
 
 (defprotocol BookTableOperations
   (-create [this]
@@ -41,7 +26,9 @@
     "Returns updated entity if it's found, returns nil otherwise.
      Throws exception if entity is malformed.")
   (-delete [this id]
-    "Returns deleted entity if it's found, returns nil otherwise."))
+    "Returns deleted entity if it's found, returns nil otherwise.")
+  (-restore [this id]
+    ""))
 
 (def ^:private tname :book)
 
@@ -59,9 +46,10 @@
       "authors     text[] NOT NULL CHECK (array_position(authors, null) is null)"
       "genres      text[] NOT NULL CHECK (array_position(genres, null) is null)"
       "description text NOT NULL"
-      "price       int NOT NULL CHECK (price >= 0)"]))
+      "price       int NOT NULL CHECK (price >= 0)"
+      "is_deleted  boolean NOT NULL"]))
   (-populate [this]
-    (udb/populate-table db tname []))
+    (udb/populate-table db tname [] :delete-mode :soft))
   (-add [this entity]
     (crud/add-entity db tname entity sanitize))
   (-get [this id]
@@ -69,22 +57,13 @@
   (-get-all [this]
     (crud/get-all-entities db tname sanitize))
   (-get-all-by-keys [this book]
-    (let [conditions (when (not-empty book)
-                       (->> (for [[key value] book
-                                  :let [key (csk/->snake_case_string key)]]
-                              (if (vector? value)
-                                #_"@> - contains all of '{}'; && - contains some of '{}'"
-                                (str key " @> " (udb/coll->sql-array value))
-                                (str key " = " value)))
-                            (clojure.string/join " AND ")
-                            (str " WHERE ")))
-          query (str "SELECT * FROM " (name tname) conditions)]
-      (->> (jdbc/execute! db [query] udb/jdbc-opts)
-           (map sanitize))))
+    (crud/get-all-entities-by-keys db tname book sanitize))
   (-update [this id entity]
     (crud/update-entity db tname id entity sanitize))
   (-delete [this id]
-    (crud/delete-entity db tname id sanitize)))
+    (crud/delete-entity db tname id sanitize))
+  (-restore [this id]
+    (crud/restore-entity db tname id sanitize)))
 
 (comment
   (require '[utilities.config :refer [load-config]])
@@ -100,11 +79,15 @@
 
   (def book-table
     (->BookTable db))
+  
+  (jdbc/execute! db [(str "DROP TABLE " (name tname))])
 
   (-create book-table)
 
+  (-get-all book-table)
+
   (-add book-table {:name "name"
-                    :authors ["author-1" "a-2"]
+                    :authors '("author-1" "a-2")
                     :genres ["6" "5" "4"]
                     :description "description"
                     :price 34})
@@ -115,12 +98,7 @@
   
   (-get book-table #uuid "68cb327d-cf1f-4c57-8872-e4e8b2f20496")
   (-delete book-table #uuid "68cb327d-cf1f-4c57-8872-e4e8b2f20496")
-  
-  (-get-all-by-keys book-table {:name "name"
-                                :authors ["author-1" "a-2"]
-                                :genres ["6" "5" "4"]
-                                :description "description"
-                                :price 34})
 
-  (-get-all book-table)
+  (-get-all-by-keys book-table {:authors ["a-2"]})
+
   )

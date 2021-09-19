@@ -39,7 +39,7 @@
 
 #_"TODO: swagger query params explode"
 
-(defn app [db services services-uri]
+(defn app [{:keys [db services services-uri client-id]}]
   (ring/ring-handler
    (ring/router
     ["/api" {:swagger {:securityDefinitions {:apiAuth {:type "apiKey"
@@ -75,6 +75,9 @@
                 :delete {:responses {200 {:body schemas/book-out}
                                      404 {:body message}}
                          :handler handlers/delete-book}
+                :post {:responses {200 {:body schemas/book-out}
+                                   404 {:body message}}
+                       :handler handlers/restore-book}
                 :patch {:parameters {:body schemas/book-update}
                         :responses {200 {:body schemas/book-out}
                                     400 {:body [:map
@@ -104,7 +107,7 @@
                          :handler handlers/verify-token}}]]]
     {:data {:db db
             :services services
-            :stats/service "book"
+            :stats/service client-id
             :coercion reitit.coercion.malli/coercion #_"Schemas closing, extra keys stripping, ..."
             #_"... transformers adding for json-body, path and query params."
             :muuntaja muuntaja-instance

@@ -1,8 +1,16 @@
 (ns utilities.db.crud.soft
   (:require [utilities.db.core :refer [jdbc-opts map->honey-sql-exprs]]
+            [utilities.core :refer [map-vals]]
             [next.jdbc :as jdbc]
             [next.jdbc.date-time]
-            [honey.sql :as h]))
+            [honey.sql :as h]
+            [next.jdbc.result-set :refer [ReadableColumn]])
+  (:import [java.sql Array]))
+
+(extend-protocol ReadableColumn
+  Array
+  (read-column-by-label [^Array v _] (vec (.getArray v)))
+  (read-column-by-index [^Array v _ _] (vec (.getArray v))))
 
 (defn add-entity
   "Returns entity if it's added.
@@ -10,7 +18,8 @@
   ([db tname entity]
    (add-entity db tname entity identity))
   ([db tname entity sanitize]
-   (let [entity (merge entity
+   (let [entity (map-vals #(if (sequential? %) [:text-array %] %) entity)
+         entity (merge entity
                        {:uid (java.util.UUID/randomUUID)
                         :is-deleted false})
          query (h/format {:insert-into [tname]
@@ -77,7 +86,8 @@
   ([db tname id entity]
    (update-entity db tname id entity identity))
   ([db tname id entity sanitize]
-   (let [pk-name (if (uuid? id) :uid :id)
+   (let [entity (map-vals #(if (sequential? %) [:text-array %] %) entity)
+         pk-name (if (uuid? id) :uid :id)
          query (h/format {:update tname
                           :set entity
                           :where [:and

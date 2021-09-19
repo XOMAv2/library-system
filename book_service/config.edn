@@ -23,13 +23,13 @@
  {:stats {:qname "utilities.api.stats"
           :amqp-url #profile {:local "amqp://guest:guest@localhost:8081"
                               :docker "amqp://guest:guest@rabbitmq:5672"
-                              :heroku ""}}
-  :services-uri #ref [:service.book.system/app :services-uri]}
+                              :heroku ""}}}
 
  :service.book.system/app
  {:db #ig/ref :service.book.system/db
   :services #ig/ref :service.book.system/services
-  :services-uri #profile #include "../services_uri.edn"}
+  :services-uri #profile #include "../services_uri.edn"
+  :client-id "book"}
 
  :service.book.system/server
  {:app #ig/ref :service.book.system/app

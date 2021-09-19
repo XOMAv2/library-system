@@ -9,6 +9,7 @@
   (-get-all-books [this] [this book] "")
   (-update-book [this uid book] "")
   (-delete-book [this uid] "")
+  (-restore-book [this uid] "")
   (-get-token [this] "")
   (-refresh-token [this] "")
   (-verify-token [this] ""))
@@ -56,6 +57,12 @@
   (-delete-book [this uid]
     (with-relogin [#(->> this -get-token :body :token (reset! token))]
       (cb-sync-request cb {:method :delete
+                           :url (str (remove-trailing-slash uri) "/api/books/" uid)
+                           :headers {"Authorization" (str "Bearer " @token)
+                                     "Accept" "application/edn; charset=utf-8"}})))
+  (-restore-book [this uid]
+    (with-relogin [#(->> this -get-token :body :token (reset! token))]
+      (cb-sync-request cb {:method :post
                            :url (str (remove-trailing-slash uri) "/api/books/" uid)
                            :headers {"Authorization" (str "Bearer " @token)
                                      "Accept" "application/edn; charset=utf-8"}})))

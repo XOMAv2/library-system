@@ -21,13 +21,20 @@
                                   (into params-a)
                                   (into params-b)))))
 
+(h/register-fn! :text-array (fn [op [sequential]]
+                              (let [sequential (map #(vector :inline %) sequential)
+                                    sequential [:array sequential]
+                                    [sql] (h/format-expr sequential)
+                                    sql (str sql "::text[]")]
+                                [sql])))
+
 (defn map->honey-sql-exprs [m]
   (if (empty? m)
     []
     (->> m
          (map (fn [[k v :as kv]]
-                (if (vector? v)
-                  [:contains k [:array v]]
+                (if (sequential? v)
+                  [:contains k [:text-array v]]
                   (into [:=] kv))))
          (into [:and]))))
 
