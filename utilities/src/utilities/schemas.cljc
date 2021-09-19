@@ -42,6 +42,13 @@
    [:access-token non-empty-string]
    [:refresh-token non-empty-string]])
 
+(def client-out
+  [:map
+   [:uid uuid?]
+   [:client-id non-empty-string]
+   [:client-secret non-empty-string]
+   [:role role]])
+
 (def stat-record-add
   [:map
    [:service non-empty-string]
