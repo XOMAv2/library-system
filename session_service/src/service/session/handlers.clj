@@ -130,7 +130,7 @@
         {:status 502
          :body {:message "Error during the rating service call."}})
 
-    (not= 201 rating-resp)
+    (not= 200 rating-resp)
     (do (u-ops/-restore user-table uid)
         {:status 500
          :body {:message "Invalid session service credentials."}})
@@ -149,7 +149,7 @@
         {:status 502
          :body {:message "Error during the rating service call."}})
 
-    (not= 201 return-resp)
+    (not= 200 return-resp)
     (do (u-ops/-restore user-table uid)
         (when (not= 200 (-> rating-service
                             (rating-api/-restore-user-rating-by-user-uid uid)
@@ -184,7 +184,7 @@
         {:status 502
          :body {:message "Error during the rating service call."}})
 
-    (not= 201 rating-resp)
+    (not= 200 rating-resp)
     (do (u-ops/-delete user-table uid)
         {:status 500
          :body {:message "Invalid session service credentials."}})
@@ -203,7 +203,7 @@
         {:status 502
          :body {:message "Error during the rating service call."}})
 
-    (not= 201 return-resp)
+    (not= 200 return-resp)
     (do (u-ops/-delete user-table uid)
         (when (not= 200 (-> rating-service
                             (rating-api/-delete-user-rating-by-user-uid uid)
