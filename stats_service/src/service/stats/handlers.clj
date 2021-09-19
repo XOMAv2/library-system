@@ -64,6 +64,6 @@
 
 (defn delete-all-stat-records
   [{{{stat-record-table :stat-record} :tables} :db}]
-  (if-let [stat-records (sr-ops/-delete-all stat-record-table)]
+  (let [stat-records (sr-ops/-delete-all stat-record-table)]
     {:status 200
      :body {:stats stat-records}}))

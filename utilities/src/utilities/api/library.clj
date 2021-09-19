@@ -22,7 +22,6 @@
   (-get-all-orders [this] "")
   (-update-order [this uid order] "")
   (-delete-order [this uid] "")
-  (-restore-order [this uid] "")
 
   (-get-token [this] "")
   (-refresh-token [this] "")
