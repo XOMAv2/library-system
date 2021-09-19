@@ -6,7 +6,7 @@
             [malli.core :as m]
             [malli.transform :as mt]
             [utilities.db.core :as udb]
-            [utilities.db.crud.hard :as crud]
+            [utilities.db.crud.soft :as crud]
             [service.library.tables.library :as library]))
 
 (defprotocol LibraryBookTableOperations
@@ -28,7 +28,9 @@
     "Returns updated entity if it's found, returns nil otherwise.
      Throws exception if entity is malformed.")
   (-delete [this id]
-    "Returns deleted entity if it's found, returns nil otherwise."))
+    "Returns deleted entity if it's found, returns nil otherwise.")
+  (-restore [this id]
+    ""))
 
 (def ^:private tname :library_books)
 
@@ -40,16 +42,17 @@
   (-create [this]
     (let [colls ["id               int GENERATED ALWAYS AS IDENTITY PRIMARY KEY"
                  "uid              uuid NOT NULL UNIQUE"
-                 "library_uid      uuid"
-                 "book_uid         uuid"
+                 "library_uid      uuid NOT NULL"
+                 "book_uid         uuid NOT NULL"
                  #_"Количество экземпляров конкретной книги на балансе конкретной библиотеки."
                  "total_quantity   int NOT NULL CHECK (total_quantity >= 0)"
                  #_"Количество бронированных и/или выданных экземпляров конкретной книги в конкретной библиотеке."
                  "granted_quantity int NOT NULL CHECK (granted_quantity >= 0 AND granted_quantity <= total_quantity)"
                  "is_available     boolean NOT NULL"
+                 "is_deleted       boolean NOT NULL"
                  (str "FOREIGN KEY (library_uid) "
                       "REFERENCES " (-> #'library/tname var-get name) " (uid) "
-                      "ON DELETE SET NULL")]
+                      "ON DELETE CASCADE")]
           colls (clojure.string/join ", " colls)
           query (str "CREATE TABLE IF NOT EXISTS " (name tname) " ( " colls " );")]
       (jdbc/execute-one! db [query])
@@ -67,7 +70,9 @@
   (-update [this id entity]
     (crud/update-entity db tname id entity sanitize))
   (-delete [this id]
-    (crud/delete-entity db tname id sanitize)))
+    (crud/delete-entity db tname id sanitize))
+  (-restore [this id]
+    (crud/restore-entity db tname id sanitize)))
 
 (comment
   (require '[utilities.config :refer [load-config]])
@@ -96,4 +101,5 @@
   (-delete library-book-table #uuid "8012998b-30a8-486d-af05-35274bda2282")
   (-get-all library-book-table)
   (jdbc/execute-one! db ["DROP TABLE library_books"])
+  
   )

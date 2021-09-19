@@ -57,3 +57,12 @@
      :body library-book}
     {:status 404
      :body {:message (str "Library-book relation with uid `" uid "` is not found.")}}))
+
+(defn restore-library-book
+  [{{{:keys [uid]}                      :path}   :parameters
+    {{library-book-table :library-book} :tables} :db}]
+  (if-let [library-book (lb-ops/-restore library-book-table uid)]
+    {:status 200
+     :body library-book}
+    {:status 404
+     :body {:message (str "Library-book relation with uid `" uid "` is not found.")}}))

@@ -131,6 +131,9 @@
                 :delete {:responses {200 {:body schemas/library-book-out}
                                      404 {:body message}}
                          :handler lb-handlers/delete-library-book}
+                :post {:responses {200 {:body schemas/library-book-out}
+                                   404 {:body message}}
+                       :handler lb-handlers/restore-library-book}
                 :patch {:parameters {:body schemas/library-book-update}
                         :responses {200 {:body schemas/library-book-out}
                                     400 {:body [:map

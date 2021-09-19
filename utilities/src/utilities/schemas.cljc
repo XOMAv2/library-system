@@ -231,7 +231,7 @@
    (mu/optional-keys
     [:map
      [:library-uid uuid?]
-     [:book-uid [:maybe uuid?]]
+     [:book-uid uuid?]
      [:total-quantity nat-int?]
      [:granted-quantity nat-int?]
      [:is-available boolean?]])
@@ -244,8 +244,8 @@
   [:and
    [:map
     [:uid uuid?]
-    [:library-uid [:maybe uuid?]]
-    [:book-uid [:maybe uuid?]]
+    [:library-uid uuid?]
+    [:book-uid uuid?]
     [:total-quantity nat-int?]
     [:granted-quantity nat-int?]
     [:is-available boolean?]]
