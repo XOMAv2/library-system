@@ -17,7 +17,7 @@
                                     (:uid user-limit))}})
        (catch Exception e
          {:status 400
-          :body {:type (-> type str)
+          :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
 (defn get-user-limit
@@ -55,7 +55,7 @@
           :body {:message (str "User limit with uid `" uid "` is not found.")}})
        (catch Exception e
          {:status 400
-          :body {:type (-> type str)
+          :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
 (defn update-total-limit
@@ -69,7 +69,7 @@
           :body {:message (str "User limit with user uid `" user-uid "` is not found.")}})
        (catch Exception e
          {:status 400
-          :body {:type (-> type str)
+          :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
 (defn update-available-limit
@@ -83,7 +83,7 @@
           :body {:message (str "User limit with user uid `" user-uid "` is not found.")}})
        (catch Exception e
          {:status 400
-          :body {:type (-> type str)
+          :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
 (defn delete-user-limit

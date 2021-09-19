@@ -19,7 +19,7 @@
                                       (:uid user))}})
          (catch Exception e
            {:status 400
-            :body {:type (-> type str)
+            :body {:type (-> e type str)
                    :message (ex-message e)}}))))
 
 (defn get-user
@@ -53,7 +53,7 @@
             :body {:message (str "User with uid `" uid "` is not found.")}})
          (catch Exception e
            {:status 400
-            :body {:type (-> type str)
+            :body {:type (-> e type str)
                    :message (ex-message e)}}))))
 
 (defn delete-user

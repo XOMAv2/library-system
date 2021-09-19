@@ -21,7 +21,7 @@
                                       (:uid stat-record))}})
          (catch Exception e
            {:status 400
-            :body {:type (-> type str)
+            :body {:type (-> e type str)
                    :message (ex-message e)}}))))
 
 (defn get-stat-record
@@ -53,7 +53,7 @@
           :body {:message (str "Statistical record with uid `" uid "` is not found.")}})
        (catch Exception e
          {:status 400
-          :body {:type (-> type str)
+          :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
 (defn delete-stat-record

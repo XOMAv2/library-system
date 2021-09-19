@@ -14,7 +14,7 @@
                                     (:uid library-book))}})
        (catch Exception e
          {:status 400
-          :body {:type (-> type str)
+          :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
 (defn get-library-book
@@ -46,7 +46,7 @@
           :body {:message (str "Library-book relation with uid `" uid "` is not found.")}})
        (catch Exception e
          {:status 400
-          :body {:type (-> type str)
+          :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
 (defn delete-library-book

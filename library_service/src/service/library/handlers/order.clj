@@ -20,7 +20,7 @@
                                       (:uid order))}})
          (catch Exception e
            {:status 400
-            :body {:type (-> type str)
+            :body {:type (-> e type str)
                    :message (ex-message e)}}))))
 
 (defn get-order
@@ -52,7 +52,7 @@
           :body {:message (str "Order with uid `" uid "` is not found.")}})
        (catch Exception e
          {:status 400
-          :body {:type (-> type str)
+          :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
 (defn delete-order

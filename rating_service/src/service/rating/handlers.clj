@@ -17,7 +17,7 @@
                                     (:uid user-rating))}})
        (catch Exception e
          {:status 400
-          :body {:type (-> type str)
+          :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
 (defn get-user-rating
@@ -55,7 +55,7 @@
           :body {:message (str "User rating with uid `" uid "` is not found.")}})
        (catch Exception e
          {:status 400
-          :body {:type (-> type str)
+          :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
 (defn update-rating-by-user-uid
@@ -69,7 +69,7 @@
           :body {:message (str "User rating with user uid `" user-uid "` is not found.")}})
        (catch Exception e
          {:status 400
-          :body {:type (-> type str)
+          :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
 (defn delete-user-rating
