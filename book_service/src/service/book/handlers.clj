@@ -1,6 +1,8 @@
 (ns service.book.handlers
   (:require [service.book.tables.book :as b-ops]
-            [utilities.core :refer [remove-trailing-slash]]))
+            [utilities.core :refer [remove-trailing-slash]]
+            [utilities.api.library :as librari-api]
+            [better-cond.core :as b]))
 
 (defn add-book
   [{{book               :body}    :parameters
@@ -50,19 +52,59 @@
                  :message (ex-message e)}})))
 
 (defn delete-book
-  [{{{:keys [uid]}      :path}   :parameters
-    {{book-table :book} :tables} :db}]
-  (if-let [book (b-ops/-delete book-table uid)]
-    {:status 200
-     :body book}
+  [{{{:keys [uid]}      :path}    :parameters
+    {{book-table :book} :tables}  :db
+    {library-service    :library} :services}]
+  (b/cond
+    :let [book (b-ops/-delete book-table uid)]
+
+    (nil? book)
     {:status 404
-     :body {:message (str "Book with uid `" uid "` is not found.")}}))
+     :body {:message (str "Book with uid `" uid "` is not found.")}}
+
+    :let [library-resp (-> library-service
+                           (librari-api/-delete-all-library-books {:book-uid uid})
+                           :status)]
+
+    (#{500 503} library-resp)
+    (do (b-ops/-restore book-table uid)
+        {:status 502
+         :body {:message "Error during the library service call."}})
+
+    (not= 200 library-resp)
+    (do (b-ops/-restore book-table uid)
+        {:status 500
+         :body {:message "Invalid book service credentials."}})
+
+    :else
+    {:status 200
+     :body book}))
 
 (defn restore-book
-  [{{{:keys [uid]}      :path}   :parameters
-    {{book-table :book} :tables} :db}]
-  (if-let [book (b-ops/-restore book-table uid)]
-    {:status 200
-     :body book}
+  [{{{:keys [uid]}      :path}    :parameters
+    {{book-table :book} :tables}  :db
+    {library-service    :library} :services}]
+  (b/cond
+    :let [book (b-ops/-restore book-table uid)]
+
+    (nil? book)
     {:status 404
-     :body {:message (str "Book with uid `" uid "` is not found.")}}))
+     :body {:message (str "Book with uid `" uid "` is not found.")}}
+
+    :let [library-resp (-> library-service
+                           (librari-api/-restore-all-library-books {:book-uid uid})
+                           :status)]
+
+    (#{500 503} library-resp)
+    (do (b-ops/-delete book-table uid)
+        {:status 502
+         :body {:message "Error during the library service call."}})
+
+    (not= 200 library-resp)
+    (do (b-ops/-delete book-table uid)
+        {:status 500
+         :body {:message "Invalid book service credentials."}})
+
+    :else
+    {:status 200
+     :body book}))

@@ -23,13 +23,18 @@
  {:stats {:qname "utilities.api.stats"
           :amqp-url #profile {:local "amqp://guest:guest@localhost:8081"
                               :docker "amqp://guest:guest@rabbitmq:5672"
-                              :heroku ""}}}
+                              :heroku ""}}
+  :cb-options {:failure-threshold-ratio [3 6]
+               :delay-ms 10000}
+  :client-id "book"
+  :client-secret "book"
+  :services-uri #profile #include "../services_uri.edn"}
 
  :service.book.system/app
  {:db #ig/ref :service.book.system/db
   :services #ig/ref :service.book.system/services
-  :services-uri #profile #include "../services_uri.edn"
-  :client-id "book"}
+  :services-uri #ref [:service.book.system/services :services-uri]
+  :client-id #ref [:service.book.system/services :client-id]}
 
  :service.book.system/server
  {:app #ig/ref :service.book.system/app

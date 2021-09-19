@@ -11,6 +11,7 @@
             [malli.core :as m]
             [utilities.core :refer [non-empty-string?]]
             [utilities.schemas :as schemas]
+            [utilities.api.library :refer [LibraryAPI make-library-service]]
             [utilities.api.stats :refer [StatsAPI map->StatsService]])
   (:gen-class))
 
@@ -26,8 +27,10 @@
     {:tables {:book book-table
               :client client-table}}))
 
-(defmethod ig/init-key :service.book.system/services [_ {:keys [stats]}]
-  {:stats (map->StatsService stats)})
+(defmethod ig/init-key :service.book.system/services
+  [_ {:keys [stats services-uri cb-options client-id client-secret]}]
+  {:library (make-library-service (:library services-uri) cb-options client-id client-secret)
+   :stats (map->StatsService stats)})
 
 (defmethod ig/init-key :service.book.system/app [_ {:keys [db services services-uri client-id]}]
   (app {:db db
@@ -52,9 +55,14 @@
                         [:book [:fn (fn [x] (satisfies? BookTableOperations x))]]
                         [:client [:fn (fn [x] (satisfies? ClientTableOperations x))]]]]]))
 (s/def ::services (m/validator [:map
+                                [:library [:fn (fn [x] (satisfies? LibraryAPI x))]]
                                 [:stats [:fn (fn [x] (satisfies? StatsAPI x))]]]))
 (s/def ::services-uri (m/validator schemas/services-uri))
+(s/def ::cb-options (m/validator [:map
+                                  [:failure-threshold-ratio [:tuple pos-int? pos-int?]]
+                                  [:delay-ms nat-int?]]))
 (s/def ::client-id non-empty-string?)
+(s/def ::client-secret non-empty-string?)
 (s/def ::app fn?)
 (s/def ::server-options (m/validator schemas/server-options))
 (s/def ::qname non-empty-string?)
@@ -65,7 +73,7 @@
   (s/keys :req-un [::db-config]))
 
 (defmethod ig/pre-init-spec :service.book.system/services [_]
-  (s/keys :req-un [::stats]))
+  (s/keys :req-un [::stats ::services-uri ::cb-options ::client-id ::client-secret]))
 
 (defmethod ig/pre-init-spec :service.book.system/app [_]
   (s/keys :req-un [::db ::services ::services-uri ::client-id]))
