@@ -1,6 +1,6 @@
 (ns utilities.api.core
   (:require [org.httpkit.client :as http]
-            [utilities.core :refer [parse-content-type when-let*]]
+            [utilities.core :refer [parse-content-type when-let* remove-trailing-slash]]
             [utilities.muuntaja :refer [muuntaja-instance]]
             [clojure.string]
             [muuntaja.core :as muuntaja]
@@ -62,3 +62,17 @@
                ~@body))
          response#))
     `(do ~@body)))
+
+(defmacro make-request [request-method uri & [body query-params]]
+  (let [*service* 'this
+        *get-token-fn* '-get-token]
+    `(with-relogin [#(->> ~*service* ~*get-token-fn* :body :token (reset! (:token ~*service*)))]
+       (cb-sync-request
+        (:cb ~*service*)
+        (merge {:method ~request-method
+                :url (-> ~*service* :uri remove-trailing-slash (str ~uri))
+                :headers (merge {"Authorization" (->> ~*service* :token deref (str "Bearer "))
+                                 "Accept" "application/edn; charset=utf-8"}
+                                (when ~body {"Content-Type" "application/edn; charset=utf-8"}))}
+               (when ~body {:body (str ~body)})
+               (when ~query-params (:query-params ~query-params)))))))
