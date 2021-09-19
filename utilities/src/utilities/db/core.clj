@@ -7,10 +7,10 @@
   (merge jdbc/unqualified-snake-kebab-opts
          {:return-keys true}))
          
-(defn coll->sql-array [coll]
-  (->> (if (map? coll) (vals coll) coll)
+(defn sequential->sql-array [sequential]
+  (->> sequential
        (map #(try (name %) (catch Exception _ %)))
-       (map #(if (string? %) (str "\"" % "\"") (str %)))
+       (map #(if (string? %) (str "\"" % "\"") (format "%s" %)))
        (clojure.string/join ", ")
        (format "'{%s}'")))
 

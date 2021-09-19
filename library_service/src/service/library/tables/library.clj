@@ -72,7 +72,7 @@
                                   :let [key (csk/->snake_case_string key)]]
                               (if (vector? value)
                                 #_"@> - contains all of '{}'; && - contains some of '{}'"
-                                (str key " @> " (udb/coll->sql-array value))
+                                (str key " @> " (udb/sequential->sql-array value))
                                 (str key " = " value)))
                             (clojure.string/join " AND ")
                             (str " WHERE ")))
