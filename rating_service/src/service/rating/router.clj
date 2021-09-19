@@ -72,6 +72,9 @@
                 :delete {:responses {200 {:body schemas/user-rating-out}
                                      404 {:body message}}
                          :handler handlers/delete-user-rating}
+                :post {:responses {200 {:body schemas/user-rating-out}
+                                   404 {:body message}}
+                       :handler handlers/restore-user-rating}
                 :patch {:parameters {:body schemas/user-rating-update}
                         :responses {200 {:body schemas/user-rating-out}
                                     400 {:body [:map

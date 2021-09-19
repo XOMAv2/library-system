@@ -11,6 +11,7 @@
   (-update-user-rating [this uid user-rating] "")
   (-update-rating-by-user-uid [this user-uid delta] "")
   (-delete-user-rating [this uid] "")
+  (-restore-user-rating [this uid] "")
   (-get-token [this] "")
   (-refresh-token [this] "")
   (-verify-token [this] ""))
@@ -64,6 +65,12 @@
   (-delete-user-rating [this uid]
     (with-relogin [#(->> this -get-token :body :token (reset! token))]
       (cb-sync-request cb {:method :delete
+                           :url (str (remove-trailing-slash uri) "/api/ratings/" uid)
+                           :headers {"Authorization" (str "Bearer " @token)
+                                     "Accept" "application/edn; charset=utf-8"}})))
+  (-restore-user-rating [this uid]
+    (with-relogin [#(->> this -get-token :body :token (reset! token))]
+      (cb-sync-request cb {:method :post
                            :url (str (remove-trailing-slash uri) "/api/ratings/" uid)
                            :headers {"Authorization" (str "Bearer " @token)
                                      "Accept" "application/edn; charset=utf-8"}})))

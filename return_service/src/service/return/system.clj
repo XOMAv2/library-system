@@ -4,7 +4,7 @@
             [utilities.config :refer [load-config]]
             [service.return.tables.user-limit :as ul-ops
              :refer [->UserLimitTable UserLimitTableOperations]]
-            [utilities.tables.client :as c-ops
+            [utilities.db.tables.client :as c-ops
              :refer [->ClientTable ClientTableOperations]]
             [integrant.core :as ig]
             [clojure.spec.alpha :as s]

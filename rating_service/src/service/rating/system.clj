@@ -4,7 +4,7 @@
             [utilities.config :refer [load-config]]
             [service.rating.tables.user-rating :as ur-ops
              :refer [->UserRatingTable UserRatingTableOperations]]
-            [utilities.tables.client :as c-ops
+            [utilities.db.tables.client :as c-ops
              :refer [->ClientTable ClientTableOperations]]
             [integrant.core :as ig]
             [clojure.spec.alpha :as s]

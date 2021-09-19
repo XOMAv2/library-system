@@ -18,5 +18,6 @@
                  [com.novemberain/langohr "5.2.0"]
                  [org.clojure/core.match "1.0.0"]
                  [http-kit "2.5.3"]
-                 [diehard "0.10.4"]]
+                 [diehard "0.10.4"]
+                 [com.github.seancorfield/honeysql "2.0.783"]]
   :repl-options {:init-ns utilities.core})

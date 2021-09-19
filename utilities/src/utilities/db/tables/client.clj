@@ -1,7 +1,8 @@
-(ns utilities.tables.client
+(ns utilities.db.tables.client
   (:require [next.jdbc :as jdbc]
             [next.jdbc.sql :as sql]
-            [utilities.db :as udb]
+            [utilities.db.core :as udb]
+            [utilities.db.crud.hard :as crud]
             [buddy.hashers :as hashers]))
 
 (defprotocol ClientTableOperations
@@ -28,13 +29,13 @@
 (def ^:private tname :client)
 
 (defonce clients
-  (->> [{:client-id "book" :client-secret "book" :role "admin"}
-        {:client-id "gateway" :client-secret "gateway" :role "admin"}
-        {:client-id "library" :client-secret "library" :role "admin"}
-        {:client-id "rating" :client-secret "rating" :role "admin"}
-        {:client-id "return" :client-secret "return" :role "admin"}
-        {:client-id "session" :client-secret "session" :role "admin"}
-        {:client-id "stats" :client-secret "stats" :role "admin"}]
+  (->> [{:client-id "book" :client-secret "book" :role "admin" :is-deleted false}
+        {:client-id "gateway" :client-secret "gateway" :role "admin" :is-deleted false}
+        {:client-id "library" :client-secret "library" :role "admin" :is-deleted false}
+        {:client-id "rating" :client-secret "rating" :role "admin" :is-deleted false}
+        {:client-id "return" :client-secret "return" :role "admin" :is-deleted false}
+        {:client-id "session" :client-secret "session" :role "admin" :is-deleted false}
+        {:client-id "stats" :client-secret "stats" :role "admin" :is-deleted false}]
        (mapv #(update % :client-secret hashers/derive {:alg :bcrypt+sha512}))))
 
 (defrecord ClientTable [db]
@@ -48,27 +49,32 @@
   (-populate [this]
     (udb/populate-table db tname clients))
   (-add [this entity]
-    (udb/add-entity db tname entity))
+    (crud/add-entity db tname entity))
   (-get [this id]
-    (udb/get-entity db tname id))
+    (crud/get-entity db tname id))
   (-get-by-client-id [this client-id]
-    (udb/get-entity-by-keys db tname {:client_id client-id}))
+    (crud/get-entity-by-keys db tname {:client_id client-id}))
   (-get-all [this]
-    (udb/get-all-entities db tname))
+    (crud/get-all-entities db tname))
   (-update [this id entity]
-    (udb/update-entity db tname id entity))
+    (crud/update-entity db tname id entity))
   (-delete [this id]
-    (udb/delete-entity db tname id)))
+    (crud/delete-entity db tname id)))
 
 (comment
   (require '[utilities.config :refer [load-config]])
 
   (def db-config
-    (-> (load-config "config.edn" {:profile :local})
-        (get-in [:service.session.system/db :db-config])))
+    (-> (load-config "../rating_service/config.edn" {:profile :local})
+        (get-in [:service.rating.system/db :db-config])))
 
   (def db
     (jdbc/get-datasource db-config))
 
   (def client-table (->ClientTable db))
+
+  (-get-all client-table)
+
+  (-get client-table #uuid "0496300c-2d37-48a2-9f06-6d69af7727fe")
+
   )

@@ -72,6 +72,9 @@
                 :delete {:responses {200 {:body schemas/user-limit-out}
                                      404 {:body message}}
                          :handler handlers/delete-user-limit}
+                :post {:responses {200 {:body schemas/user-limit-out}
+                                   404 {:body message}}
+                       :handler handlers/restore-user-limit}
                 :patch {:parameters {:body schemas/user-limit-update}
                         :responses {200 {:body schemas/user-limit-out}
                                     400 {:body [:map

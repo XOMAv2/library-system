@@ -1,18 +1,8 @@
-(ns utilities.db
-  (:require [next.jdbc :as jdbc]
+(ns utilities.db.crud.hard
+  (:require [utilities.db.core :refer [jdbc-opts]]
+            [next.jdbc :as jdbc]
             [next.jdbc.sql :as sql]
             [next.jdbc.date-time]))
-
-(defn coll->sql-array [coll]
-  (->> (if (map? coll) (vals coll) coll)
-       (map #(try (name %) (catch Exception _ %)))
-       (map #(if (string? %) (str "\"" % "\"") (str %)))
-       (clojure.string/join ", ")
-       (format "'{%s}'")))
-
-(def jdbc-opts
-  (merge jdbc/unqualified-snake-kebab-opts
-         {:return-keys true}))
 
 (defn add-entity
   "Returns entity if it's added.
@@ -92,21 +82,3 @@
    (let [query (str "DELETE FROM " (name tname))]
      (->> (jdbc/execute! db [query] jdbc-opts)
           (map sanitize)))))
-
-(defn create-table
-  "Returns nil if table is created or already exists, throws exception otherwise."
-  [db tname colls]
-  (let [colls (clojure.string/join ", " colls)
-        query (str "CREATE TABLE IF NOT EXISTS " (name tname) " ( " colls " );")]
-    (jdbc/execute-one! db [query] jdbc-opts)))
-
-(defn populate-table
-  "Populates empty table with default data and returns number of added rows.
-   Returns nil if table isn't empty."
-  [db tname defaults]
-  (when (= 0 (count (get-all-entities db tname)))
-    (->> (for [entity defaults]
-           (try (add-entity db tname entity)
-                1
-                (catch Exception _ 0)))
-         (reduce +))))

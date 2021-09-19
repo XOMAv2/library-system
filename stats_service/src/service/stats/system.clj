@@ -4,7 +4,7 @@
             [utilities.config :refer [load-config]]
             [service.stats.tables.stat-record :as sr-ops
              :refer [->StatRecordTable StatRecordTableOperations]]
-            [utilities.tables.client :as c-ops
+            [utilities.db.tables.client :as c-ops
              :refer [->ClientTable ClientTableOperations]]
             [integrant.core :as ig]
             [clojure.spec.alpha :as s]

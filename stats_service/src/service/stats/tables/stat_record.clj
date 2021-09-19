@@ -5,7 +5,8 @@
             [utilities.schemas :as schemas]
             [malli.core :as m]
             [malli.transform :as mt]
-            [utilities.db :as udb]))
+            [utilities.db.core :as udb]
+            [utilities.db.crud.hard :as crud]))
 
 (defprotocol StatRecordTableOperations
   (-create [this]
@@ -50,19 +51,19 @@
   (-populate [this]
     (udb/populate-table db tname []))
   (-add [this entity]
-    (udb/add-entity db tname entity sanitize))
+    (crud/add-entity db tname entity sanitize))
   (-get [this id]
-    (udb/get-entity db tname id sanitize))
+    (crud/get-entity db tname id sanitize))
   (-get-all [this]
-    (udb/get-all-entities db tname sanitize))
+    (crud/get-all-entities db tname sanitize))
   (-get-all-by-service [this service]
-    (udb/get-all-entities-by-keys db tname {:service service} sanitize))
+    (crud/get-all-entities-by-keys db tname {:service service} sanitize))
   (-update [this id entity]
-    (udb/update-entity db tname id entity sanitize))
+    (crud/update-entity db tname id entity sanitize))
   (-delete [this id]
-    (udb/delete-entity db tname id sanitize))
+    (crud/delete-entity db tname id sanitize))
   (-delete-all [this]
-    (udb/delete-all-entities db tname sanitize)))
+    (crud/delete-all-entities db tname sanitize)))
 
 (comment
   (require '[utilities.config :refer [load-config]])
@@ -79,10 +80,10 @@
   (def stat-record-table
     (->StatRecordTable db))
   
-  (udb/add-entity db "stat_record" {:service "book"
-                                    :body "get"
-                                    :content-type "text/plain"
-                                    :send-time #inst "2020-11-09"})
+  (crud/add-entity db "stat_record" {:service "book"
+                                     :body "get"
+                                     :content-type "text/plain"
+                                     :send-time #inst "2020-11-09"})
 
   (-get-all stat-record-table)
   (-delete-all stat-record-table)

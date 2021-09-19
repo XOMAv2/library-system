@@ -8,7 +8,7 @@
              :refer [->OrderTable OrderTableOperations]]
             [service.library.tables.library-book :as lb-ops
              :refer [->LibraryBookTable LibraryBookTableOperations]]
-            [utilities.tables.client :as c-ops
+            [utilities.db.tables.client :as c-ops
              :refer [->ClientTable ClientTableOperations]]
             [integrant.core :as ig]
             [clojure.spec.alpha :as s]

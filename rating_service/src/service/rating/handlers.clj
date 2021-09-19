@@ -1,6 +1,6 @@
 (ns service.rating.handlers
   (:require [service.rating.tables.user-rating :as ur-ops]
-            [utilities.tables.client :as c-ops]
+            [utilities.db.tables.client :as c-ops]
             [utilities.core :refer [remove-trailing-slash]]
             [utilities.auth :as auth]
             [buddy.hashers :as hashers]))
@@ -76,6 +76,15 @@
   [{{{:keys [uid]}                    :path}   :parameters
     {{user-rating-table :user-rating} :tables} :db}]
   (if-let [user-rating (ur-ops/-delete user-rating-table uid)]
+    {:status 200
+     :body user-rating}
+    {:status 404
+     :body {:message (str "User rating with uid `" uid "` is not found.")}}))
+
+(defn restore-user-rating
+  [{{{:keys [uid]}                    :path}   :parameters
+    {{user-rating-table :user-rating} :tables} :db}]
+  (if-let [user-rating (ur-ops/-restore user-rating-table uid)]
     {:status 200
      :body user-rating}
     {:status 404

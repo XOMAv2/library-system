@@ -1,6 +1,6 @@
 (ns service.return.handlers
   (:require [service.return.tables.user-limit :as ul-ops]
-            [utilities.tables.client :as c-ops]
+            [utilities.db.tables.client :as c-ops]
             [utilities.core :refer [remove-trailing-slash]]
             [utilities.auth :as auth]
             [buddy.hashers :as hashers]))
@@ -90,6 +90,15 @@
   [{{{:keys [uid]}                  :path}   :parameters
     {{user-limit-table :user-limit} :tables} :db}]
   (if-let [user-limit (ul-ops/-delete user-limit-table uid)]
+    {:status 200
+     :body user-limit}
+    {:status 404
+     :body {:message (str "User limit with uid `" uid "` is not found.")}}))
+
+(defn restore-user-limit
+  [{{{:keys [uid]}                  :path}   :parameters
+    {{user-limit-table :user-limit} :tables} :db}]
+  (if-let [user-limit (ul-ops/-restore user-limit-table uid)]
     {:status 200
      :body user-limit}
     {:status 404

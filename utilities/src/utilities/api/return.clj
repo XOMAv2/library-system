@@ -12,6 +12,7 @@
   (-update-total-limit-by-user-uid [this user-uid delta] "")
   (-update-available-limit-by-user-uid [this user-uid delta] "")
   (-delete-user-limit [this uid] "")
+  (-restore-user-limit [this uid] "")
   (-get-token [this] "")
   (-refresh-token [this] "")
   (-verify-token [this] ""))
@@ -72,6 +73,12 @@
   (-delete-user-limit [this uid]
     (with-relogin [#(->> this -get-token :body :token (reset! token))]
       (cb-sync-request cb {:method :delete
+                           :url (str (remove-trailing-slash uri) "/api/limits/" uid)
+                           :headers {"Authorization" (str "Bearer " @token)
+                                     "Accept" "application/edn; charset=utf-8"}})))
+  (-restore-user-limit [this uid]
+    (with-relogin [#(->> this -get-token :body :token (reset! token))]
+      (cb-sync-request cb {:method :post
                            :url (str (remove-trailing-slash uri) "/api/limits/" uid)
                            :headers {"Authorization" (str "Bearer " @token)
                                      "Accept" "application/edn; charset=utf-8"}})))

@@ -1,6 +1,6 @@
 (ns service.book.handlers
   (:require [service.book.tables.book :as b-ops]
-            [utilities.tables.client :as c-ops]
+            [utilities.db.tables.client :as c-ops]
             [utilities.core :refer [remove-trailing-slash]]
             [utilities.auth :as auth]
             [buddy.hashers :as hashers]))

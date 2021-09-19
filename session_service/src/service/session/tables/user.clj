@@ -4,7 +4,8 @@
             [utilities.schemas :as schemas]
             [malli.core :as m]
             [malli.transform :as mt]
-            [utilities.db :as udb]
+            [utilities.db.core :as udb]
+            [utilities.db.crud.hard :as crud]
             [buddy.hashers :as hashers]))
 
 (defprotocol UserTableOperations
@@ -51,17 +52,17 @@
      (->> [{:name "admin" :email "admin@admin.com" :role "admin" :password-hash "admin"}]
           (mapv #(update % :password-hash hashers/derive {:alg :bcrypt+sha512})))))
   (-add [this entity]
-    (udb/add-entity db tname entity sanitize))
+    (crud/add-entity db tname entity sanitize))
   (-get [this id]
-    (udb/get-entity db tname id sanitize))
+    (crud/get-entity db tname id sanitize))
   (-get-by-email [this email]
-    (udb/get-entity-by-keys db tname {:email email}))
+    (crud/get-entity-by-keys db tname {:email email}))
   (-get-all [this]
-    (udb/get-all-entities db tname sanitize))
+    (crud/get-all-entities db tname sanitize))
   (-update [this id entity]
-    (udb/update-entity db tname id entity sanitize))
+    (crud/update-entity db tname id entity sanitize))
   (-delete [this id]
-    (udb/delete-entity db tname id sanitize)))
+    (crud/delete-entity db tname id sanitize)))
 
 (comment
   (require '[utilities.config :refer [load-config]])

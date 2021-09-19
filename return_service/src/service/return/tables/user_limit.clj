@@ -4,7 +4,9 @@
             [utilities.schemas :as schemas]
             [malli.core :as m]
             [malli.transform :as mt]
-            [utilities.db :as udb]
+            [utilities.db.core :as udb]
+            [utilities.db.crud.soft :as crud]
+            [honey.sql :as h]
             [clojure.math.numeric-tower :refer [abs]]))
 
 (defprotocol UserLimitTableOperations
@@ -32,7 +34,9 @@
     "Returns updated entity if it's found, returns nil otherwise.
      Throws exception if entity is malformed.")
   (-delete [this id]
-    "Returns deleted entity if it's found, returns nil otherwise."))
+    "Returns deleted entity if it's found, returns nil otherwise.")
+  (-restore [this id]
+    ""))
 
 (def ^:private tname :user_limit)
 
@@ -50,37 +54,42 @@
       #_"Максимальное число книг, доступных пользователю для бронирования/получения на руки."
       "total_limit     int NOT NULL CHECK (total_limit >= 0)"
       #_"Число книг, доступное пользователю в данный момент для бронирования/получения."
-      "available_limit int NOT NULL CHECK (available_limit >= 0 AND available_limit <= total_limit)"]))
+      "available_limit int NOT NULL CHECK (available_limit >= 0 AND available_limit <= total_limit)"
+      "is_deleted      boolean NOT NULL"]))
   (-populate [this]
-    (udb/populate-table db tname []))
+    (udb/populate-table db tname [] :delete-mode :soft))
   (-add [this entity]
-    (udb/add-entity db tname entity sanitize))
+    (crud/add-entity db tname entity sanitize))
   (-get [this id]
-    (udb/get-entity db tname id sanitize))
+    (crud/get-entity db tname id sanitize))
   (-get-by-user-uid [this user-uid]
-    (udb/get-entity-by-keys db tname {:user_uid user-uid} sanitize))
+    (crud/get-entity-by-keys db tname {:user_uid user-uid} sanitize))
   (-get-all [this]
-    (udb/get-all-entities db tname sanitize))
+    (crud/get-all-entities db tname sanitize))
   (-update [this id entity]
-    (udb/update-entity db tname id entity sanitize))
+    (crud/update-entity db tname id entity sanitize))
   (-update-total-limit-by-user-uid [this user-uid delta]
-    (let [sign (if (neg? delta) "-" "+")
-          query (format "UPDATE %s
-                         SET total_limit = total_limit %s %d
-                         WHERE user_uid = '%s'"
-                        (name tname) sign (abs delta) user-uid)]
-      (-> (jdbc/execute-one! db [query] udb/jdbc-opts)
+    (let [sign (if (neg? delta) :- :+)
+          query (h/format {:update tname
+                           :set {:total-limit [sign :total-limit (abs delta)]}
+                           :where [:and
+                                   [:= :is-deleted false]
+                                   [:= :user-uid user-uid]]})]
+      (-> (jdbc/execute-one! db query udb/jdbc-opts)
           (sanitize))))
   (-update-available-limit-by-user-uid [this user-uid delta]
-    (let [sign (if (neg? delta) "-" "+")
-          query (format "UPDATE %s
-                         SET available_limit = available_limit %s %d
-                         WHERE user_uid = '%s'"
-                        (name tname) sign (abs delta) user-uid)]
-      (-> (jdbc/execute-one! db [query] udb/jdbc-opts)
+    (let [sign (if (neg? delta) :- :+)
+          query (h/format {:update tname
+                           :set {:available-limit [sign :available-limit (abs delta)]}
+                           :where [:and
+                                   [:= :is-deleted false]
+                                   [:= :user-uid user-uid]]})]
+      (-> (jdbc/execute-one! db query udb/jdbc-opts)
           (sanitize))))
   (-delete [this id]
-    (udb/delete-entity db tname id sanitize)))
+    (crud/delete-entity db tname id sanitize))
+  (-restore [this id]
+    (crud/restore-entity db tname id sanitize)))
 
 (comment
   (require '[utilities.config :refer [load-config]])
@@ -105,5 +114,4 @@
 
   (-add user-limit-table {:user_uid (java.util.UUID/randomUUID)
                           :total_limit 54
-                          :available_limit 20})
-  )
+                          :available_limit 20}))

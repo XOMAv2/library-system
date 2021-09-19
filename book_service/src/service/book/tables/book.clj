@@ -4,7 +4,8 @@
             [utilities.schemas :as schemas]
             [malli.core :as m]
             [malli.transform :as mt]
-            [utilities.db :as udb]
+            [utilities.db.core :as udb]
+            [utilities.db.crud.hard :as crud]
             [clojure.string]
             [next.jdbc.prepare :refer [SettableParameter]]
             [next.jdbc.result-set :refer [ReadableColumn]]
@@ -62,11 +63,11 @@
   (-populate [this]
     (udb/populate-table db tname []))
   (-add [this entity]
-    (udb/add-entity db tname entity sanitize))
+    (crud/add-entity db tname entity sanitize))
   (-get [this id]
-    (udb/get-entity db tname id sanitize))
+    (crud/get-entity db tname id sanitize))
   (-get-all [this]
-    (udb/get-all-entities db tname sanitize))
+    (crud/get-all-entities db tname sanitize))
   (-get-all-by-keys [this book]
     (let [conditions (when (not-empty book)
                        (->> (for [[key value] book
@@ -81,9 +82,9 @@
       (->> (jdbc/execute! db [query] udb/jdbc-opts)
            (map sanitize))))
   (-update [this id entity]
-    (udb/update-entity db tname id entity sanitize))
+    (crud/update-entity db tname id entity sanitize))
   (-delete [this id]
-    (udb/delete-entity db tname id sanitize)))
+    (crud/delete-entity db tname id sanitize)))
 
 (comment
   (require '[utilities.config :refer [load-config]])

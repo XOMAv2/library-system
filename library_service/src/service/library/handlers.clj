@@ -1,5 +1,5 @@
 (ns service.library.handlers
-  (:require [utilities.tables.client :as c-ops]
+  (:require [utilities.db.tables.client :as c-ops]
             [utilities.auth :as auth]
             [buddy.hashers :as hashers]))
 
