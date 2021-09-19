@@ -85,7 +85,13 @@
       ["/user-uid/:user-uid" {:get {:parameters {:path [:map [:user-uid uuid?]]}
                                     :responses {200 {:body schemas/user-rating-out}
                                                 404 {:body message}}
-                                    :handler handlers/get-user-rating-by-user-uid}}]
+                                    :handler handlers/get-user-rating-by-user-uid}
+                              :delete {:responses {200 {:body schemas/user-rating-out}
+                                                   404 {:body message}}
+                                       :handler handlers/delete-user-rating-by-user-uid}
+                              :post {:responses {200 {:body schemas/user-rating-out}
+                                                 404 {:body message}}
+                                     :handler handlers/restore-user-rating-by-user-uid}}]
       ["/user-uid/:user-uid/rating/:delta"
        {:patch {:parameters {:path [:map
                                     [:user-uid uuid?]

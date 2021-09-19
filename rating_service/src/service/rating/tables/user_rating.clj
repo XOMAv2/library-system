@@ -32,7 +32,11 @@
      Throws exception if entity is malformed.")
   (-delete [this id]
     "Returns deleted entity if it's found, returns nil otherwise.")
+  (-delete-by-user-uid [this user-uid]
+    "")
   (-restore [this id]
+    "")
+  (-restore-by-user-uid [this user-uid]
     ""))
 
 (def ^:private tname :user_rating)
@@ -71,8 +75,24 @@
           (sanitize))))
   (-delete [this id]
     (crud/delete-entity db tname id sanitize))
+  (-delete-by-user-uid [this user-uid]
+    (let [query (h/format {:update tname
+                           :set {:is-deleted true}
+                           :where [:and
+                                   [:= :is-deleted false]
+                                   [:= :user-uid user-uid]]})]
+      (-> (jdbc/execute-one! db query udb/jdbc-opts)
+          (sanitize))))
   (-restore [this id]
-    (crud/restore-entity db tname id sanitize)))
+    (crud/restore-entity db tname id sanitize))
+  (-restore-by-user-uid [this user-uid]
+    (let [query (h/format {:update tname
+                           :set {:is-deleted false}
+                           :where [:and
+                                   [:= :is-deleted true]
+                                   [:= :user-uid user-uid]]})]
+      (-> (jdbc/execute-one! db query udb/jdbc-opts)
+          (sanitize)))))
 
 (comment
   (require '[utilities.config :refer [load-config]])

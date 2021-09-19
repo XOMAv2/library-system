@@ -85,7 +85,13 @@
       ["/user-uid/:user-uid" {:get {:parameters {:path [:map [:user-uid uuid?]]}
                                     :responses {200 {:body schemas/user-limit-out}
                                                 404 {:body message}}
-                                    :handler handlers/get-user-limit-by-user-uid}}]
+                                    :handler handlers/get-user-limit-by-user-uid}
+                              :delete {:responses {200 {:body schemas/user-limit-out}
+                                                   404 {:body message}}
+                                       :handler handlers/delete-user-limit-by-user-uid}
+                              :post {:responses {200 {:body schemas/user-limit-out}
+                                                 404 {:body message}}
+                                     :handler handlers/restore-user-limit-by-user-uid}}]
       ["/user-uid/:user-uid/total-limit/:delta"
        {:patch {:parameters {:path [:map
                                     [:user-uid uuid?]

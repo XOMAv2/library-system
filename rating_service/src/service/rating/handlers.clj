@@ -81,6 +81,15 @@
     {:status 404
      :body {:message (str "User rating with uid `" uid "` is not found.")}}))
 
+(defn delete-user-rating-by-user-uid
+  [{{{:keys [user-uid]}               :path}   :parameters
+    {{user-rating-table :user-rating} :tables} :db}]
+  (if-let [user-rating (ur-ops/-delete-by-user-uid user-rating-table user-uid)]
+    {:status 200
+     :body user-rating}
+    {:status 404
+     :body {:message (str "User rating with user uid `" user-uid "` is not found.")}}))
+
 (defn restore-user-rating
   [{{{:keys [uid]}                    :path}   :parameters
     {{user-rating-table :user-rating} :tables} :db}]
@@ -89,6 +98,15 @@
      :body user-rating}
     {:status 404
      :body {:message (str "User rating with uid `" uid "` is not found.")}}))
+
+(defn restore-user-rating-by-user-uid
+  [{{{:keys [user-uid]}               :path}   :parameters
+    {{user-rating-table :user-rating} :tables} :db}]
+  (if-let [user-rating (ur-ops/-restore-by-user-uid user-rating-table user-uid)]
+    {:status 200
+     :body user-rating}
+    {:status 404
+     :body {:message (str "User rating with user uid `" user-uid "` is not found.")}}))
 
 (defn get-token
   [{{{:keys [client-id client-secret]} :body}   :parameters

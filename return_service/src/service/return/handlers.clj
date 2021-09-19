@@ -95,6 +95,15 @@
     {:status 404
      :body {:message (str "User limit with uid `" uid "` is not found.")}}))
 
+(defn delete-user-limit-by-user-uid
+  [{{{:keys [user-uid]}             :path}   :parameters
+    {{user-limit-table :user-limit} :tables} :db}]
+  (if-let [user-limit (ul-ops/-delete-by-user-uid user-limit-table user-uid)]
+    {:status 200
+     :body user-limit}
+    {:status 404
+     :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}))
+
 (defn restore-user-limit
   [{{{:keys [uid]}                  :path}   :parameters
     {{user-limit-table :user-limit} :tables} :db}]
@@ -103,6 +112,15 @@
      :body user-limit}
     {:status 404
      :body {:message (str "User limit with uid `" uid "` is not found.")}}))
+
+(defn restore-user-limit-by-user-uid
+  [{{{:keys [user-uid]}             :path}   :parameters
+    {{user-limit-table :user-limit} :tables} :db}]
+  (if-let [user-limit (ul-ops/-restore-by-user-uid user-limit-table user-uid)]
+    {:status 200
+     :body user-limit}
+    {:status 404
+     :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}))
 
 (defn get-token
   [{{{:keys [client-id client-secret]} :body}   :parameters
