@@ -33,8 +33,8 @@
   (-update-rating-by-user-uid [this user-uid delta] (mr :patch (str "/api/ratings/user-uid/" user-uid "/rating/" delta)))
   (-delete-user-rating [this uid]                   (mr :delete (str "/api/ratings/" uid)))
   (-delete-user-rating-by-user-uid [this user-uid]  (mr :delete (str "/api/ratings/user-uid/" user-uid)))
-  (-restore-user-rating [this uid]                  (mr :post (str "/api/ratings/" uid)))
-  (-restore-user-rating-by-user-uid [this user-uid] (mr :post (str "/api/ratings/user-uid/" user-uid)))
+  (-restore-user-rating [this uid]                  (mr :put (str "/api/ratings/" uid)))
+  (-restore-user-rating-by-user-uid [this user-uid] (mr :put (str "/api/ratings/user-uid/" user-uid)))
   (-get-token [this]
     (cb-sync-request cb {:method :post
                          :url (str (remove-trailing-slash uri) "/api/auth/login")

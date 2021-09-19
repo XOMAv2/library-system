@@ -78,11 +78,11 @@
                                      500 {:body any?}
                                      502 {:body message}}
                          :handler handlers/delete-user}
-                :post {:responses {200 {:body schemas/user-out}
-                                   404 {:body message}
-                                   500 {:body any?}
-                                   502 {:body message}}
-                       :handler handlers/restore-user}
+                :put {:responses {200 {:body schemas/user-out}
+                                  404 {:body message}
+                                  500 {:body any?}
+                                  502 {:body message}}
+                      :handler handlers/restore-user}
                 :patch {:parameters {:body schemas/user-update}
                         :responses {200 {:body schemas/user-out}
                                     400 {:body [:map

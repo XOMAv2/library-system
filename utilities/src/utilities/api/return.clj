@@ -35,8 +35,8 @@
   (-update-available-limit-by-user-uid [this user-uid delta] (mr :patch (str "/api/limits/user-uid/" user-uid "/available-limit/" delta)))
   (-delete-user-limit [this uid]                   (mr :delete (str "/api/limits/" uid)))
   (-delete-user-limit-by-user-uid [this user-uid]  (mr :delete (str "/api/limits/user-uid/" user-uid)))
-  (-restore-user-limit [this uid]                  (mr :post (str "/api/limits/" uid)))
-  (-restore-user-limit-by-user-uid [this user-uid] (mr :post (str "/api/limits/user-uid/" user-uid)))
+  (-restore-user-limit [this uid]                  (mr :put (str "/api/limits/" uid)))
+  (-restore-user-limit-by-user-uid [this user-uid] (mr :put (str "/api/limits/user-uid/" user-uid)))
   (-get-token [this]
     (cb-sync-request cb {:method :post
                          :url (str (remove-trailing-slash uri) "/api/auth/login")

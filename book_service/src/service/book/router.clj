@@ -76,9 +76,9 @@
                 :delete {:responses {200 {:body schemas/book-out}
                                      404 {:body message}}
                          :handler handlers/delete-book}
-                :post {:responses {200 {:body schemas/book-out}
-                                   404 {:body message}}
-                       :handler handlers/restore-book}
+                :put {:responses {200 {:body schemas/book-out}
+                                  404 {:body message}}
+                      :handler handlers/restore-book}
                 :patch {:parameters {:body schemas/book-update}
                         :responses {200 {:body schemas/book-out}
                                     400 {:body [:map

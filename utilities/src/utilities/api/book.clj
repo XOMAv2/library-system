@@ -25,7 +25,7 @@
   (-get-all-books [this book]   (make-request :get "/api/books" nil book))
   (-update-book [this uid book] (make-request :patch (str "/api/books/" uid) book))
   (-delete-book [this uid]      (make-request :delete (str "/api/books/" uid)))
-  (-restore-book [this uid]     (make-request :post (str "/api/books/" uid)))
+  (-restore-book [this uid]     (make-request :put (str "/api/books/" uid)))
   (-get-token [this]
     (cb-sync-request cb {:method :post
                          :url (str (remove-trailing-slash uri) "/api/auth/login")

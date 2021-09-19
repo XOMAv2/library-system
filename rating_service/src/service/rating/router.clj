@@ -73,9 +73,9 @@
                 :delete {:responses {200 {:body schemas/user-rating-out}
                                      404 {:body message}}
                          :handler handlers/delete-user-rating}
-                :post {:responses {200 {:body schemas/user-rating-out}
-                                   404 {:body message}}
-                       :handler handlers/restore-user-rating}
+                :put {:responses {200 {:body schemas/user-rating-out}
+                                  404 {:body message}}
+                      :handler handlers/restore-user-rating}
                 :patch {:parameters {:body schemas/user-rating-update}
                         :responses {200 {:body schemas/user-rating-out}
                                     400 {:body [:map
@@ -90,9 +90,9 @@
                               :delete {:responses {200 {:body schemas/user-rating-out}
                                                    404 {:body message}}
                                        :handler handlers/delete-user-rating-by-user-uid}
-                              :post {:responses {200 {:body schemas/user-rating-out}
-                                                 404 {:body message}}
-                                     :handler handlers/restore-user-rating-by-user-uid}}]
+                              :put {:responses {200 {:body schemas/user-rating-out}
+                                                404 {:body message}}
+                                    :handler handlers/restore-user-rating-by-user-uid}}]
       ["/user-uid/:user-uid/rating/:delta"
        {:patch {:parameters {:path [:map
                                     [:user-uid uuid?]

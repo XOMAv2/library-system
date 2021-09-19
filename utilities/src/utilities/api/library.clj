@@ -45,7 +45,7 @@
   (-get-all-library-books [this]         (make-request :get "/api/library-books"))
   (-update-library-book [this uid library-book] (make-request :patch (str "/api/library-books/" uid) library-book))
   (-delete-library-book [this uid]       (make-request :delete (str "/api/library-books/" uid)))
-  (-restore-library-book [this uid]      (make-request :post (str "/api/library-books/" uid)))
+  (-restore-library-book [this uid]      (make-request :put (str "/api/library-books/" uid)))
   #_"orders"
   (-add-order [this order]        (make-request :post "/api/orders" order))
   (-get-order [this uid]          (make-request :get (str "/api/orders/" uid)))

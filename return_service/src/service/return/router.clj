@@ -73,9 +73,9 @@
                 :delete {:responses {200 {:body schemas/user-limit-out}
                                      404 {:body message}}
                          :handler handlers/delete-user-limit}
-                :post {:responses {200 {:body schemas/user-limit-out}
-                                   404 {:body message}}
-                       :handler handlers/restore-user-limit}
+                :put {:responses {200 {:body schemas/user-limit-out}
+                                  404 {:body message}}
+                      :handler handlers/restore-user-limit}
                 :patch {:parameters {:body schemas/user-limit-update}
                         :responses {200 {:body schemas/user-limit-out}
                                     400 {:body [:map
@@ -90,9 +90,9 @@
                               :delete {:responses {200 {:body schemas/user-limit-out}
                                                    404 {:body message}}
                                        :handler handlers/delete-user-limit-by-user-uid}
-                              :post {:responses {200 {:body schemas/user-limit-out}
-                                                 404 {:body message}}
-                                     :handler handlers/restore-user-limit-by-user-uid}}]
+                              :put {:responses {200 {:body schemas/user-limit-out}
+                                                404 {:body message}}
+                                    :handler handlers/restore-user-limit-by-user-uid}}]
       ["/user-uid/:user-uid/total-limit/:delta"
        {:patch {:parameters {:path [:map
                                     [:user-uid uuid?]
