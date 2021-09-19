@@ -15,6 +15,7 @@
                                            response->stats-middleware]]
             [expound.alpha :refer [expound-str]]
             [service.rating.handlers :as handlers]
+            [utilities.handlers.auth :as a-handlers]
             [utilities.muuntaja :refer [muuntaja-instance]]
             [utilities.schemas :as schemas :refer [message]]
             [clojure.spec.alpha :as s]
@@ -110,18 +111,18 @@
                         :responses {200 {:body [:map [:token schemas/non-empty-string]]}
                                     401 {:body message}
                                     404 {:body message}}
-                        :handler handlers/get-token}}]
+                        :handler a-handlers/get-token}}]
       ["/refresh" {:put {:roles nil
                          :middleware [authorization-middleware]
 
                          :responses {200 {:body [:map [:token schemas/non-empty-string]]}
                                      404 {:body message}}
-                         :handler handlers/refresh-token}}]
+                         :handler a-handlers/refresh-token}}]
       ["/verify" {:post {:roles nil
                          :middleware [authorization-middleware]
 
                          :responses {200 {}}
-                         :handler handlers/verify-token}}]]]
+                         :handler a-handlers/verify-token}}]]]
     {:data {:db db
             :services services
             :stats/service "rating"

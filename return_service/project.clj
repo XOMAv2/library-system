@@ -13,7 +13,6 @@
                  [javax.servlet/servlet-api "2.5"]
                  [integrant "0.8.0"]
                  [buddy/buddy-auth "3.0.1"]
-                 [buddy/buddy-hashers "1.8.1"]
                  [org.clojure/math.numeric-tower "0.0.4"]
                  [com.github.seancorfield/honeysql "2.0.783"]]
   :main ^:skip-aot service.return.system

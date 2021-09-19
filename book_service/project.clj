@@ -13,7 +13,6 @@
                  [javax.servlet/servlet-api "2.5"]
                  [integrant "0.8.0"]
                  [buddy/buddy-auth "3.0.1"]
-                 [buddy/buddy-hashers "1.8.1"]
                  [camel-snake-kebab "0.4.2"]]
   :main ^:skip-aot service.book.system
   :target-path "target/%s"
