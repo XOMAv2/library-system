@@ -37,7 +37,7 @@
                 (fn [request]
                   (handler (assoc request :services-uri services-uri)))))})
 
-(defn app [db services services-uri]
+(defn app [{:keys [db services services-uri client-id]}]
   (ring/ring-handler
    (ring/router
     ["/api" {:swagger {:securityDefinitions {:apiAuth {:type "apiKey"
@@ -61,7 +61,9 @@
                                    :headers {"Location" {:schema {:type "string"}}}}
                               400 {:body [:map
                                           [:type string?]
-                                          [:message string?]]}}
+                                          [:message string?]]}
+                              500 {:body any?}
+                              502 {:body message}}
                   :handler handlers/add-user}}]
       ["/:uid" {:roles nil
                 :middleware [authorization-middleware]
@@ -72,8 +74,15 @@
                                   404 {:body message}}
                       :handler handlers/get-user}
                 :delete {:responses {200 {:body schemas/user-out}
-                                     404 {:body message}}
+                                     404 {:body message}
+                                     500 {:body any?}
+                                     502 {:body message}}
                          :handler handlers/delete-user}
+                :post {:responses {200 {:body schemas/user-out}
+                                   404 {:body message}
+                                   500 {:body any?}
+                                   502 {:body message}}
+                       :handler handlers/restore-user}
                 :patch {:parameters {:body schemas/user-update}
                         :responses {200 {:body schemas/user-out}
                                     400 {:body [:map
@@ -101,7 +110,7 @@
                          :handler handlers/verify-token}}]]]
     {:data {:db db
             :services services
-            :stats/service "session"
+            :stats/service client-id
             :coercion reitit.coercion.malli/coercion #_"Schemas closing, extra keys stripping, ..."
             #_"... transformers adding for json-body, path and query params."
             :muuntaja muuntaja-instance

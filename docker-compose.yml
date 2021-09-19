@@ -52,7 +52,6 @@ services:
         networks: 
             - gateway_network
             - service_network
-            - session_network
             - rabbitmq_network
 
     library_db:
@@ -150,12 +149,13 @@ services:
             context: ./
             dockerfile: ./Dockerfile
             args: {APPNAME: session_service}
-        depends_on: [session_db, stats]
+        depends_on: [session_db, stats, rating, return]
         container_name: session
         ports: ["3005:3000"]
         links: [session_db:postgres]
         networks: 
             - session_network
+            - service_network
             - rabbitmq_network
         
     stats_db:
@@ -182,7 +182,6 @@ services:
         networks: 
             - stats_network
             - service_network
-            - session_network
             - rabbitmq_network
     
     rabbitmq:

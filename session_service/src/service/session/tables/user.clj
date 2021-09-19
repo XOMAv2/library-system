@@ -5,7 +5,7 @@
             [malli.core :as m]
             [malli.transform :as mt]
             [utilities.db.core :as udb]
-            [utilities.db.crud.hard :as crud]
+            [utilities.db.crud.soft :as crud]
             [buddy.hashers :as hashers]))
 
 (defprotocol UserTableOperations
@@ -28,7 +28,9 @@
     "Returns updated entity if it's found, returns nil otherwise.
      Throws exception if entity is malformed.")
   (-delete [this id]
-    "Returns deleted entity if it's found, returns nil otherwise."))
+    "Returns deleted entity if it's found, returns nil otherwise.")
+  (-restore [this id]
+    ""))
 
 #_"I don't like the plural form, but otherwise postgres requires quotes."
 #_"\"user\""
@@ -45,12 +47,14 @@
                                 "name          text NOT NULL"
                                 "email         text NOT NULL UNIQUE"
                                 "password_hash text NOT NULL"
-                                "role          text NOT NULL"]))
+                                "role          text NOT NULL"
+                                "is_deleted    boolean NOT NULL"]))
   (-populate [this]
     (udb/populate-table
      db tname
      (->> [{:name "admin" :email "admin@admin.com" :role "admin" :password-hash "admin"}]
-          (mapv #(update % :password-hash hashers/derive {:alg :bcrypt+sha512})))))
+          (mapv #(update % :password-hash hashers/derive {:alg :bcrypt+sha512})))
+     :delete-mode :soft))
   (-add [this entity]
     (crud/add-entity db tname entity sanitize))
   (-get [this id]
@@ -62,7 +66,9 @@
   (-update [this id entity]
     (crud/update-entity db tname id entity sanitize))
   (-delete [this id]
-    (crud/delete-entity db tname id sanitize)))
+    (crud/delete-entity db tname id sanitize))
+  (-restore [this id]
+    (crud/restore-entity db tname id sanitize)))
 
 (comment
   (require '[utilities.config :refer [load-config]])

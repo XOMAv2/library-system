@@ -3,24 +3,77 @@
             [clojure.set :refer [rename-keys]]
             [utilities.core :refer [remove-trailing-slash]]
             [utilities.auth :as auth]
-            [buddy.hashers :as hashers]))
+            [buddy.hashers :as hashers]
+            [utilities.api.rating :as rating-api]
+            [utilities.api.return :as return-api]
+            [better-cond.core :as b]))
 
 (defn add-user
   [{{user               :body}    :parameters
     {{user-table :user} :tables}  :db
-    {service-uri        :session} :services-uri}]
-  (let [user (update user :password #(hashers/derive % {:alg :bcrypt+sha512}))
-        user (rename-keys user {:password :password-hash})]
-    (try (let [user (u-ops/-add user-table user)]
-           {:status 201
-            :body user
-            :headers {"Location" (str (remove-trailing-slash service-uri)
-                                      "/api/users/"
-                                      (:uid user))}})
-         (catch Exception e
-           {:status 400
-            :body {:type (-> e type str)
-                   :message (ex-message e)}}))))
+    {service-uri        :session} :services-uri
+    {rating-service     :rating
+     return-service     :return}  :services}]
+  (b/cond
+    :let [user (update user :password #(hashers/derive % {:alg :bcrypt+sha512}))
+          user (rename-keys user {:password :password-hash})
+          user (try (u-ops/-add user-table user)
+                    (catch Exception e e))]
+
+    (instance? Exception user)
+    (let [e user]
+      {:status 400
+       :body {:type (-> e type str)
+              :message (ex-message e)}})
+
+    :let [user-uid (:uid user)]
+
+    :let [rating {:user-uid user-uid
+                  :rating 5}
+          rating-resp (rating-api/-add-user-rating rating-service rating)
+          rating (:body rating-resp)]
+
+    (#{500 503} (:status rating-resp))
+    (do (u-ops/-delete user-table user-uid)
+        {:status 502
+         :body {:message "Error during the rating service call."}})
+
+    (not= 201 (:status rating-resp))
+    (do (u-ops/-delete user-table user-uid)
+        {:status 500
+         :body {:message "Invalid session service credentials."}})
+
+    :let [limit {:user-uid user-uid
+                 :total-limit 5
+                 :available-limit 5}
+          return-resp (return-api/-add-user-limit return-service limit)
+          limit (:body return-resp)]
+
+    (#{500 503} (:status return-resp))
+    (do (u-ops/-delete user-table user-uid)
+        (when (not= 200 (-> rating-service
+                            (rating-api/-delete-user-rating (:uid rating))
+                            :status))
+          #_"TODO: do something when api call return bad response and "
+          #_"we are already processing bad response branch.")
+        {:status 502
+         :body {:message "Error during the rating service call."}})
+
+    (not= 201 (:status return-resp))
+    (do (u-ops/-delete user-table user-uid)
+        (when (not= 200 (-> rating-service
+                            (rating-api/-delete-user-rating (:uid rating))
+                            :status))
+          #_"TODO: do something when api call return bad response and "
+          #_"we are already processing bad response branch.")
+        {:status 500
+         :body {:message "Invalid session service ccredentials."}})
+
+    :else
+    {:status 201
+     :body user
+     :headers {"Location" (str (remove-trailing-slash service-uri)
+                               "/api/users/" user-uid)}}))
 
 (defn get-user
   [{{{:keys [uid]}      :path}   :parameters
@@ -58,12 +111,111 @@
 
 (defn delete-user
   [{{{:keys [uid]}      :path}   :parameters
-    {{user-table :user} :tables} :db}]
-  (if-let [user (u-ops/-delete user-table uid)]
-    {:status 200
-     :body user}
+    {{user-table :user} :tables} :db
+    {rating-service     :rating
+     return-service     :return} :services}]  
+  (b/cond
+    :let [user (u-ops/-delete user-table uid)]
+
+    (nil? user)
     {:status 404
-     :body {:message (str "User with uid `" uid "` is not found.")}}))
+     :body {:message (str "User with uid `" uid "` is not found.")}}
+
+    :let [rating-resp (-> rating-service
+                          (rating-api/-delete-user-rating-by-user-uid uid)
+                          :status)]
+
+    (#{500 503} rating-resp)
+    (do (u-ops/-restore user-table uid)
+        {:status 502
+         :body {:message "Error during the rating service call."}})
+
+    (not= 201 rating-resp)
+    (do (u-ops/-restore user-table uid)
+        {:status 500
+         :body {:message "Invalid session service credentials."}})
+
+    :let [return-resp (-> return-service
+                          (return-api/-delete-user-limit-by-user-uid uid)
+                          :status)]
+
+    (#{500 503} return-resp)
+    (do (u-ops/-restore user-table uid)
+        (when (not= 200 (-> rating-service
+                            (rating-api/-restore-user-rating-by-user-uid uid)
+                            :status))
+          #_"TODO: do something when api call return bad response and "
+          #_"we are already processing bad response branch.")
+        {:status 502
+         :body {:message "Error during the rating service call."}})
+
+    (not= 201 return-resp)
+    (do (u-ops/-restore user-table uid)
+        (when (not= 200 (-> rating-service
+                            (rating-api/-restore-user-rating-by-user-uid uid)
+                            :status))
+          #_"TODO: do something when api call return bad response and "
+          #_"we are already processing bad response branch.")
+        {:status 500
+         :body {:message "Invalid session service ccredentials."}})
+
+    :else
+    {:status 200
+     :body user}))
+
+(defn restore-user
+  [{{{:keys [uid]}      :path}   :parameters
+    {{user-table :user} :tables} :db
+    {rating-service     :rating
+     return-service     :return} :services}]
+  (b/cond
+    :let [user (u-ops/-restore user-table uid)]
+
+    (nil? user)
+    {:status 404
+     :body {:message (str "User with uid `" uid "` is not found.")}}
+
+    :let [rating-resp (-> rating-service
+                          (rating-api/-restore-user-rating-by-user-uid uid)
+                          :status)]
+
+    (#{500 503} rating-resp)
+    (do (u-ops/-delete user-table uid)
+        {:status 502
+         :body {:message "Error during the rating service call."}})
+
+    (not= 201 rating-resp)
+    (do (u-ops/-delete user-table uid)
+        {:status 500
+         :body {:message "Invalid session service credentials."}})
+
+    :let [return-resp (-> return-service
+                          (return-api/-restore-user-limit-by-user-uid uid)
+                          :status)]
+
+    (#{500 503} return-resp)
+    (do (u-ops/-delete user-table uid)
+        (when (not= 200 (-> rating-service
+                            (rating-api/-delete-user-rating-by-user-uid uid)
+                            :status))
+          #_"TODO: do something when api call return bad response and "
+          #_"we are already processing bad response branch.")
+        {:status 502
+         :body {:message "Error during the rating service call."}})
+
+    (not= 201 return-resp)
+    (do (u-ops/-delete user-table uid)
+        (when (not= 200 (-> rating-service
+                            (rating-api/-delete-user-rating-by-user-uid uid)
+                            :status))
+          #_"TODO: do something when api call return bad response and "
+          #_"we are already processing bad response branch.")
+        {:status 500
+         :body {:message "Invalid session service ccredentials."}})
+
+    :else
+    {:status 200
+     :body user}))
 
 (defn get-tokens
   [{{{:keys [email password]} :body}   :parameters
