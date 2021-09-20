@@ -18,7 +18,7 @@ services:
             context: ./
             dockerfile: ./Dockerfile
             args: {APPNAME: book_service}
-        depends_on: [book_db, stats]
+        depends_on: [book_db, stats, library]
         container_name: book
         ports: ["3000:3000"]
         links: 
