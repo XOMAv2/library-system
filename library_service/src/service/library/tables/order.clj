@@ -1,6 +1,7 @@
 (ns service.library.tables.order
   (:require [next.jdbc :as jdbc]
             [next.jdbc.sql :as sql]
+            [clojure.string]
             [utilities.schemas :as schemas]
             [malli.core :as m]
             [malli.transform :as mt]
@@ -21,7 +22,7 @@
     "Returns entity if it's found, returns nil otherwise.")
   (-get-all [this]
     "Returns collection of entities if table isn't empty, returns empty collection otherwise.")
-  (-get-all-by-keys [this order]
+  (-get-all-by-keys [this keys]
     "Returns all of result entities with matching column values according to entity map.")
   (-update [this id entity]
     "Returns updated entity if it's found, returns nil otherwise.
@@ -65,8 +66,8 @@
     (crud/get-entity db tname id sanitize))
   (-get-all [this]
     (crud/get-all-entities db tname sanitize))
-  (-get-all-by-keys [this order]
-    (crud/get-all-entities-by-keys db tname order sanitize))
+  (-get-all-by-keys [this keys]
+    (crud/get-all-entities-by-keys db tname keys sanitize))
   (-update [this id entity]
     (crud/update-entity db tname id entity sanitize))
   (-delete [this id]

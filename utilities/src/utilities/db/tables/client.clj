@@ -11,7 +11,7 @@
 (defprotocol ClientTableOperations
   (-create [this]
     "Returns nil if table is created or already exists, throws exception otherwise.")
-  (-populate [this] [this clients]
+  (-populate [this] [this entities]
     "Populates empty table with default data and returns number of added rows.
      Returns nil if table isn't empty.")
   (-add [this entity]
@@ -54,8 +54,8 @@
                                 "role          text NOT NULL"]))
   (-populate [this]
     (udb/populate-table db tname clients))
-  (-populate [this clients]
-    (udb/populate-table db tname clients))
+  (-populate [this entities]
+    (udb/populate-table db tname entities))
   (-add [this entity]
     (crud/add-entity db tname entity sanitize))
   (-get [this id]

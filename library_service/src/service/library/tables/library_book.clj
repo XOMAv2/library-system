@@ -22,18 +22,18 @@
     "Returns entity if it's found, returns nil otherwise.")
   (-get-all [this]
     "Returns collection of entities if table isn't empty, returns empty collection otherwise.")
-  (-get-all-by-keys [this library-book]
+  (-get-all-by-keys [this keys]
     "Returns all of result entities with matching column values according to entity map.")
   (-update [this id entity]
     "Returns updated entity if it's found, returns nil otherwise.
      Throws exception if entity is malformed.")
   (-delete [this id]
     "Returns deleted entity if it's found, returns nil otherwise.")
-  (-delete-all-by-keys [this library-book]
+  (-delete-all-by-keys [this keys]
     "")
   (-restore [this id]
     "")
-  (-restore-all-by-keys [this library-book]
+  (-restore-all-by-keys [this keys]
     ""))
 
 (def ^:private tname :library_books)
@@ -69,18 +69,18 @@
     (crud/get-entity db tname id sanitize))
   (-get-all [this]
     (crud/get-all-entities db tname sanitize))
-  (-get-all-by-keys [this library-book]
-    (crud/get-all-entities-by-keys db tname library-book sanitize))
+  (-get-all-by-keys [this keys]
+    (crud/get-all-entities-by-keys db tname keys sanitize))
   (-update [this id entity]
     (crud/update-entity db tname id entity sanitize))
   (-delete [this id]
     (crud/delete-entity db tname id sanitize))
-  (-delete-all-by-keys [this library-book]
-    (crud/delete-all-entities-by-keys db tname library-book sanitize))
+  (-delete-all-by-keys [this keys]
+    (crud/delete-all-entities-by-keys db tname keys sanitize))
   (-restore [this id]
     (crud/restore-entity db tname id sanitize))
-  (-restore-all-by-keys [this library-book]
-    (crud/restore-all-entities-by-keys db tname library-book sanitize)))
+  (-restore-all-by-keys [this keys]
+    (crud/restore-all-entities-by-keys db tname keys sanitize)))
 
 (comment
   (require '[utilities.config :refer [load-config]])

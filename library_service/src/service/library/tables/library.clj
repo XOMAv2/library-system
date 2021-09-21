@@ -35,7 +35,7 @@
     "Returns entity if it's found, returns nil otherwise.")
   (-get-all [this]
     "Returns collection of entities if table isn't empty, returns empty collection otherwise.")
-  (-get-all-by-keys [this library]
+  (-get-all-by-keys [this keys]
     "Returns all of result entities with matching column values according to entity map.")
   (-update [this id entity]
     "Returns updated entity if it's found, returns nil otherwise.
@@ -66,9 +66,9 @@
     (crud/get-entity db tname id sanitize))
   (-get-all [this]
     (crud/get-all-entities db tname sanitize))
-  (-get-all-by-keys [this library]
-    (let [conditions (when (not-empty library)
-                       (->> (for [[key value] library
+  (-get-all-by-keys [this keys]
+    (let [conditions (when (not-empty keys)
+                       (->> (for [[key value] keys
                                   :let [key (csk/->snake_case_string key)]]
                               (if (vector? value)
                                 #_"@> - contains all of '{}'; && - contains some of '{}'"
