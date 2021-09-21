@@ -1,7 +1,6 @@
 (ns service.stats.tables.stat-record
   (:require [next.jdbc :as jdbc]
             [next.jdbc.sql :as sql]
-            #_[next.jdbc.date-time]
             [utilities.schemas :as schemas]
             [malli.core :as m]
             [malli.transform :as mt]

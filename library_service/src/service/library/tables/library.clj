@@ -5,22 +5,7 @@
             [malli.core :as m]
             [malli.transform :as mt]
             [utilities.db.core :as udb]
-            [utilities.db.crud.hard :as crud]
-            [clojure.string]
-            [next.jdbc.prepare :refer [SettableParameter]]
-            [next.jdbc.result-set :refer [ReadableColumn]]
-            [camel-snake-kebab.core :as csk])
-  (:import [java.sql Array PreparedStatement]))
-
-(extend-protocol SettableParameter
-  clojure.lang.PersistentVector
-  (set-parameter [^clojure.lang.PersistentVector v ^PreparedStatement ps ^long i]
-    (.setObject ps i (into-array String v))))
-
-(extend-protocol ReadableColumn
-  Array
-  (read-column-by-label [^Array v _] (vec (.getArray v)))
-  (read-column-by-index [^Array v _ _] (vec (.getArray v))))
+            [utilities.db.crud.hard :as crud]))
 
 (defprotocol LibraryTableOperations
   (-create [this]
@@ -67,19 +52,7 @@
   (-get-all [this]
     (crud/get-all-entities db tname sanitize))
   (-get-all-by-keys [this keys]
-    (let [conditions (when (not-empty keys)
-                       (->> (for [[key value] keys
-                                  :let [key (csk/->snake_case_string key)]]
-                              (if (vector? value)
-                                #_"@> - contains all of '{}'; && - contains some of '{}'"
-                                (str key " @> " (udb/sequential->sql-array value))
-                                (str key " = " value)))
-                            (clojure.string/join " AND ")
-                            (str " WHERE ")))
-          query (str "SELECT * FROM " (name tname) conditions)]
-      (->> (jdbc/execute! db [query] udb/jdbc-opts)
-           (map sanitize)))
-    (crud/get-all-entities-by-keys db tname library sanitize))
+    (crud/get-all-entities-by-keys db tname keys sanitize))
   (-update [this id entity]
     (crud/update-entity db tname id entity sanitize))
   (-delete [this id]
