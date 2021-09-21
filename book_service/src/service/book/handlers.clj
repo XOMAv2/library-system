@@ -1,8 +1,9 @@
 (ns service.book.handlers
   (:require [service.book.tables.book :as b-ops]
             [utilities.core :refer [remove-trailing-slash]]
-            [utilities.api.library :as librari-api]
-            [better-cond.core :as b]))
+            [utilities.api.library :as library-api]
+            [better-cond.core :as b]
+            [clojure.core.match :refer [match]]))
 
 (defn add-book
   [{{book               :body}    :parameters
@@ -62,25 +63,49 @@
     {:status 404
      :body {:message (str "Book with uid `" uid "` is not found.")}}
 
-    :let [library-resp (-> library-service
-                           (librari-api/-delete-all-library-books {:book-uid uid})
-                           :status)]
+    :let [library-book-resp (-> library-service
+                                (library-api/-delete-all-library-books {:book-uid uid})
+                                :status)]
 
-    (#{500 503} library-resp)
+    (not= 200 library-book-resp)
     (do (b-ops/-restore book-table uid)
-        {:status 502
-         :body {:message "Error during the library service call."}})
+        (match library-book-resp
+          (:or 500 503) {:status 502
+                         :body {:message "Error during the library service call."}}
+          (:or 401 403) {:status 500
+                         :body {:message "Invalid book service credentials."}}
+          400           {:status 500
+                         :body {:message "Malformed request to the library service."}}
+          :else         {:status 500
+                         :body {:message "Error during the library service call."}}))
 
-    (not= 200 library-resp)
+    :let [order-resp (-> library-service
+                         (library-api/-update-all-orders {:book-uid uid} {:book-uid nil})
+                         :status)]
+
+    (not= 200 order-resp)
     (do (b-ops/-restore book-table uid)
-        {:status 500
-         :body {:message "Invalid book service credentials."}})
+        (when (not= 200 (-> library-service
+                            (library-api/-restore-all-library-books {:book-uid uid})
+                            :status))
+          #_"TODO: do something when api call return bad response and "
+          #_"we are already processing bad response branch.")
+        (match order-resp
+          (:or 500 503) {:status 502
+                         :body {:message "Error during the library service call."}}
+          (:or 401 403) {:status 500
+                         :body {:message "Invalid book service credentials."}}
+          400           {:status 500
+                         :body {:message "Malformed request from book service to library service."}}
+          :else         {:status 500
+                         :body {:message "Error during the library service call."}}))
 
     :else
     {:status 200
      :body book}))
 
 (defn restore-book
+  "Book restore doesn't relations within orders!"
   [{{{:keys [uid]}      :path}    :parameters
     {{book-table :book} :tables}  :db
     {library-service    :library} :services}]
@@ -92,18 +117,20 @@
      :body {:message (str "Book with uid `" uid "` is not found.")}}
 
     :let [library-resp (-> library-service
-                           (librari-api/-restore-all-library-books {:book-uid uid})
+                           (library-api/-restore-all-library-books {:book-uid uid})
                            :status)]
-
-    (#{500 503} library-resp)
-    (do (b-ops/-delete book-table uid)
-        {:status 502
-         :body {:message "Error during the library service call."}})
 
     (not= 200 library-resp)
     (do (b-ops/-delete book-table uid)
-        {:status 500
-         :body {:message "Invalid book service credentials."}})
+        (match library-resp
+          (:or 500 503) {:status 502
+                         :body {:message "Error during the library service call."}}
+          (:or 401 403) {:status 500
+                         :body {:message "Invalid book service credentials."}}
+          400           {:status 500
+                         :body {:message "Malformed request from book service to library service."}}
+          :else         {:status 500
+                         :body {:message "Error during the library service call."}}))
 
     :else
     {:status 200
