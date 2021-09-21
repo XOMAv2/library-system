@@ -210,7 +210,7 @@
               :else false)))]])
 
 (def order-query
-  (-> order-add
+  (-> order-update
       (m/children)
       (first)
       (mu/optional-keys)))

@@ -27,6 +27,8 @@
   (-update [this id entity]
     "Returns updated entity if it's found, returns nil otherwise.
      Throws exception if entity is malformed.")
+  (-update-all-by-keys [this keys entity]
+    "")
   (-delete [this id]
     "Returns deleted entity if it's found, returns nil otherwise."))
 
@@ -70,6 +72,8 @@
     (crud/get-all-entities-by-keys db tname keys sanitize))
   (-update [this id entity]
     (crud/update-entity db tname id entity sanitize))
+  (-update-all-by-keys [this keys entity]
+    (crud/update-all-entities-by-keys db tname keys entity sanitize))
   (-delete [this id]
     (crud/delete-entity db tname id sanitize)))
 

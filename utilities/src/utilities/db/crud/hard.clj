@@ -93,7 +93,8 @@
    (let [exprs (-> keys map->honey-sql-exprs)
          entity (map-vals #(if (sequential? %) [:text-array %] %) entity)
          query (h/format {:update tname
-                          :set entity
+                          :set entity #_"TODO: check what will happen if entity is empty map ..."
+                          #_"... and what happens in previous realization."
                           :where exprs})]
      (->> (jdbc/execute! db query jdbc-opts)
           (map sanitize)))))

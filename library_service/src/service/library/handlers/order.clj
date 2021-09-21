@@ -55,6 +55,18 @@
           :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
+(defn update-all-orders
+  [{{order-query          :query
+     order                :body}   :parameters
+    {{order-table :order} :tables} :db}]
+  (try (let [order (o-ops/-update-all-by-keys order-table order-query order)]
+         {:status 200
+          :body order})
+       (catch Exception e
+         {:status 400
+          :body {:type (-> e type str)
+                 :message (ex-message e)}})))
+
 (defn delete-order
   [{{{:keys [uid]}        :path}   :parameters
     {{order-table :order} :tables} :db}]

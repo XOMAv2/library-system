@@ -25,6 +25,7 @@
   (-get-order [this uid] "")
   (-get-all-orders [this] [this order-query] "")
   (-update-order [this uid order] "")
+  (-update-all-orders [this order-query order] "")
   (-delete-order [this uid] "")
 
   (-get-token [this] "")
@@ -59,6 +60,7 @@
   (-get-all-orders [this]                       (mk :get "/api/orders"))
   (-get-all-orders [this order-query]           (mk :get "/api/orders" nil order-query))
   (-update-order [this uid order]               (mk :patch (str "/api/orders/" uid) order))
+  (-update-all-orders [this order-query order]  (mk :patch "/api/orders" order order-query))
   (-delete-order [this uid]                     (mk :delete (str "/api/orders/" uid)))
 
   #_"auth"

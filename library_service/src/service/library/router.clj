@@ -164,7 +164,13 @@
                               400 {:body [:map
                                           [:type string?]
                                           [:message string?]]}}
-                  :handler o-handlers/add-order}}]
+                  :handler o-handlers/add-order}
+           :patch {:parameters {:query schemas/order-query}
+                   :responses {200 {:body [:map [:orders [:sequential schemas/order-out]]]}
+                               400 {:body [:map
+                                           [:type string?]
+                                           [:message string?]]}}
+                   :handler o-handlers/update-all-orders}}]
       ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
 
                 :get {:responses {200 {:body schemas/order-out}
