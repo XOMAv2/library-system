@@ -9,6 +9,7 @@
             [malli.core :as m]
             [utilities.core :refer [non-empty-string?]]
             [utilities.schemas :as schemas]
+            [utilities.api.library :refer [LibraryAPI make-library-service]]
             [utilities.api.rating :refer [RatingAPI make-rating-service]]
             [utilities.api.return :refer [ReturnAPI make-return-service]]
             [utilities.api.stats :refer [StatsAPI map->StatsService]])
@@ -24,7 +25,8 @@
 
 (defmethod ig/init-key :service.session.system/services
   [_ {:keys [stats services-uri cb-options client-id client-secret]}]
-  {:rating (make-rating-service (:rating services-uri) cb-options client-id client-secret)
+  {:library (make-library-service (:library services-uri) cb-options client-id client-secret)
+   :rating (make-rating-service (:rating services-uri) cb-options client-id client-secret)
    :return (make-return-service (:return services-uri) cb-options client-id client-secret)
    :stats (map->StatsService stats)})
 
@@ -49,6 +51,7 @@
                           [:tables [:map
                                     [:user [:fn (fn [x] (satisfies? UserTableOperations x))]]]]]))
 (s/def ::services (m/validator [:map
+                                [:library [:fn (fn [x] (satisfies? LibraryAPI x))]]
                                 [:rating [:fn (fn [x] (satisfies? RatingAPI x))]]
                                 [:return [:fn (fn [x] (satisfies? ReturnAPI x))]]
                                 [:stats [:fn (fn [x] (satisfies? StatsAPI x))]]]))

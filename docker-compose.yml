@@ -149,7 +149,7 @@ services:
             context: ./
             dockerfile: ./Dockerfile
             args: {APPNAME: session_service}
-        depends_on: [session_db, stats, rating, return]
+        depends_on: [session_db, stats, rating, return, library]
         container_name: session
         ports: ["3005:3000"]
         links: [session_db:postgres]

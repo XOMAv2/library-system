@@ -4,9 +4,11 @@
             [utilities.core :refer [remove-trailing-slash]]
             [utilities.auth :as auth]
             [buddy.hashers :as hashers]
+            [utilities.api.library :as library-api]
             [utilities.api.rating :as rating-api]
             [utilities.api.return :as return-api]
-            [better-cond.core :as b]))
+            [better-cond.core :as b]
+            [clojure.core.match :refer [match]]))
 
 (defn add-user
   [{{user               :body}    :parameters
@@ -33,15 +35,17 @@
           rating-resp (rating-api/-add-user-rating rating-service rating)
           rating (:body rating-resp)]
 
-    (#{500 503} (:status rating-resp))
-    (do (u-ops/-delete user-table user-uid)
-        {:status 502
-         :body {:message "Error during the rating service call."}})
-
     (not= 201 (:status rating-resp))
     (do (u-ops/-delete user-table user-uid)
-        {:status 500
-         :body {:message "Invalid session service credentials."}})
+        (match (:status rating-resp)
+          (:or 500 503) {:status 502
+                         :body {:message "Error during the rating service call."}}
+          (:or 401 403) {:status 500
+                         :body {:message "Unable to acces the rating service due to invalid credentials."}}
+          400           {:status 500
+                         :body {:message "Malformed request to the rating service."}}
+          :else         {:status 500
+                         :body {:message "Error during the rating service call."}}))
 
     :let [limit {:user-uid user-uid
                  :total-limit 5
@@ -49,25 +53,22 @@
           return-resp (return-api/-add-user-limit return-service limit)
           limit (:body return-resp)]
 
-    (#{500 503} (:status return-resp))
-    (do (u-ops/-delete user-table user-uid)
-        (when (not= 200 (-> rating-service
-                            (rating-api/-delete-user-rating (:uid rating))
-                            :status))
-          #_"TODO: do something when api call return bad response and "
-          #_"we are already processing bad response branch.")
-        {:status 502
-         :body {:message "Error during the rating service call."}})
-
     (not= 201 (:status return-resp))
     (do (u-ops/-delete user-table user-uid)
         (when (not= 200 (-> rating-service
                             (rating-api/-delete-user-rating (:uid rating))
                             :status))
-          #_"TODO: do something when api call return bad response and "
+          #_"TODO: do something when api call returns bad response and "
           #_"we are already processing bad response branch.")
-        {:status 500
-         :body {:message "Invalid session service ccredentials."}})
+        (match (:status return-resp)
+          (:or 500 503) {:status 502
+                         :body {:message "Error during the return service call."}}
+          (:or 401 403) {:status 500
+                         :body {:message "Unable to acces the return service due to invalid credentials."}}
+          400           {:status 500
+                         :body {:message "Malformed request to the return service."}}
+          :else         {:status 500
+                         :body {:message "Error during the return service call."}}))
 
     :else
     {:status 201
@@ -112,7 +113,8 @@
 (defn delete-user
   [{{{:keys [uid]}      :path}   :parameters
     {{user-table :user} :tables} :db
-    {rating-service     :rating
+    {library-service    :library
+     rating-service     :rating
      return-service     :return} :services}]  
   (b/cond
     :let [user (u-ops/-delete user-table uid)]
@@ -125,45 +127,71 @@
                           (rating-api/-delete-user-rating-by-user-uid uid)
                           :status)]
 
-    (#{500 503} rating-resp)
-    (do (u-ops/-restore user-table uid)
-        {:status 502
-         :body {:message "Error during the rating service call."}})
-
     (not= 200 rating-resp)
     (do (u-ops/-restore user-table uid)
-        {:status 500
-         :body {:message "Invalid session service credentials."}})
+        (match rating-resp
+          (:or 500 503) {:status 502
+                         :body {:message "Error during the rating service call."}}
+          (:or 401 403) {:status 500
+                         :body {:message "Unable to acces the rating service due to invalid credentials."}}
+          400           {:status 500
+                         :body {:message "Malformed request to the rating service."}}
+          :else         {:status 500
+                         :body {:message "Error during the rating service call."}}))
 
     :let [return-resp (-> return-service
                           (return-api/-delete-user-limit-by-user-uid uid)
                           :status)]
-
-    (#{500 503} return-resp)
-    (do (u-ops/-restore user-table uid)
-        (when (not= 200 (-> rating-service
-                            (rating-api/-restore-user-rating-by-user-uid uid)
-                            :status))
-          #_"TODO: do something when api call return bad response and "
-          #_"we are already processing bad response branch.")
-        {:status 502
-         :body {:message "Error during the rating service call."}})
 
     (not= 200 return-resp)
     (do (u-ops/-restore user-table uid)
         (when (not= 200 (-> rating-service
                             (rating-api/-restore-user-rating-by-user-uid uid)
                             :status))
-          #_"TODO: do something when api call return bad response and "
+          #_"TODO: do something when api call returns bad response and "
           #_"we are already processing bad response branch.")
-        {:status 500
-         :body {:message "Invalid session service ccredentials."}})
+        (match return-resp
+          (:or 500 503) {:status 502
+                         :body {:message "Error during the return service call."}}
+          (:or 401 403) {:status 500
+                         :body {:message "Unable to acces the return service due to invalid credentials."}}
+          400           {:status 500
+                         :body {:message "Malformed request to the return service."}}
+          :else         {:status 500
+                         :body {:message "Error during the return service call."}}))
+    
+    :let [library-resp (-> library-service
+                           (library-api/-update-all-orders {:user-uid uid} {:user-uid nil})
+                           :status)]
+    
+    (not= 200 library-resp)
+    (do (u-ops/-restore user-table uid)
+        (when (not= 200 (-> rating-service
+                            (rating-api/-restore-user-rating-by-user-uid uid)
+                            :status))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        (when (not= 200 (-> return-service
+                            (return-api/-restore-user-limit-by-user-uid uid)
+                            :status))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        (match library-resp
+          (:or 500 503) {:status 502
+                         :body {:message "Error during the library service call."}}
+          (:or 401 403) {:status 500
+                         :body {:message "Unable to acces the library service due to invalid credentials."}}
+          400           {:status 500
+                         :body {:message "Malformed request to the library service."}}
+          :else         {:status 500
+                         :body {:message "Error during the library service call."}}))
 
     :else
     {:status 200
      :body user}))
 
 (defn restore-user
+  "User restore doesn't restore relations within orders!"
   [{{{:keys [uid]}      :path}   :parameters
     {{user-table :user} :tables} :db
     {rating-service     :rating
@@ -178,40 +206,39 @@
     :let [rating-resp (-> rating-service
                           (rating-api/-restore-user-rating-by-user-uid uid)
                           :status)]
-
-    (#{500 503} rating-resp)
-    (do (u-ops/-delete user-table uid)
-        {:status 502
-         :body {:message "Error during the rating service call."}})
-
+   
     (not= 200 rating-resp)
     (do (u-ops/-delete user-table uid)
-        {:status 500
-         :body {:message "Invalid session service credentials."}})
+        (match rating-resp
+          (:or 500 503) {:status 502
+                         :body {:message "Error during the rating service call."}}
+          (:or 401 403) {:status 500
+                         :body {:message "Unable to acces the rating service due to invalid credentials."}}
+          400           {:status 500
+                         :body {:message "Malformed request to the rating service."}}
+          :else         {:status 500
+                         :body {:message "Error during the rating service call."}}))
 
     :let [return-resp (-> return-service
                           (return-api/-restore-user-limit-by-user-uid uid)
                           :status)]
-
-    (#{500 503} return-resp)
-    (do (u-ops/-delete user-table uid)
-        (when (not= 200 (-> rating-service
-                            (rating-api/-delete-user-rating-by-user-uid uid)
-                            :status))
-          #_"TODO: do something when api call return bad response and "
-          #_"we are already processing bad response branch.")
-        {:status 502
-         :body {:message "Error during the rating service call."}})
-
+    
     (not= 200 return-resp)
     (do (u-ops/-delete user-table uid)
         (when (not= 200 (-> rating-service
                             (rating-api/-delete-user-rating-by-user-uid uid)
                             :status))
-          #_"TODO: do something when api call return bad response and "
+          #_"TODO: do something when api call returns bad response and "
           #_"we are already processing bad response branch.")
-        {:status 500
-         :body {:message "Invalid session service ccredentials."}})
+        (match return-resp
+          (:or 500 503) {:status 502
+                         :body {:message "Error during the return service call."}}
+          (:or 401 403) {:status 500
+                         :body {:message "Unable to acces the return service due to invalid credentials."}}
+          400           {:status 500
+                         :body {:message "Malformed request to the return service."}}
+          :else         {:status 500
+                         :body {:message "Error during the return service call."}}))
 
     :else
     {:status 200
