@@ -27,10 +27,10 @@
      :body {:message (str "library with uid `" uid "` is not found.")}}))
 
 (defn get-all-libraries
-  [{{library                  :query}  :parameters
+  [{{library-query            :query}  :parameters
     {{library-table :library} :tables} :db}]
-  (let [libraries (if (not-empty library)
-                    (l-ops/-get-all-by-keys library-table library)
+  (let [libraries (if (not-empty library-query)
+                    (l-ops/-get-all-by-keys library-table library-query)
                     (l-ops/-get-all library-table))]
     {:status 200
      :body {:libraries libraries}}))

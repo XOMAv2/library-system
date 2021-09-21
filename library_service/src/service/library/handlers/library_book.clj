@@ -27,10 +27,10 @@
      :body {:message (str "Library-book relation with uid `" uid "` is not found.")}}))
 
 (defn get-all-library-books
-  [{{library-book                       :query}  :parameters
+  [{{library-book-query                 :query}  :parameters
     {{library-book-table :library-book} :tables} :db}]
-  (let [library-books (if (not-empty library-book)
-                        (lb-ops/-get-all-by-keys library-book-table library-book)
+  (let [library-books (if (not-empty library-book-query)
+                        (lb-ops/-get-all-by-keys library-book-table library-book-query)
                         (lb-ops/-get-all library-book-table))]
     {:status 200
      :body {:library-books library-books}}))
@@ -59,10 +59,10 @@
      :body {:message (str "Library-book relation with uid `" uid "` is not found.")}}))
 
 (defn delete-all-library-books
-  [{{library-book                       :query}  :parameters
+  [{{library-book-query                 :query}  :parameters
     {{library-book-table :library-book} :tables} :db}]
   (let [library-book (-> library-book-table
-                         (lb-ops/-delete-all-by-keys (or library-book {})))]
+                         (lb-ops/-delete-all-by-keys (or library-book-query {})))]
     {:status 200
      :body {:library-books library-book}}))
 
@@ -76,9 +76,9 @@
      :body {:message (str "Library-book relation with uid `" uid "` is not found.")}}))
 
 (defn restore-all-library-books
-  [{{library-book                       :query}  :parameters
+  [{{library-book-query                 :query}  :parameters
     {{library-book-table :library-book} :tables} :db}]
   (let [library-book (-> library-book-table
-                         (lb-ops/-restore-all-by-keys (or library-book {})))]
+                         (lb-ops/-restore-all-by-keys (or library-book-query {})))]
     {:status 200
      :body {:library-books library-book}}))

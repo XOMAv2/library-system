@@ -6,7 +6,7 @@
 (defprotocol BookAPI
   (-add-book [this book] "")
   (-get-book [this uid] "")
-  (-get-all-books [this] [this book] "")
+  (-get-all-books [this] [this book-query] "")
   (-update-book [this uid book] "")
   (-delete-book [this uid] "")
   (-restore-book [this uid] "")
@@ -19,13 +19,13 @@
                         ^clojure.lang.Atom token
                         client-id client-secret]
   BookAPI
-  (-add-book [this book]        (make-request :post "/api/books" book))
-  (-get-book [this uid]         (make-request :get (str "/api/books/" uid)))
-  (-get-all-books [this]        (make-request :get "/api/books"))
-  (-get-all-books [this book]   (make-request :get "/api/books" nil book))
-  (-update-book [this uid book] (make-request :patch (str "/api/books/" uid) book))
-  (-delete-book [this uid]      (make-request :delete (str "/api/books/" uid)))
-  (-restore-book [this uid]     (make-request :put (str "/api/books/" uid)))
+  (-add-book [this book]            (make-request :post "/api/books" book))
+  (-get-book [this uid]             (make-request :get (str "/api/books/" uid)))
+  (-get-all-books [this]            (make-request :get "/api/books"))
+  (-get-all-books [this book-query] (make-request :get "/api/books" nil book-query))
+  (-update-book [this uid book]     (make-request :patch (str "/api/books/" uid) book))
+  (-delete-book [this uid]          (make-request :delete (str "/api/books/" uid)))
+  (-restore-book [this uid]         (make-request :put (str "/api/books/" uid)))
   (-get-token [this]
     (cb-sync-request cb {:method :post
                          :url (str (remove-trailing-slash uri) "/api/auth/login")

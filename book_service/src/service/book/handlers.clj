@@ -29,10 +29,10 @@
      :body {:message (str "Book with uid `" uid "` is not found.")}}))
 
 (defn get-all-books
-  [{{book               :query}  :parameters
+  [{{book-query         :query}  :parameters
     {{book-table :book} :tables} :db}]
-  (let [books (if (not-empty book)
-                (b-ops/-get-all-by-keys book-table book)
+  (let [books (if (not-empty book-query)
+                (b-ops/-get-all-by-keys book-table book-query)
                 (b-ops/-get-all book-table))]
     {:status 200
      :body {:books books}}))

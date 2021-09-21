@@ -33,10 +33,10 @@
      :body {:message (str "Order with uid `" uid "` is not found.")}}))
 
 (defn get-all-orders
-  [{{order                :query}  :parameters
+  [{{order-query          :query}  :parameters
     {{order-table :order} :tables} :db}]
-  (let [orders (if (not-empty order)
-                 (o-ops/-get-all-by-keys order-table order)
+  (let [orders (if (not-empty order-query)
+                 (o-ops/-get-all-by-keys order-table order-query)
                  (o-ops/-get-all order-table))]
     {:status 200
      :body {:orders orders}}))
