@@ -45,7 +45,7 @@ services:
             context: ./
             dockerfile: ./Dockerfile
             args: {APPNAME: gateway_service}
-        depends_on: [gateway_db, stats, session, book, library, rating]
+        depends_on: [gateway_db, stats, session, book, library, rating, return]
         container_name: gateway
         ports: ["3001:3000"]
         links: [gateway_db:postgres]
