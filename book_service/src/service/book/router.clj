@@ -75,12 +75,12 @@
                       :handler handlers/get-book}
                 :delete {:responses {200 {:body schemas/book-out}
                                      404 {:body message}
-                                     500 {:body message}
+                                     500 {:body any?}
                                      502 {:body message}}
                          :handler handlers/delete-book}
                 :put {:responses {200 {:body schemas/book-out}
                                   404 {:body message}
-                                  500 {:body message}
+                                  500 {:body any?}
                                   502 {:body message}}
                       :handler handlers/restore-book}
                 :patch {:parameters {:body schemas/book-update}

@@ -73,7 +73,7 @@
           (:or 500 503) {:status 502
                          :body {:message "Error during the library service call."}}
           (:or 401 403) {:status 500
-                         :body {:message "Invalid book service credentials."}}
+                         :body {:message "Unable to acces the library service due to invalid credentials."}}
           400           {:status 500
                          :body {:message "Malformed request to the library service."}}
           :else         {:status 500
@@ -88,15 +88,15 @@
         (when (not= 200 (-> library-service
                             (library-api/-restore-all-library-books {:book-uid uid})
                             :status))
-          #_"TODO: do something when api call return bad response and "
+          #_"TODO: do something when api call returns bad response and "
           #_"we are already processing bad response branch.")
         (match order-resp
           (:or 500 503) {:status 502
                          :body {:message "Error during the library service call."}}
           (:or 401 403) {:status 500
-                         :body {:message "Invalid book service credentials."}}
+                         :body {:message "Unable to acces the library service due to invalid credentials."}}
           400           {:status 500
-                         :body {:message "Malformed request from book service to library service."}}
+                         :body {:message "Malformed request to the library service."}}
           :else         {:status 500
                          :body {:message "Error during the library service call."}}))
 
@@ -105,7 +105,7 @@
      :body book}))
 
 (defn restore-book
-  "Book restore doesn't relations within orders!"
+  "Book restore doesn't restore relations within orders!"
   [{{{:keys [uid]}      :path}    :parameters
     {{book-table :book} :tables}  :db
     {library-service    :library} :services}]
@@ -126,9 +126,9 @@
           (:or 500 503) {:status 502
                          :body {:message "Error during the library service call."}}
           (:or 401 403) {:status 500
-                         :body {:message "Invalid book service credentials."}}
+                         :body {:message "Unable to acces the library service due to invalid credentials."}}
           400           {:status 500
-                         :body {:message "Malformed request from book service to library service."}}
+                         :body {:message "Malformed request to the library service."}}
           :else         {:status 500
                          :body {:message "Error during the library service call."}}))
 
