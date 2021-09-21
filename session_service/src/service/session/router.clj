@@ -57,7 +57,7 @@
                   :middleware [services-uri-middleware]
 
                   :parameters {:body schemas/user-add}
-                  :responses {201 {:body schemas/user-out
+                  :responses {201 {:body schemas/user-out-extended
                                    :headers {"Location" {:schema {:type "string"}}}}
                               400 {:body [:map
                                           [:type string?]
@@ -70,7 +70,7 @@
 
                 :parameters {:path [:map [:uid uuid?]]}
 
-                :get {:responses {200 {:body schemas/user-out}
+                :get {:responses {200 {:body schemas/user-out-extended}
                                   404 {:body message}}
                       :handler handlers/get-user}
                 :delete {:responses {200 {:body schemas/user-out}

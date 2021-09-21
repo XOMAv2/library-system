@@ -72,18 +72,35 @@
 
     :else
     {:status 201
-     :body user
+     :body (merge user
+                  (select-keys rating [:rating])
+                  (select-keys limit [:total-limit
+                                      :available-limit]))
      :headers {"Location" (str (remove-trailing-slash service-uri)
                                "/api/users/" user-uid)}}))
 
 (defn get-user
   [{{{:keys [uid]}      :path}   :parameters
-    {{user-table :user} :tables} :db}]
-  (if-let [user (u-ops/-get user-table uid)]
-    {:status 200
-     :body user}
+    {{user-table :user} :tables} :db
+    {rating-service     :rating
+     return-service     :return} :services}]
+  (b/cond
+    :let [user (u-ops/-get user-table uid)]
+
+    (nil? user)
     {:status 404
-     :body {:message (str "User with uid `" uid "` is not found.")}}))
+     :body {:message (str "User with uid `" uid "` is not found.")}}
+
+    :else
+    (let [rating (rating-api/-get-user-rating-by-user-uid rating-service uid)
+          rating (when (= 200 (:status rating))
+                   (select-keys (:body rating) [:rating]))
+          limit (return-api/-get-user-limit-by-user-uid return-service uid)
+          limit (when (= 200 (:status limit))
+                  (select-keys (:body limit) [:total-limit
+                                              :available-limit]))]
+      {:status 200
+       :body (merge user rating limit)})))
 
 (defn get-all-users
   [{{{user-table :user} :tables} :db}]

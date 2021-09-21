@@ -37,6 +37,13 @@
    [:email non-empty-string]
    [:role role]])
 
+(def user-out-extended
+  (mu/merge user-out
+            [:map
+             [:total-limit {:optional true} nat-int?]
+             [:available-limit {:optional true} nat-int?]
+             [:rating {:optional true} nat-int?]]))
+
 (def token-pair
   [:map
    [:access-token non-empty-string]
