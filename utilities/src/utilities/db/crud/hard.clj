@@ -85,6 +85,19 @@
      (-> (jdbc/execute-one! db query jdbc-opts)
          (sanitize)))))
 
+(defn update-all-entities-by-keys
+  ""
+  ([db tname keys entity]
+   (update-all-entities-by-keys db tname keys entity identity))
+  ([db tname keys entity sanitize]
+   (let [exprs (-> keys map->honey-sql-exprs)
+         entity (map-vals #(if (sequential? %) [:text-array %] %) entity)
+         query (h/format {:update tname
+                          :set entity
+                          :where exprs})]
+     (->> (jdbc/execute! db query jdbc-opts)
+          (map sanitize)))))
+
 (defn delete-entity
   "Returns deleted entity if it's found, returns nil otherwise."
   ([db tname id]
