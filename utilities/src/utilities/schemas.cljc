@@ -216,6 +216,28 @@
               [true  true  true]  (loe receiving-date return-date)
               :else false)))]])
 
+(def order-out-extended
+  [:and
+   [:map
+    [:uid uuid?]
+    [:library-uid [:maybe uuid?]]
+    [:library (mu/update-properties library-out assoc :optional true)]
+    [:book-uid [:maybe uuid?]]
+    [:book (mu/update-properties book-out assoc :optional true)]
+    [:user-uid [:maybe uuid?]]
+    [:user (mu/update-properties user-out assoc :optional true)]
+    [:booking-date inst?]
+    [:receiving-date [:maybe inst?]]
+    [:return-date [:maybe inst?]]
+    [:condition [:maybe non-empty-string]]]
+   [:fn (fn [{:keys [receiving-date return-date condition]}]
+          (let [loe #?(:clj time/<= :cljs <=)]
+            (match (mapv some? [receiving-date return-date condition])
+              [false false false] true
+              [true  false false] true
+              [true  true  true]  (loe receiving-date return-date)
+              :else false)))]])
+
 (def order-query
   (-> order-update
       (m/children)
