@@ -15,6 +15,10 @@
             [malli.core :as m]
             [utilities.core :refer [non-empty-string?]]
             [utilities.schemas :as schemas]
+            [utilities.api.book :refer [BookAPI make-book-service]]
+            [utilities.api.rating :refer [RatingAPI make-rating-service]]
+            [utilities.api.return :refer [ReturnAPI make-return-service]]
+            [utilities.api.session :refer [SessionAPI make-session-service]]
             [utilities.api.stats :refer [StatsAPI map->StatsService]])
   (:gen-class))
 
@@ -38,11 +42,19 @@
               :order order-table
               :client client-table}}))
 
-(defmethod ig/init-key :service.library.system/services [_ {:keys [stats services-uri]}]
-  {:stats (map->StatsService stats)})
+(defmethod ig/init-key :service.library.system/services
+  [_ {:keys [stats services-uri cb-options client-id client-secret]}]
+  {:book (make-book-service (:book services-uri) cb-options client-id client-secret)
+   :rating (make-rating-service (:rating services-uri) cb-options client-id client-secret)
+   :return (make-return-service (:return services-uri) cb-options client-id client-secret)
+   :session (make-session-service (:session services-uri) cb-options client-id client-secret)
+   :stats (map->StatsService stats)})
 
-(defmethod ig/init-key :service.library.system/app [_ {:keys [db services services-uri]}]
-  (app db services services-uri))
+(defmethod ig/init-key :service.library.system/app [_ {:keys [db services services-uri client-id]}]
+  (app {:db db
+        :services services
+        :services-uri services-uri
+        :client-id client-id}))
 
 (defmethod ig/init-key :service.library.system/server [_ {:keys [app server-options]}]
   (run-server app server-options))
@@ -63,8 +75,17 @@
                         [:order [:fn (fn [x] (satisfies? OrderTableOperations x))]]
                         [:client [:fn (fn [x] (satisfies? ClientTableOperations x))]]]]]))
 (s/def ::services (m/validator [:map
+                                [:book [:fn (fn [x] (satisfies? BookAPI x))]]
+                                [:rating [:fn (fn [x] (satisfies? RatingAPI x))]]
+                                [:return [:fn (fn [x] (satisfies? ReturnAPI x))]]
+                                [:session [:fn (fn [x] (satisfies? SessionAPI x))]]
                                 [:stats [:fn (fn [x] (satisfies? StatsAPI x))]]]))
 (s/def ::services-uri (m/validator schemas/services-uri))
+(s/def ::cb-options (m/validator [:map
+                                  [:failure-threshold-ratio [:tuple pos-int? pos-int?]]
+                                  [:delay-ms nat-int?]]))
+(s/def ::client-id non-empty-string?)
+(s/def ::client-secret non-empty-string?)
 (s/def ::app fn?)
 (s/def ::server-options (m/validator schemas/server-options))
 (s/def ::qname non-empty-string?)
@@ -75,10 +96,10 @@
   (s/keys :req-un [::db-config]))
 
 (defmethod ig/pre-init-spec :service.library.system/services [_]
-  (s/keys :req-un [::stats ::services-uri]))
+  (s/keys :req-un [::stats ::services-uri ::cb-options ::client-id ::client-secret]))
 
 (defmethod ig/pre-init-spec :service.library.system/app [_]
-  (s/keys :req-un [::db ::services ::services-uri]))
+  (s/keys :req-un [::db ::services ::services-uri ::client-id]))
 
 (defmethod ig/pre-init-spec :service.library.system/server [_]
   (s/keys :req-un [::app ::server-options]))

@@ -62,7 +62,7 @@
 
 #_"TODO: swagger query params explode"
 
-(defn app [db services services-uri]
+(defn app [{:keys [db services services-uri client-id]}]
   (ring/ring-handler
    (ring/router
     ["/api" {:swagger {:securityDefinitions {:apiAuth {:type "apiKey"
@@ -208,7 +208,7 @@
                          :handler a-handlers/verify-token}}]]]
     {:data {:db db
             :services services
-            :stats/service "library"
+            :stats/service client-id
             :coercion reitit.coercion.malli/coercion #_"Schemas closing, extra keys stripping, ..."
             #_"... transformers adding for json-body, path and query params."
             :muuntaja muuntaja-instance

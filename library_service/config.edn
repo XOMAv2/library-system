@@ -20,16 +20,21 @@
                                 :uri ""}}}
  
  :service.library.system/services
-{:stats {:qname "utilities.api.stats"
-         :amqp-url #profile {:local "amqp://guest:guest@localhost:8081"
-                             :docker "amqp://guest:guest@rabbitmq:5672"
-                             :heroku ""}}
- :services-uri #ref [:service.library.system/app :services-uri]}
+ {:stats {:qname "utilities.api.stats"
+          :amqp-url #profile {:local "amqp://guest:guest@localhost:8081"
+                              :docker "amqp://guest:guest@rabbitmq:5672"
+                              :heroku ""}}
+  :cb-options {:failure-threshold-ratio [3 6]
+               :delay-ms 10000}
+  :client-id "library"
+  :client-secret "library"
+  :services-uri #profile #include "../services_uri.edn"}
 
  :service.library.system/app
  {:db #ig/ref :service.library.system/db
   :services #ig/ref :service.library.system/services
-  :services-uri #profile #include "../services_uri.edn"}
+  :services-uri #ref [:service.library.system/services :services-uri]
+  :client-id #ref [:service.library.system/services :client-id]}
 
  :service.library.system/server
  {:app #ig/ref :service.library.system/app
