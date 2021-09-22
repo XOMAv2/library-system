@@ -8,7 +8,7 @@
 (defn add-book
   [{{book               :body}    :parameters
     {{book-table :book} :tables}  :db
-    {service-uri        :book} :services-uri}]
+    {service-uri        :book}    :services-uri}]
   (try (let [book (b-ops/-add book-table book)]
          {:status 201
           :body book
