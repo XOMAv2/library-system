@@ -173,7 +173,7 @@
                    :handler o-handlers/update-all-orders}}]
       ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
 
-                :get {:responses {200 {:body schemas/order-out}
+                :get {:responses {200 {:body schemas/order-out-extended}
                                   404 {:body message}}
                       :handler o-handlers/get-order}
                 :delete {:responses {200 {:body schemas/order-out}

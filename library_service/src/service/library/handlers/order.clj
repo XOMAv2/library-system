@@ -1,7 +1,12 @@
 (ns service.library.handlers.order
   (:require [service.library.tables.order :as o-ops]
+            [service.library.tables.library :as l-ops]
             [utilities.core :refer [remove-trailing-slash]]
-            [utilities.time :as time]))
+            [utilities.time :as time]
+            [utilities.api.book :as book-api]
+            [utilities.api.session :as session-api]
+            [better-cond.core :as b]
+            [clojure.core.match :refer [match]]))
 
 (defn add-order
   [{{order                :body}   :parameters
@@ -24,13 +29,30 @@
                    :message (ex-message e)}}))))
 
 (defn get-order
-  [{{{:keys [uid]}        :path}   :parameters
-    {{order-table :order} :tables} :db}]
-  (if-let [order (o-ops/-get order-table uid)]
-    {:status 200
-     :body order}
+  [{{{:keys [uid]}            :path}    :parameters
+    {{order-table   :order
+      library-table :library} :tables}  :db
+    {book-service             :book
+     session-service          :session} :services}]
+  (b/cond
+    :let [order (o-ops/-get order-table uid)]
+
+    (nil? order)
     {:status 404
-     :body {:message (str "Order with uid `" uid "` is not found.")}}))
+     :body {:message (str "Order with uid `" uid "` is not found.")}}
+
+    :else
+    (let [book (book-api/-get-book book-service (:book-uid order))
+          book (when (= 200 (:status book))
+                 {:book (:body book)})
+          user (session-api/-get-user session-service (:user-uid order))
+          user (when (= 200 (:status user))
+                 {:user (:body user)})
+          library (l-ops/-get library-table (:library-uid order))
+          library (when (some? library)
+                    {:library library})]
+      {:status 200
+       :body (merge order book user library)})))
 
 (defn get-all-orders
   [{{order-query          :query}  :parameters
