@@ -58,7 +58,7 @@
       #_"Максимальное число книг, доступных пользователю для бронирования/получения на руки."
       "total_limit     int NOT NULL CHECK (total_limit >= 0)"
       #_"Число книг, доступное пользователю в данный момент для бронирования/получения."
-      "available_limit int NOT NULL CHECK (available_limit >= 0 AND available_limit <= total_limit)"
+      "available_limit int NOT NULL CHECK (available_limit <= total_limit)"
       "is_deleted      boolean NOT NULL"]))
   (-populate [this]
     (udb/populate-table db tname [] :delete-mode :soft))
@@ -75,7 +75,8 @@
   (-update-total-limit-by-user-uid [this user-uid delta]
     (let [sign (if (neg? delta) :- :+)
           query (h/format {:update tname
-                           :set {:total-limit [sign :total-limit (abs delta)]}
+                           :set {:total-limit [sign :total-limit (abs delta)]
+                                 :available-limit [sign :available-limit (abs delta)]}
                            :where [:and
                                    [:= :is-deleted false]
                                    [:= :user-uid user-uid]]})]

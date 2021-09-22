@@ -41,7 +41,7 @@
   (mu/merge user-out
             [:map
              [:total-limit {:optional true} nat-int?]
-             [:available-limit {:optional true} nat-int?]
+             [:available-limit {:optional true} int?]
              [:rating {:optional true} nat-int?]]))
 
 (def token-pair
@@ -82,7 +82,7 @@
    [:map
     [:user-uid uuid?]
     [:total-limit nat-int?]
-    [:available-limit nat-int?]]
+    [:available-limit int?]]
    [:fn (fn [{:keys [total-limit available-limit]}]
           (<= available-limit total-limit))]])
 
@@ -91,7 +91,7 @@
    [:map
     [:user-uid {:optional true} uuid?]
     [:total-limit {:optional true} nat-int?]
-    [:available-limit {:optional true} nat-int?]]
+    [:available-limit {:optional true} int?]]
    [:fn (fn [{:keys [total-limit available-limit]}]
           (if (and total-limit available-limit)
             (<= available-limit total-limit)
@@ -103,7 +103,7 @@
     [:uid uuid?]
     [:user-uid uuid?]
     [:total-limit nat-int?]
-    [:available-limit nat-int?]]
+    [:available-limit int?]]
    [:fn (fn [{:keys [total-limit available-limit]}]
           (<= available-limit total-limit))]])
 

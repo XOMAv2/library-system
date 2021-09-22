@@ -38,7 +38,7 @@
                 (fn [request]
                   (handler (assoc request :services-uri services-uri)))))})
 
-(defn app [db services services-uri]
+(defn app [{:keys [db services services-uri client-id]}]
   (ring/ring-handler
    (ring/router
     ["/api" {:swagger {:securityDefinitions {:apiAuth {:type "apiKey"
@@ -62,8 +62,10 @@
                   :responses {201 {:body schemas/user-limit-out
                                    :headers {"Location" {:schema {:type "string"}}}}
                               400 {:body [:map
-                                          [:type string?]
-                                          [:message string?]]}}
+                                          [:type {:optional true} string?]
+                                          [:message string?]]}
+                              500 {:body any?}
+                              502 {:body message}}
                   :handler handlers/add-user-limit}}]
       ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
 
@@ -109,7 +111,7 @@
                                     [:delta int?]]}
                 :responses {200 {:body schemas/user-limit-out}
                             400 {:body [:map
-                                        [:type string?]
+                                        [:type {:optional true} string?]
                                         [:message string?]]}
                             404 {:body message}}
                 :handler handlers/update-available-limit}}]]
@@ -135,7 +137,7 @@
                          :handler a-handlers/verify-token}}]]]
     {:data {:db db
             :services services
-            :stats/service "return"
+            :stats/service client-id
             :coercion reitit.coercion.malli/coercion #_"Schemas closing, extra keys stripping, ..."
             #_"... transformers adding for json-body, path and query params."
             :muuntaja muuntaja-instance

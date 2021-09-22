@@ -14,7 +14,9 @@
                  [integrant "0.8.0"]
                  [buddy/buddy-auth "3.0.1"]
                  [org.clojure/math.numeric-tower "0.0.4"]
-                 [com.github.seancorfield/honeysql "2.0.783"]]
+                 [com.github.seancorfield/honeysql "2.0.783"]
+                 [better-cond "2.1.0"]
+                 [org.clojure/core.match "1.0.0"]]
   :main ^:skip-aot service.return.system
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
