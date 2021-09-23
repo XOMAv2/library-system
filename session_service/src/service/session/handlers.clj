@@ -65,8 +65,6 @@
         (match (:status return-resp)
           (:or 500 503) {:status 502
                          :body {:message "Error during the return service call."}}
-          502           {:status 502
-                         :body (:body return-resp)}
           (:or 401 403) {:status 500
                          :body {:message "Unable to acces the return service due to invalid credentials."}}
           400           {:status 500

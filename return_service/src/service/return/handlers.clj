@@ -1,32 +1,13 @@
 (ns service.return.handlers
   (:require [service.return.tables.user-limit :as ul-ops]
             [utilities.core :refer [remove-trailing-slash]]
-            [utilities.api.session :as session-api]
-            [better-cond.core :as b]
-            [clojure.core.match :refer [match]]))
+            [better-cond.core :as b]))
 
 (defn add-user-limit
   [{{user-limit                     :body}    :parameters
     {{user-limit-table :user-limit} :tables}  :db
-    {service-uri                    :return}  :services-uri
-    {session-service                :session} :services}]
+    {service-uri                    :return}  :services-uri}]
   (b/cond
-    :let [user-uid (:user-uid user-limit)
-          session-resp (-> session-service
-                           (session-api/-get-user user-uid)
-                           :status)]
-
-    (not= 200 session-resp)
-    (match session-resp
-      (:or 500 503) {:status 502
-                     :body {:message "Error during the session service call."}}
-      (:or 401 403) {:status 500
-                     :body {:message "Unable to acces the session service due to invalid credentials."}}
-      404           {:status 422
-                     :body {:message (str "User with uid `" user-uid "` is not found.")}}
-      :else         {:status 500
-                     :body {:message "Error during the session service call."}})
-
     :let [user-limit (try (ul-ops/-add user-limit-table user-limit)
                           (catch Exception e e))]
 

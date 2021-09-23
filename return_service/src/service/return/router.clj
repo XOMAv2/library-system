@@ -63,9 +63,7 @@
                                    :headers {"Location" {:schema {:type "string"}}}}
                               422 {:body [:map
                                           [:type {:optional true} string?]
-                                          [:message string?]]}
-                              500 {:body any?}
-                              502 {:body message}}
+                                          [:message string?]]}}
                   :handler handlers/add-user-limit}}]
       ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
 

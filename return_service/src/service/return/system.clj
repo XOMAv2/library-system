@@ -11,7 +11,6 @@
             [malli.core :as m]
             [utilities.core :refer [non-empty-string?]]
             [utilities.schemas :as schemas]
-            [utilities.api.session :refer [SessionAPI make-session-service]]
             [utilities.api.stats :refer [StatsAPI map->StatsService]])
   (:gen-class))
 
@@ -27,10 +26,8 @@
     {:tables {:user-limit user-limit-table
               :client client-table}}))
 
-(defmethod ig/init-key :service.return.system/services
-  [_ {:keys [stats services-uri cb-options client-id client-secret]}]
-  {:session (make-session-service (:session services-uri) cb-options client-id client-secret)
-   :stats (map->StatsService stats)})
+(defmethod ig/init-key :service.return.system/services [_ {:keys [stats services-uri]}]
+  {:stats (map->StatsService stats)})
 
 (defmethod ig/init-key :service.return.system/app [_ {:keys [db services services-uri client-id]}]
   (app {:db db
@@ -55,14 +52,9 @@
                         [:user-limit [:fn (fn [x] (satisfies? UserLimitTableOperations x))]]
                         [:client [:fn (fn [x] (satisfies? ClientTableOperations x))]]]]]))
 (s/def ::services (m/validator [:map
-                                [:session [:fn (fn [x] (satisfies? SessionAPI x))]]
                                 [:stats [:fn (fn [x] (satisfies? StatsAPI x))]]]))
 (s/def ::services-uri (m/validator schemas/services-uri))
-(s/def ::cb-options (m/validator [:map
-                                  [:failure-threshold-ratio [:tuple pos-int? pos-int?]]
-                                  [:delay-ms nat-int?]]))
 (s/def ::client-id non-empty-string?)
-(s/def ::client-secret non-empty-string?)
 (s/def ::app fn?)
 (s/def ::server-options (m/validator schemas/server-options))
 (s/def ::qname non-empty-string?)
@@ -73,7 +65,7 @@
   (s/keys :req-un [::db-config]))
 
 (defmethod ig/pre-init-spec :service.return.system/services [_]
-  (s/keys :req-un [::stats ::services-uri ::cb-options ::client-id ::client-secret]))
+  (s/keys :req-un [::stats ::services-uri]))
 
 (defmethod ig/pre-init-spec :service.return.system/app [_]
   (s/keys :req-un [::db ::services ::services-uri ::client-id]))
