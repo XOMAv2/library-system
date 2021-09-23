@@ -61,7 +61,7 @@
                   :responses {201 {:body schemas/stat-record-out
                                    :headers {"Location" {:schema {:type "string"}}}}
                               422 {:body [:map
-                                          [:type string?]
+                                          [:type {:optional true} string?]
                                           [:message string?]]}}
                   :handler handlers/add-stat-record}
            :delete {:responses {200 {:body [:map [:stats [:sequential schemas/stat-record-out]]]}}
@@ -77,7 +77,7 @@
                 :patch {:parameters {:body schemas/stat-record-update}
                         :responses {200 {:body schemas/stat-record-out}
                                     422 {:body [:map
-                                                [:type string?]
+                                                [:type {:optional true} string?]
                                                 [:message string?]]}
                                     404 {:body message}}
                         :handler handlers/update-stat-record}}]]

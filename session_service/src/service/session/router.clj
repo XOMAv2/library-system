@@ -76,7 +76,7 @@
                 :delete {:responses {200 {:body schemas/user-out}
                                      404 {:body message}
                                      422 {:body [:map
-                                                 [:type string?]
+                                                 [:type {:optional true} string?]
                                                  [:message string?]]}
                                      500 {:body any?}
                                      502 {:body message}}
@@ -89,7 +89,7 @@
                 :patch {:parameters {:body schemas/user-update}
                         :responses {200 {:body schemas/user-out}
                                     422 {:body [:map
-                                                [:type string?]
+                                                [:type {:optional true} string?]
                                                 [:message string?]]}
                                     404 {:body message}}
                         :handler handlers/update-user}}]]

@@ -79,7 +79,7 @@
                 :patch {:parameters {:body schemas/user-limit-update}
                         :responses {200 {:body schemas/user-limit-out}
                                     422 {:body [:map
-                                                [:type string?]
+                                                [:type {:optional true} string?]
                                                 [:message string?]]}
                                     404 {:body message}}
                         :handler handlers/update-user-limit}}]
@@ -99,7 +99,7 @@
                                     [:delta int?]]}
                 :responses {200 {:body schemas/user-limit-out}
                             422 {:body [:map
-                                        [:type string?]
+                                        [:type {:optional true} string?]
                                         [:message string?]]}
                             404 {:body message}}
                 :handler handlers/update-total-limit}}]

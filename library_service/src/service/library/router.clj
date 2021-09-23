@@ -67,7 +67,7 @@
                   :responses {201 {:body schemas/library-out
                                    :headers {"Location" {:schema {:type "string"}}}}
                               422 {:body [:map
-                                          [:type string?]
+                                          [:type {:optional true} string?]
                                           [:message string?]]}}
                   :handler l-handlers/add-library}}]
       ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
@@ -81,7 +81,7 @@
                 :patch {:parameters {:body schemas/library-update}
                         :responses {200 {:body schemas/library-out}
                                     422 {:body [:map
-                                                [:type string?]
+                                                [:type {:optional true} string?]
                                                 [:message string?]]}
                                     404 {:body message}}
                         :handler l-handlers/update-library}}]]
@@ -100,7 +100,7 @@
                   :responses {201 {:body schemas/library-book-out
                                    :headers {"Location" {:schema {:type "string"}}}}
                               422 {:body [:map
-                                          [:type string?]
+                                          [:type {:optional true} string?]
                                           [:message string?]]}}
                   :handler lb-handlers/add-library-book}
            :delete {:parameters {:query schemas/library-book-query}
@@ -123,7 +123,7 @@
                 :patch {:parameters {:body schemas/library-book-update}
                         :responses {200 {:body schemas/library-book-out}
                                     422 {:body [:map
-                                                [:type string?]
+                                                [:type {:optional true} string?]
                                                 [:message string?]]}
                                     404 {:body message}}
                         :handler lb-handlers/update-library-book}}]]
@@ -151,7 +151,7 @@
            :patch {:parameters {:query schemas/order-query}
                    :responses {200 {:body [:map [:orders [:sequential schemas/order-out]]]}
                                422 {:body [:map
-                                           [:type string?]
+                                           [:type {:optional true} string?]
                                            [:message string?]]}}
                    :handler o-handlers/update-all-orders}}]
       ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
