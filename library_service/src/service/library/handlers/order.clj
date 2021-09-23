@@ -24,7 +24,7 @@
                                       "/api/orders/"
                                       (:uid order))}})
          (catch Exception e
-           {:status 400
+           {:status 422
             :body {:type (-> e type str)
                    :message (ex-message e)}}))))
 
@@ -73,7 +73,7 @@
          {:status 404
           :body {:message (str "Order with uid `" uid "` is not found.")}})
        (catch Exception e
-         {:status 400
+         {:status 422
           :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
@@ -85,7 +85,7 @@
          {:status 200
           :body order})
        (catch Exception e
-         {:status 400
+         {:status 422
           :body {:type (-> e type str)
                  :message (ex-message e)}})))
 

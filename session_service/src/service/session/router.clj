@@ -59,8 +59,8 @@
                   :parameters {:body schemas/user-add}
                   :responses {201 {:body schemas/user-out-extended
                                    :headers {"Location" {:schema {:type "string"}}}}
-                              400 {:body [:map
-                                          [:type string?]
+                              422 {:body [:map
+                                          [:type {:optional true} string?]
                                           [:message string?]]}
                               500 {:body any?}
                               502 {:body message}}
@@ -75,6 +75,9 @@
                       :handler handlers/get-user}
                 :delete {:responses {200 {:body schemas/user-out}
                                      404 {:body message}
+                                     422 {:body [:map
+                                                 [:type string?]
+                                                 [:message string?]]}
                                      500 {:body any?}
                                      502 {:body message}}
                          :handler handlers/delete-user}
@@ -85,7 +88,7 @@
                       :handler handlers/restore-user}
                 :patch {:parameters {:body schemas/user-update}
                         :responses {200 {:body schemas/user-out}
-                                    400 {:body [:map
+                                    422 {:body [:map
                                                 [:type string?]
                                                 [:message string?]]}
                                     404 {:body message}}

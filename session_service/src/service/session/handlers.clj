@@ -24,7 +24,7 @@
 
     (instance? Exception user)
     (let [e user]
-      {:status 400
+      {:status 422
        :body {:type (-> e type str)
               :message (ex-message e)}})
 
@@ -44,6 +44,8 @@
                          :body {:message "Unable to acces the rating service due to invalid credentials."}}
           400           {:status 500
                          :body {:message "Malformed request to the rating service."}}
+          422           {:status 422
+                         :body (:body rating-resp)}
           :else         {:status 500
                          :body {:message "Error during the rating service call."}}))
 
@@ -69,6 +71,8 @@
                          :body {:message "Unable to acces the return service due to invalid credentials."}}
           400           {:status 500
                          :body {:message "Malformed request to the return service."}}
+          422           {:status 422
+                         :body (:body return-resp)}
           :else         {:status 500
                          :body {:message "Error during the return service call."}}))
 
@@ -125,7 +129,7 @@
            {:status 404
             :body {:message (str "User with uid `" uid "` is not found.")}})
          (catch Exception e
-           {:status 400
+           {:status 422
             :body {:type (-> e type str)
                    :message (ex-message e)}}))))
 
@@ -179,11 +183,10 @@
           :else         {:status 500
                          :body {:message "Error during the return service call."}}))
     
-    :let [library-resp (-> library-service
-                           (library-api/-update-all-orders {:user-uid uid} {:user-uid nil})
-                           :status)]
+    :let [library-resp (library-api/-update-all-orders library-service
+                                                       {:user-uid uid} {:user-uid nil})]
     
-    (not= 200 library-resp)
+    (not= 200 (:status library-resp))
     (do (u-ops/-restore user-table uid)
         (when (not= 200 (-> rating-service
                             (rating-api/-restore-user-rating-by-user-uid uid)
@@ -195,13 +198,15 @@
                             :status))
           #_"TODO: do something when api call returns bad response and "
           #_"we are already processing bad response branch.")
-        (match library-resp
+        (match (:status library-resp)
           (:or 500 503) {:status 502
                          :body {:message "Error during the library service call."}}
           (:or 401 403) {:status 500
                          :body {:message "Unable to acces the library service due to invalid credentials."}}
           400           {:status 500
                          :body {:message "Malformed request to the library service."}}
+          422           {:status 422
+                         :body (:body library-resp)}
           :else         {:status 500
                          :body {:message "Error during the library service call."}}))
 

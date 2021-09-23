@@ -61,7 +61,7 @@
                   :parameters {:body schemas/user-rating-add}
                   :responses {201 {:body schemas/user-rating-out
                                    :headers {"Location" {:schema {:type "string"}}}}
-                              400 {:body [:map
+                              422 {:body [:map
                                           [:type string?]
                                           [:message string?]]}}
                   :handler handlers/add-user-rating}}]
@@ -78,7 +78,7 @@
                       :handler handlers/restore-user-rating}
                 :patch {:parameters {:body schemas/user-rating-update}
                         :responses {200 {:body schemas/user-rating-out}
-                                    400 {:body [:map
+                                    422 {:body [:map
                                                 [:type string?]
                                                 [:message string?]]}
                                     404 {:body message}}
@@ -98,7 +98,7 @@
                                     [:user-uid uuid?]
                                     [:delta int?]]}
                 :responses {200 {:body schemas/user-rating-out}
-                            400 {:body [:map
+                            422 {:body [:map
                                         [:type string?]
                                         [:message string?]]}
                             404 {:body message}}

@@ -60,7 +60,7 @@
                   :parameters {:body schemas/stat-record-add}
                   :responses {201 {:body schemas/stat-record-out
                                    :headers {"Location" {:schema {:type "string"}}}}
-                              400 {:body [:map
+                              422 {:body [:map
                                           [:type string?]
                                           [:message string?]]}}
                   :handler handlers/add-stat-record}
@@ -76,7 +76,7 @@
                          :handler handlers/delete-stat-record}
                 :patch {:parameters {:body schemas/stat-record-update}
                         :responses {200 {:body schemas/stat-record-out}
-                                    400 {:body [:map
+                                    422 {:body [:map
                                                 [:type string?]
                                                 [:message string?]]}
                                     404 {:body message}}

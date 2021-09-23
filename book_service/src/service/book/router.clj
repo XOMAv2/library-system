@@ -64,7 +64,7 @@
                   :parameters {:body schemas/book-add}
                   :responses {201 {:body schemas/book-out
                                    :headers {"Location" {:schema {:type "string"}}}}
-                              400 {:body [:map
+                              422 {:body [:map
                                           [:type string?]
                                           [:message string?]]}}
                   :handler handlers/add-book}}]
@@ -75,6 +75,9 @@
                       :handler handlers/get-book}
                 :delete {:responses {200 {:body schemas/book-out}
                                      404 {:body message}
+                                     422 {:body [:map
+                                                 [:type string?]
+                                                 [:message string?]]}
                                      500 {:body any?}
                                      502 {:body message}}
                          :handler handlers/delete-book}
@@ -85,7 +88,7 @@
                       :handler handlers/restore-book}
                 :patch {:parameters {:body schemas/book-update}
                         :responses {200 {:body schemas/book-out}
-                                    400 {:body [:map
+                                    422 {:body [:map
                                                 [:type string?]
                                                 [:message string?]]}
                                     404 {:body message}}

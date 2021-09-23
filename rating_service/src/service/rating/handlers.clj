@@ -13,7 +13,7 @@
                                     "/api/ratings/"
                                     (:uid user-rating))}})
        (catch Exception e
-         {:status 400
+         {:status 422
           :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
@@ -51,7 +51,7 @@
          {:status 404
           :body {:message (str "User rating with uid `" uid "` is not found.")}})
        (catch Exception e
-         {:status 400
+         {:status 422
           :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
@@ -65,7 +65,7 @@
          {:status 404
           :body {:message (str "User rating with user uid `" user-uid "` is not found.")}})
        (catch Exception e
-         {:status 400
+         {:status 422
           :body {:type (-> e type str)
                  :message (ex-message e)}})))
 

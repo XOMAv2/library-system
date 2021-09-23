@@ -22,7 +22,7 @@
                      :body {:message "Error during the session service call."}}
       (:or 401 403) {:status 500
                      :body {:message "Unable to acces the session service due to invalid credentials."}}
-      404           {:status 400
+      404           {:status 422
                      :body {:message (str "User with uid `" user-uid "` is not found.")}}
       :else         {:status 500
                      :body {:message "Error during the session service call."}})
@@ -32,7 +32,7 @@
 
     (instance? Exception user-limit)
     (let [e user]
-      {:status 400
+      {:status 422
        :body {:type (-> e type str)
               :message (ex-message e)}})
 
@@ -77,7 +77,7 @@
          {:status 404
           :body {:message (str "User limit with uid `" uid "` is not found.")}})
        (catch Exception e
-         {:status 400
+         {:status 422
           :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
@@ -92,7 +92,7 @@
          {:status 404
           :body {:message (str "User limit with user uid `" user-uid "` is not found.")}})
        (catch Exception e
-         {:status 400
+         {:status 422
           :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
@@ -112,7 +112,7 @@
 
     (and (neg? new-available-limit)
          (< new-available-limit available-limit))
-    {:status 400
+    {:status 422
      :body {:message "If the available limit is negative, the new value must be greater than the previous one."}}
 
     :let [user-limit (try (-> user-limit-table
@@ -121,7 +121,7 @@
 
     (instance? Exception user-limit)
     (let [e user]
-      {:status 400
+      {:status 422
        :body {:type (-> e type str)
               :message (ex-message e)}})
     

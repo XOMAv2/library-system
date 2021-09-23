@@ -61,7 +61,7 @@
                   :parameters {:body schemas/user-limit-add}
                   :responses {201 {:body schemas/user-limit-out
                                    :headers {"Location" {:schema {:type "string"}}}}
-                              400 {:body [:map
+                              422 {:body [:map
                                           [:type {:optional true} string?]
                                           [:message string?]]}
                               500 {:body any?}
@@ -80,7 +80,7 @@
                       :handler handlers/restore-user-limit}
                 :patch {:parameters {:body schemas/user-limit-update}
                         :responses {200 {:body schemas/user-limit-out}
-                                    400 {:body [:map
+                                    422 {:body [:map
                                                 [:type string?]
                                                 [:message string?]]}
                                     404 {:body message}}
@@ -100,7 +100,7 @@
                                     [:user-uid uuid?]
                                     [:delta int?]]}
                 :responses {200 {:body schemas/user-limit-out}
-                            400 {:body [:map
+                            422 {:body [:map
                                         [:type string?]
                                         [:message string?]]}
                             404 {:body message}}
@@ -110,7 +110,7 @@
                                     [:user-uid uuid?]
                                     [:delta int?]]}
                 :responses {200 {:body schemas/user-limit-out}
-                            400 {:body [:map
+                            422 {:body [:map
                                         [:type {:optional true} string?]
                                         [:message string?]]}
                             404 {:body message}}

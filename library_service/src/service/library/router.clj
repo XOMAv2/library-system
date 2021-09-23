@@ -86,7 +86,7 @@
                   :parameters {:body schemas/library-add}
                   :responses {201 {:body schemas/library-out
                                    :headers {"Location" {:schema {:type "string"}}}}
-                              400 {:body [:map
+                              422 {:body [:map
                                           [:type string?]
                                           [:message string?]]}}
                   :handler l-handlers/add-library}}]
@@ -100,7 +100,7 @@
                          :handler l-handlers/delete-library}
                 :patch {:parameters {:body schemas/library-update}
                         :responses {200 {:body schemas/library-out}
-                                    400 {:body [:map
+                                    422 {:body [:map
                                                 [:type string?]
                                                 [:message string?]]}
                                     404 {:body message}}
@@ -119,7 +119,7 @@
                   :parameters {:body schemas/library-book-add}
                   :responses {201 {:body schemas/library-book-out
                                    :headers {"Location" {:schema {:type "string"}}}}
-                              400 {:body [:map
+                              422 {:body [:map
                                           [:type string?]
                                           [:message string?]]}}
                   :handler lb-handlers/add-library-book}
@@ -142,7 +142,7 @@
                        :handler lb-handlers/restore-library-book}
                 :patch {:parameters {:body schemas/library-book-update}
                         :responses {200 {:body schemas/library-book-out}
-                                    400 {:body [:map
+                                    422 {:body [:map
                                                 [:type string?]
                                                 [:message string?]]}
                                     404 {:body message}}
@@ -161,13 +161,13 @@
                   :parameters {:body schemas/order-add}
                   :responses {201 {:body schemas/order-out
                                    :headers {"Location" {:schema {:type "string"}}}}
-                              400 {:body [:map
-                                          [:type string?]
+                              422 {:body [:map
+                                          [:type {:optional true} string?]
                                           [:message string?]]}}
                   :handler o-handlers/add-order}
            :patch {:parameters {:query schemas/order-query}
                    :responses {200 {:body [:map [:orders [:sequential schemas/order-out]]]}
-                               400 {:body [:map
+                               422 {:body [:map
                                            [:type string?]
                                            [:message string?]]}}
                    :handler o-handlers/update-all-orders}}]
@@ -181,7 +181,7 @@
                          :handler o-handlers/delete-order}
                 :patch {:parameters {:body schemas/order-update}
                         :responses {200 {:body schemas/order-out}
-                                    400 {:body [:map
+                                    422 {:body [:map
                                                 [:type string?]
                                                 [:message string?]]}
                                     404 {:body message}}

@@ -16,7 +16,7 @@
                                     "/api/books/"
                                     (:uid book))}})
        (catch Exception e
-         {:status 400
+         {:status 422
           :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
@@ -48,7 +48,7 @@
          {:status 404
           :body {:message (str "Book with uid `" uid "` is not found.")}})
        (catch Exception e
-         {:status 400
+         {:status 422
           :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
@@ -63,40 +63,42 @@
     {:status 404
      :body {:message (str "Book with uid `" uid "` is not found.")}}
 
-    :let [library-book-resp (-> library-service
-                                (library-api/-delete-all-library-books {:book-uid uid})
-                                :status)]
+    :let [library-book-resp (library-api/-delete-all-library-books library-service
+                                                                   {:book-uid uid})]
 
-    (not= 200 library-book-resp)
+    (not= 200 (:status library-book-resp))
     (do (b-ops/-restore book-table uid)
-        (match library-book-resp
+        (match (:status library-book-resp)
           (:or 500 503) {:status 502
                          :body {:message "Error during the library service call."}}
           (:or 401 403) {:status 500
                          :body {:message "Unable to acces the library service due to invalid credentials."}}
           400           {:status 500
                          :body {:message "Malformed request to the library service."}}
+          422           {:status 422
+                         :body (:body library-book-resp)}
           :else         {:status 500
                          :body {:message "Error during the library service call."}}))
 
-    :let [order-resp (-> library-service
-                         (library-api/-update-all-orders {:book-uid uid} {:book-uid nil})
-                         :status)]
+    :let [order-resp (library-api/-update-all-orders library-service
+                                                     {:book-uid uid} {:book-uid nil})]
 
-    (not= 200 order-resp)
+    (not= 200 (:status order-resp))
     (do (b-ops/-restore book-table uid)
         (when (not= 200 (-> library-service
                             (library-api/-restore-all-library-books {:book-uid uid})
                             :status))
           #_"TODO: do something when api call returns bad response and "
           #_"we are already processing bad response branch.")
-        (match order-resp
+        (match (:status order-resp)
           (:or 500 503) {:status 502
                          :body {:message "Error during the library service call."}}
           (:or 401 403) {:status 500
                          :body {:message "Unable to acces the library service due to invalid credentials."}}
           400           {:status 500
                          :body {:message "Malformed request to the library service."}}
+          422           {:status 422
+                         :body (:body order-resp)}
           :else         {:status 500
                          :body {:message "Error during the library service call."}}))
 
