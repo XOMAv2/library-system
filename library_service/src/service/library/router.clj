@@ -24,26 +24,6 @@
             [utilities.auth :refer [authorization-middleware backend]]
             [buddy.auth.middleware :refer [wrap-authentication]]))
 
-"
-•	получение списка информации о всех библиотеках в системе;
-•	получение информации о библиотеке;
-•	удаление информации о библиотеке;
-•	добавление информации о библиотеке;
-•	добавление книги в фонд библиотеки;
-•	удаление книги из фонда библиотеки;
-•	изменение числа экземпляров книги в фонде библиотеке;
-•	бронирование книги;
-•	возврат книги;
-
-•	получение истории заказов пользователя;
-•	добавление заказа в историю;
-•	удаление заказа из истории;
-•	создание пустой истории для нового пользователя;
-•	удаление существующего пользователя и его истории;
-•	изменение лимита книг на руках пользователя;
-•	получение книжного лимита пользователя.
-"
-
 (def db-middleware
   {:name ::db-middleware
    :spec (s/keys :req-un [:service.library.system/db])
@@ -161,9 +141,12 @@
                   :parameters {:body schemas/order-add}
                   :responses {201 {:body schemas/order-out
                                    :headers {"Location" {:schema {:type "string"}}}}
+                              404 {:body message}
                               422 {:body [:map
                                           [:type {:optional true} string?]
-                                          [:message string?]]}}
+                                          [:message string?]]}
+                              500 {:body any?}
+                              502 {:body message}}
                   :handler o-handlers/add-order}
            :patch {:parameters {:query schemas/order-query}
                    :responses {200 {:body [:map [:orders [:sequential schemas/order-out]]]}
@@ -181,10 +164,12 @@
                          :handler o-handlers/delete-order}
                 :patch {:parameters {:body schemas/order-update}
                         :responses {200 {:body schemas/order-out}
+                                    404 {:body message}
                                     422 {:body [:map
-                                                [:type string?]
+                                                [:type {:optional true} string?]
                                                 [:message string?]]}
-                                    404 {:body message}}
+                                    500 {:body any?}
+                                    502 {:body message}}
                         :handler o-handlers/update-order}}]]
 
      ["/auth" {:swagger {:tags ["auth"]}}

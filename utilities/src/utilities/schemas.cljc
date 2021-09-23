@@ -158,24 +158,23 @@
    [:name {:optional true} non-empty-string]
    [:address {:optional true} non-empty-string]])
 
+(def condition
+  [:and
+   [string? {:decode/string clojure.string/lower-case}]
+   [:enum "normal" "poor" "terrible"]])
+
 (def order-add
   [:and
    [:map
     [:library-uid uuid?]
     [:book-uid uuid?]
     [:user-uid uuid?]
-    [:booking-date {:optional true} inst?]
-    [:receiving-date {:optional true} inst?]
-    [:return-date {:optional true} inst?]
-    [:condition {:optional true} non-empty-string]]
-   [:fn (fn [{:keys [booking-date receiving-date return-date condition]}]
-          (let [loe #?(:clj time/<= :cljs <=)]
-            (match (mapv some? [booking-date receiving-date return-date condition])
-              [false false false false] true
-              [true  false false false] true
-              [true  true  false false] (loe booking-date receiving-date)
-              [true  true  true  true]  (loe booking-date receiving-date return-date)
-              :else false)))]])
+    [:booking-date inst?]
+    [:receiving-date {:optional true} inst?]]
+   [:fn (fn [{:keys [booking-date receiving-date]}]
+          (if (some? receiving-date)
+            (#?(:clj time/<= :cljs <=) booking-date receiving-date)
+            true))]])
 
 (def order-update
   [:and
@@ -187,7 +186,7 @@
      [:booking-date inst?]
      [:receiving-date inst?]
      [:return-date inst?]
-     [:condition non-empty-string]])
+     [:condition condition]])
    [:fn (fn [{:keys [booking-date receiving-date return-date]}]
           (let [loe #?(:clj time/<= :cljs <=)]
             (match (mapv some? [booking-date receiving-date return-date])
@@ -207,7 +206,7 @@
     [:booking-date inst?]
     [:receiving-date [:maybe inst?]]
     [:return-date [:maybe inst?]]
-    [:condition [:maybe non-empty-string]]]
+    [:condition [:maybe condition]]]
    [:fn (fn [{:keys [receiving-date return-date condition]}]
           (let [loe #?(:clj time/<= :cljs <=)]
             (match (mapv some? [receiving-date return-date condition])
@@ -229,7 +228,7 @@
     [:booking-date inst?]
     [:receiving-date [:maybe inst?]]
     [:return-date [:maybe inst?]]
-    [:condition [:maybe non-empty-string]]]
+    [:condition [:maybe condition]]]
    [:fn (fn [{:keys [receiving-date return-date condition]}]
           (let [loe #?(:clj time/<= :cljs <=)]
             (match (mapv some? [receiving-date return-date condition])

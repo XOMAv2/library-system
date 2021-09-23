@@ -4,29 +4,62 @@
             [utilities.core :refer [remove-trailing-slash]]
             [utilities.time :as time]
             [utilities.api.book :as book-api]
+            [utilities.api.rating :as rating-api]
+            [utilities.api.return :as return-api]
             [utilities.api.session :as session-api]
             [better-cond.core :as b]
             [clojure.core.match :refer [match]]))
 
 (defn add-order
-  [{{order                :body}   :parameters
-    {{order-table :order} :tables} :db
-    {service-uri          :order}  :services-uri}]
-  (let [order (merge {:booking-date (time/now)
-                      :receiving-date nil
-                      :return-date nil
-                      :condition nil}
-                     order)]
-    (try (let [order (o-ops/-add order-table order)]
-           {:status 201
-            :body order
-            :headers {"Location" (str (remove-trailing-slash service-uri)
-                                      "/api/orders/"
-                                      (:uid order))}})
-         (catch Exception e
-           {:status 422
-            :body {:type (-> e type str)
-                   :message (ex-message e)}}))))
+  [{{order                  :body}    :parameters
+    {{order-table   :order} :tables}  :db
+    {service-uri            :order}   :services-uri
+    {return-service         :return} :services}]
+  (b/cond
+    :let [order (merge {:booking-date (time/now)
+                        :receiving-date nil
+                        :return-date nil
+                        :condition nil}
+                       order)
+          user-uid (:user-uid order)]
+    
+    :let [return-resp (return-api/-update-available-limit-by-user-uid return-service user-uid -1)]
+    
+    (not= 200 (:status return-resp))
+    (match (:status return-resp)
+      (:or 500 503) {:status 502
+                     :body {:message "Error during the return service call."}}
+      (:or 401 403) {:status 500
+                     :body {:message "Unable to acces the return service due to invalid credentials."}}
+      404           {:status 404
+                     :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
+      422           {:status 422
+                     :body (:body return-resp)}
+      :else         {:status 500
+                     :body {:message "Error during the return service call."}})
+    
+    :let [order (try (o-ops/-add order-table order)
+                     (catch Exception e e))]
+
+    (instance? Exception order)
+    (do (when (not= 200 (-> return-service
+                            (return-api/-update-available-limit-by-user-uid user-uid 1)
+                            :status))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        (let [e order]
+          {:status 422
+           :body {:type (-> e type str)
+                  :message (ex-message e)}}))
+
+    :else
+    {:status 201
+     :body (merge order
+                  {:book book :user user}
+                  (when library {:library library}))
+     :headers {"Location" (str (remove-trailing-slash service-uri)
+                               "/api/orders/"
+                               (:uid order))}}))
 
 (defn get-order
   [{{{:keys [uid]}            :path}    :parameters
@@ -64,20 +97,94 @@
      :body {:orders orders}}))
 
 (defn update-order
+  "Only the first setting of the condition field value will affect the user rating."
   [{{{:keys [uid]}        :path
-     order                :body}   :parameters
-    {{order-table :order} :tables} :db}]
-  (try (if-let [order (o-ops/-update order-table uid order)]
-         {:status 200
-          :body order}
-         {:status 404
-          :body {:message (str "Order with uid `" uid "` is not found.")}})
-       (catch Exception e
-         {:status 422
-          :body {:type (-> e type str)
-                 :message (ex-message e)}})))
+     order                :body}    :parameters
+    {{order-table :order} :tables}  :db
+    {return-service       :return
+     rating-service       :rating} :services}]
+  (b/cond
+    :let [prev-order (o-ops/-get uid)
+          {prev-return-date :return-date
+           prev-condition :condition} prev-order
+          {:keys [return-date condition user-uid]} order]
+
+    (nil? prev-order)
+    {:status 404
+     :body {:message (str "Order with uid `" uid "` is not found.")}}
+
+    :let [return-resp (if (and (nil? prev-return-date) return-date)
+                        (return-api/-update-available-limit-by-user-uid return-service user-uid 1)
+                        {:status 200})]
+
+    (not= 200 (:status return-resp))
+    (match (:status return-resp)
+      (:or 500 503) {:status 502
+                     :body {:message "Error during the return service call."}}
+      (:or 401 403) {:status 500
+                     :body {:message "Unable to acces the return service due to invalid credentials."}}
+      404           {:status 404
+                     :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
+      422           {:status 422
+                     :body (:body return-resp)}
+      :else         {:status 500
+                     :body {:message "Error during the return service call."}})
+
+    :let [order (try (o-ops/-update order-table uid order)
+                     (catch Exception e e))]
+
+    (instance? Exception order)
+    (do (when (not= 200 (-> return-service
+                            (return-api/-update-available-limit-by-user-uid user-uid -1)
+                            :status))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        (let [e order]
+          {:status 422
+           :body {:type (-> e type str)
+                  :message (ex-message e)}}))
+
+    (nil? order)
+    (do (when (not= 200 (-> return-service
+                            (return-api/-update-available-limit-by-user-uid user-uid -1)
+                            :status))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        {:status 404
+         :body {:message (str "Order with uid `" uid "` is not found.")}})
+
+    :let [rating-resp (if (and (nil? prev-condition) condition)
+                        (rating-api/-update-rating-by-user-uid rating-service user-uid condition)
+                        {:status 200})]
+
+    (not= 200 (:status rating-resp))
+    (do (when (not= 200 (-> return-service
+                            (return-api/-update-available-limit-by-user-uid user-uid -1)
+                            :status))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        (when (nil? (try (u-ops/-update order-table uid prev-order)
+                         (catch Exception _ nil)))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        (match (:status rating-resp)
+          (:or 500 503) {:status 502
+                         :body {:message "Error during the rating service call."}}
+          (:or 401 403) {:status 500
+                         :body {:message "Unable to acces the rating service due to invalid credentials."}}
+          404           {:status 404
+                         :body {:message (str "User rating with user uid `" user-uid "` is not found.")}}
+          422           {:status 422
+                         :body (:body rating-resp)}
+          :else         {:status 500
+                         :body {:message "Error during the rating service call."}}))
+    
+    :else
+    {:status 200
+     :body order}))
 
 (defn update-all-orders
+  "Condition field update will not affect the user rating."
   [{{order-query          :query
      order                :body}   :parameters
     {{order-table :order} :tables} :db}]
