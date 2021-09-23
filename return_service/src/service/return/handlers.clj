@@ -113,7 +113,7 @@
     (and (neg? new-available-limit)
          (< new-available-limit available-limit))
     {:status 422
-     :body {:message "If the available limit is negative, the new value must be greater than the previous one."}}
+     :body {:message (str "The next value of the available limit must be at least " available-limit ".")}}
 
     :let [user-limit (try (-> user-limit-table
                               (ul-ops/-update-available-limit-by-user-uid user-uid delta))
