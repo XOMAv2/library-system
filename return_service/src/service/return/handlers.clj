@@ -12,7 +12,7 @@
                           (catch Exception e e))]
 
     (instance? Exception user-limit)
-    (let [e user]
+    (let [e user-limit]
       {:status 422
        :body {:type (-> e type str)
               :message (ex-message e)}})
@@ -82,7 +82,7 @@
   [{{{:keys [user-uid delta]}       :path}   :parameters
     {{user-limit-table :user-limit} :tables} :db}]
   (b/cond
-    :let [user-limit (ul-ops/-get-by-user-uid user-uid)]
+    :let [user-limit (ul-ops/-get-by-user-uid user-limit-table user-uid)]
 
     (nil? user-limit)
     {:status 404
@@ -101,7 +101,7 @@
                           (catch Exception e e))]
 
     (instance? Exception user-limit)
-    (let [e user]
+    (let [e user-limit]
       {:status 422
        :body {:type (-> e type str)
               :message (ex-message e)}})

@@ -54,9 +54,7 @@
 
     :else
     {:status 201
-     :body (merge order
-                  {:book book :user user}
-                  (when library {:library library}))
+     :body order
      :headers {"Location" (str (remove-trailing-slash service-uri)
                                "/api/orders/"
                                (:uid order))}}))
@@ -104,7 +102,7 @@
     {return-service       :return
      rating-service       :rating} :services}]
   (b/cond
-    :let [prev-order (o-ops/-get uid)
+    :let [prev-order (o-ops/-get order-table uid)
           {prev-return-date :return-date
            prev-condition :condition} prev-order
           {:keys [return-date condition user-uid]} order]
@@ -163,7 +161,7 @@
                             :status))
           #_"TODO: do something when api call returns bad response and "
           #_"we are already processing bad response branch.")
-        (when (nil? (try (u-ops/-update order-table uid prev-order)
+        (when (nil? (try (o-ops/-update order-table uid prev-order)
                          (catch Exception _ nil)))
           #_"TODO: do something when api call returns bad response and "
           #_"we are already processing bad response branch.")
