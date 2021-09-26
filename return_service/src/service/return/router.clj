@@ -102,8 +102,8 @@
                                        [:type {:optional true} string?]
                                        [:message string?]]}
                            404 {:body message}}
-               :handler handlers/reset-total-limit}}
-       {:patch {:parameters {:path [:map
+               :handler handlers/reset-total-limit}
+        :patch {:parameters {:path [:map
                                     [:user-uid uuid?]
                                     [:value int?]]}
                 :responses {200 {:body schemas/user-limit-out}
