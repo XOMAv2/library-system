@@ -71,7 +71,7 @@ services:
             context: ./
             dockerfile: ./Dockerfile
             args: {APPNAME: library_service}
-        depends_on: [library_db, stats]
+        depends_on: [library_db, stats, rating, return]
         container_name: library
         ports: ["3002:3000"]
         links: [library_db:postgres]
@@ -97,7 +97,7 @@ services:
             context: ./
             dockerfile: ./Dockerfile
             args: {APPNAME: rating_service}
-        depends_on: [rating_db, stats]
+        depends_on: [rating_db, stats, return]
         container_name: rating
         ports: ["3003:3000"]
         links: [rating_db:postgres]
@@ -149,7 +149,7 @@ services:
             context: ./
             dockerfile: ./Dockerfile
             args: {APPNAME: session_service}
-        depends_on: [session_db, stats, rating, return, library]
+        depends_on: [session_db, stats, rating, library]
         container_name: session
         ports: ["3005:3000"]
         links: [session_db:postgres]
