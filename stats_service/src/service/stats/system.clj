@@ -31,7 +31,8 @@
               :client client-table}}))
 
 (defmethod ig/init-key :service.stats.system/app [_ {:keys [db services-uri]}]
-  (app db services-uri))
+  (app {:db db
+        :services-uri services-uri}))
 
 (defmethod ig/init-key :service.stats.system/server [_ {:keys [app server-options]}]
   (run-server app server-options))

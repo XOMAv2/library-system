@@ -36,7 +36,7 @@
                 (fn [request]
                   (handler (assoc request :services-uri services-uri)))))})
 
-(defn app [db services-uri]
+(defn app [{:keys [db services-uri]}]
   (ring/ring-handler
    (ring/router
     ["/api" {:swagger {:securityDefinitions {:apiAuth {:type "apiKey"
