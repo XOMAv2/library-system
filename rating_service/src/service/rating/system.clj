@@ -12,7 +12,7 @@
             [utilities.core :refer [non-empty-string?]]
             [utilities.schemas :as schemas]
             [utilities.api.return :refer [ReturnAPI make-return-service]]
-            [utilities.api.stats :refer [StatsAPI map->StatsService]])
+            [utilities.api.stats :refer [StatsAPI make-stats-service]])
   (:gen-class))
 
 #_"ig/init-key"
@@ -28,9 +28,9 @@
               :client client-table}}))
 
 (defmethod ig/init-key :service.rating.system/services
-  [_ {:keys [stats services-uri cb-options client-id client-secret]}]
+  [_ {:keys [rabbit-opts services-uri cb-options client-id client-secret]}]
   {:return (make-return-service (:return services-uri) cb-options client-id client-secret)
-   :stats (map->StatsService stats)})
+   :stats (make-stats-service (:stats services-uri) cb-options client-id client-secret rabbit-opts)})
 
 (defmethod ig/init-key :service.rating.system/app [_ {:keys [db services services-uri client-id]}]
   (app {:db db
@@ -67,13 +67,13 @@
 (s/def ::server-options (m/validator schemas/server-options))
 (s/def ::qname non-empty-string?)
 (s/def ::amqp-url non-empty-string?)
-(s/def ::stats (s/keys :req-un [::qname ::amqp-url]))
+(s/def ::rabbit-opts (s/keys :req-un [::qname ::amqp-url]))
 
 (defmethod ig/pre-init-spec :service.rating.system/db [_]
   (s/keys :req-un [::db-config]))
 
 (defmethod ig/pre-init-spec :service.rating.system/services [_]
-  (s/keys :req-un [::stats ::services-uri ::cb-options ::client-id ::client-secret]))
+  (s/keys :req-un [::rabbit-opts ::services-uri ::cb-options ::client-id ::client-secret]))
 
 (defmethod ig/pre-init-spec :service.rating.system/app [_]
   (s/keys :req-un [::db ::services ::services-uri ::client-id]))

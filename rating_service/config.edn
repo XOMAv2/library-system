@@ -20,10 +20,10 @@
                                 :uri ""}}}
 
  :service.rating.system/services
- {:stats {:qname "utilities.api.stats"
-          :amqp-url #profile {:local "amqp://guest:guest@localhost:8081"
-                              :docker "amqp://guest:guest@rabbitmq:5672"
-                              :heroku ""}}
+ {:rabbit-opts {:qname "utilities.api.stats"
+                :amqp-url #profile {:local "amqp://guest:guest@localhost:8081"
+                                    :docker "amqp://guest:guest@rabbitmq:5672"
+                                    :heroku ""}}
   :cb-options {:failure-threshold-ratio [3 6]
                :delay-ms 10000}
   :client-id "rating"

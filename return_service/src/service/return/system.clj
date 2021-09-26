@@ -11,7 +11,7 @@
             [malli.core :as m]
             [utilities.core :refer [non-empty-string?]]
             [utilities.schemas :as schemas]
-            [utilities.api.stats :refer [StatsAPI map->StatsService]])
+            [utilities.api.stats :refer [StatsAPI make-stats-service]])
   (:gen-class))
 
 #_"ig/init-key"
@@ -26,8 +26,9 @@
     {:tables {:user-limit user-limit-table
               :client client-table}}))
 
-(defmethod ig/init-key :service.return.system/services [_ {:keys [stats services-uri]}]
-  {:stats (map->StatsService stats)})
+(defmethod ig/init-key :service.return.system/services
+  [_ {:keys [rabbit-opts services-uri cb-options client-id client-secret]}]
+  {:stats (make-stats-service (:stats services-uri) cb-options client-id client-secret rabbit-opts)})
 
 (defmethod ig/init-key :service.return.system/app [_ {:keys [db services services-uri client-id]}]
   (app {:db db
@@ -54,18 +55,22 @@
 (s/def ::services (m/validator [:map
                                 [:stats [:fn (fn [x] (satisfies? StatsAPI x))]]]))
 (s/def ::services-uri (m/validator schemas/services-uri))
+(s/def ::cb-options (m/validator [:map
+                                  [:failure-threshold-ratio [:tuple pos-int? pos-int?]]
+                                  [:delay-ms nat-int?]]))
 (s/def ::client-id non-empty-string?)
+(s/def ::client-secret non-empty-string?)
 (s/def ::app fn?)
 (s/def ::server-options (m/validator schemas/server-options))
 (s/def ::qname non-empty-string?)
 (s/def ::amqp-url non-empty-string?)
-(s/def ::stats (s/keys :req-un [::qname ::amqp-url]))
+(s/def ::rabbit-opts (s/keys :req-un [::qname ::amqp-url]))
 
 (defmethod ig/pre-init-spec :service.return.system/db [_]
   (s/keys :req-un [::db-config]))
 
 (defmethod ig/pre-init-spec :service.return.system/services [_]
-  (s/keys :req-un [::stats ::services-uri]))
+  (s/keys :req-un [::rabbit-opts ::services-uri ::cb-options ::client-id ::client-secret]))
 
 (defmethod ig/pre-init-spec :service.return.system/app [_]
   (s/keys :req-un [::db ::services ::services-uri ::client-id]))
