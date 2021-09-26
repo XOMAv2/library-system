@@ -62,10 +62,39 @@
           :body {:type (-> e type str)
                  :message (ex-message e)}})))
 
+(defn reset-total-limit
+  "Changing the total limit leads to a change in the available limit."
+  [{{{:keys [user-uid value]}       :path}   :parameters
+    {{user-limit-table :user-limit} :tables} :db}]
+  (b/cond
+    :let [user-limit (ul-ops/-get-by-user-uid user-limit-table user-uid)]
+
+    (nil? user-limit)
+    {:status 404
+     :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
+
+    :let [delta (- value (:total-limit user-limit))
+          user-limit (try (ul-ops/-update-total-limit-by-user-uid user-limit-table user-uid delta)
+                          (catch Exception e e))]
+
+    (instance? Exception user-limit)
+    (let [e user-limit]
+      {:status 422
+       :body {:type (-> e type str)
+              :message (ex-message e)}})
+
+    (nil? user-limit)
+    {:status 404
+     :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
+
+    :else
+    {:status 200
+     :body user-limit}))
+
 (defn update-total-limit
   "Changing the total limit leads to a change in the available limit."
-  [{{{:keys [user-uid delta]}       :path}   :parameters
-    {{user-limit-table :user-limit} :tables} :db}]
+  [{{{user-uid :user-uid delta :value} :path}   :parameters
+    {{user-limit-table :user-limit}    :tables} :db}]
   (try (if-let [user-limit (ul-ops/-update-total-limit-by-user-uid
                             user-limit-table user-uid delta)]
          {:status 200

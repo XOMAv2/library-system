@@ -87,15 +87,17 @@
           (<= available-limit total-limit))]])
 
 (def user-limit-update
-  [:and
-   [:map
-    [:user-uid {:optional true} uuid?]
-    [:total-limit {:optional true} nat-int?]
-    [:available-limit {:optional true} int?]]
-   [:fn (fn [{:keys [total-limit available-limit]}]
-          (if (and total-limit available-limit)
-            (<= available-limit total-limit)
-            true))]])
+  [:map
+   [:user-uid uuid?]]
+  #_[:and
+     [:map
+      [:user-uid {:optional true} uuid?]
+      [:total-limit {:optional true} nat-int?]
+      [:available-limit {:optional true} int?]]
+     [:fn (fn [{:keys [total-limit available-limit]}]
+            (if (and total-limit available-limit)
+              (<= available-limit total-limit)
+              true))]])
 
 (def user-limit-out
   [:and

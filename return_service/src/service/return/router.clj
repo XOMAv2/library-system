@@ -93,10 +93,19 @@
                               :put {:responses {200 {:body schemas/user-limit-out}
                                                 404 {:body message}}
                                     :handler handlers/restore-user-limit-by-user-uid}}]
-      ["/user-uid/:user-uid/total-limit/:delta"
+      ["/user-uid/:user-uid/total-limit/:value"
+       {:post {:parameters {:path [:map
+                                   [:user-uid uuid?]
+                                   [:value nat-int?]]}
+               :responses {200 {:body schemas/user-limit-out}
+                           422 {:body [:map
+                                       [:type {:optional true} string?]
+                                       [:message string?]]}
+                           404 {:body message}}
+               :handler handlers/reset-total-limit}}
        {:patch {:parameters {:path [:map
                                     [:user-uid uuid?]
-                                    [:delta int?]]}
+                                    [:value int?]]}
                 :responses {200 {:body schemas/user-limit-out}
                             422 {:body [:map
                                         [:type {:optional true} string?]
