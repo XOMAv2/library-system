@@ -48,15 +48,16 @@
           #_"we are already processing bad response branch.")
         (match (:status return-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the return service call."}}
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the return service due to invalid credentials."}}
-          400           {:status 500
-                         :body {:message "Malformed request to the return service."}}
+                         :body {:message "Unable to access the return service due to invalid credentials."
+                                :response return-resp}}
           422           {:status 422
                          :body (:body return-resp)}
           :else         {:status 500
-                         :body {:message "Error during the return service call."}}))
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}))
 
     :else
     {:status 201
@@ -131,17 +132,18 @@
           #_"we are already processing bad response branch.")
         (match (:status return-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the return service call."}}
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the return service due to invalid credentials."}}
-          400           {:status 500
-                         :body {:message "Malformed request to the return service."}}
+                         :body {:message "Unable to access the return service due to invalid credentials."
+                                :response return-resp}}
           422           {:status 422
                          :body (:body return-resp)}
           404           {:status 404
-                         :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
+                         :body (:body return-resp)}
           :else         {:status 500
-                         :body {:message "Error during the return service call."}}))
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}))
 
     :else
     {:status 200
@@ -179,17 +181,18 @@
           #_"we are already processing bad response branch.")
         (match (:status return-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the return service call."}}
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the return service due to invalid credentials."}}
-          400           {:status 500
-                         :body {:message "Malformed request to the return service."}}
+                         :body {:message "Unable to access the return service due to invalid credentials."
+                                :response return-resp}}
           422           {:status 422
                          :body (:body return-resp)}
           404           {:status 404
-                         :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
+                         :body (:body return-resp)}
           :else         {:status 500
-                         :body {:message "Error during the return service call."}}))
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}))
 
     :else
     {:status 200
@@ -207,26 +210,25 @@
     {:status 404
      :body {:message (str "User rating with uid `" uid "` is not found.")}}
 
-    :let [return-resp (-> return-service
-                          (return-api/-delete-user-limit-by-user-uid user-uid)
-                          :status)]
+    :let [return-resp (return-api/-delete-user-limit-by-user-uid return-service user-uid)]
 
-    (not= 200 return-resp)
+    (not= 200 (:status return-resp))
     (do (when (nil? (try (ur-ops/-restore user-rating-table uid)
                          (catch Exception _ nil)))
           #_"TODO: do something when api call returns bad response and "
           #_"we are already processing bad response branch.")
-        (match return-resp
+        (match (:status return-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the return service call."}}
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the return service due to invalid credentials."}}
-          400           {:status 500
-                         :body {:message "Malformed request to the return service."}}
+                         :body {:message "Unable to access the return service due to invalid credentials."
+                                :response return-resp}}
           404           {:status 404
-                         :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
+                         :body (:body return-resp)}
           :else         {:status 500
-                         :body {:message "Error during the return service call."}}))
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}))
 
     :else
     {:status 200
@@ -243,26 +245,25 @@
     {:status 404
      :body {:message (str "User rating with user uid `" user-uid "` is not found.")}}
 
-    :let [return-resp (-> return-service
-                          (return-api/-delete-user-limit-by-user-uid user-uid)
-                          :status)]
+    :let [return-resp (return-api/-delete-user-limit-by-user-uid return-service user-uid)]
 
-    (not= 200 return-resp)
+    (not= 200 (:status return-resp))
     (do (when (nil? (try (ur-ops/-restore-by-user-uid user-rating-table user-uid)
                          (catch Exception _ nil)))
           #_"TODO: do something when api call returns bad response and "
           #_"we are already processing bad response branch.")
-        (match return-resp
+        (match (:status return-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the return service call."}}
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the return service due to invalid credentials."}}
-          400           {:status 500
-                         :body {:message "Malformed request to the return service."}}
+                         :body {:message "Unable to access the return service due to invalid credentials."
+                                :response return-resp}}
           404           {:status 404
-                         :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
+                         :body (:body return-resp)}
           :else         {:status 500
-                         :body {:message "Error during the return service call."}}))
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}))
 
     :else
     {:status 200
@@ -280,26 +281,25 @@
     {:status 404
      :body {:message (str "User rating with uid `" uid "` is not found.")}}
 
-    :let [return-resp (-> return-service
-                          (return-api/-restore-user-limit-by-user-uid user-uid)
-                          :status)]
+    :let [return-resp (return-api/-restore-user-limit-by-user-uid return-service user-uid)]
 
-    (not= 200 return-resp)
+    (not= 200 (:status return-resp))
     (do (when (nil? (try (ur-ops/-delete user-rating-table uid)
                          (catch Exception _ nil)))
           #_"TODO: do something when api call returns bad response and "
           #_"we are already processing bad response branch.")
-        (match return-resp
+        (match (:status return-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the return service call."}}
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the return service due to invalid credentials."}}
-          400           {:status 500
-                         :body {:message "Malformed request to the return service."}}
+                         :body {:message "Unable to access the return service due to invalid credentials."
+                                :response return-resp}}
           404           {:status 404
-                         :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
+                         :body (:body return-resp)}
           :else         {:status 500
-                         :body {:message "Error during the return service call."}}))
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}))
 
     :else
     {:status 200
@@ -316,26 +316,25 @@
     {:status 404
      :body {:message (str "User rating with user uid `" user-uid "` is not found.")}}
 
-    :let [return-resp (-> return-service
-                          (return-api/-restore-user-limit-by-user-uid user-uid)
-                          :status)]
+    :let [return-resp (return-api/-restore-user-limit-by-user-uid return-service user-uid)]
 
-    (not= 200 return-resp)
+    (not= 200 (:status return-resp))
     (do (when (nil? (try (ur-ops/-delete-by-user-uid user-rating-table user-uid)
                          (catch Exception _ nil)))
           #_"TODO: do something when api call returns bad response and "
           #_"we are already processing bad response branch.")
-        (match return-resp
+        (match (:status return-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the return service call."}}
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the return service due to invalid credentials."}}
-          400           {:status 500
-                         :body {:message "Malformed request to the return service."}}
+                         :body {:message "Unable to access the return service due to invalid credentials."
+                                :response return-resp}}
           404           {:status 404
-                         :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
+                         :body (:body return-resp)}
           :else         {:status 500
-                         :body {:message "Error during the return service call."}}))
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}))
 
     :else
     {:status 200

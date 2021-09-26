@@ -35,20 +35,24 @@
           rating (:body rating-resp)]
 
     (not= 201 (:status rating-resp))
-    (do (u-ops/-delete user-table user-uid)
+    (do (when (nil? (try (u-ops/-delete user-table user-uid)
+                         (catch Exception _ nil)))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
         (match (:status rating-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the rating service call."}}
+                         :body {:message "Error during the rating service call."
+                                :response rating-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the rating service due to invalid credentials."}}
+                         :body {:message "Unable to access the rating service due to invalid credentials."
+                                :response rating-resp}}
           502           {:status 502
                          :body (:body rating-resp)}
-          400           {:status 500
-                         :body {:message "Malformed request to the rating service."}}
           422           {:status 422
                          :body (:body rating-resp)}
           :else         {:status 500
-                         :body {:message "Error during the rating service call."}}))
+                         :body {:message "Error during the rating service call."
+                                :response rating-resp}}))
     
     :else
     {:status 201
@@ -119,24 +123,33 @@
     :let [rating-resp (rating-api/-delete-user-rating-by-user-uid rating-service uid)]
 
     (not= 200 (:status rating-resp))
-    (do (u-ops/-restore user-table uid)
+    (do (when (nil? (try (u-ops/-restore user-table uid)
+                         (catch Exception _ nil)))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
         (match (:status rating-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the rating service call."}}
+                         :body {:message "Error during the rating service call."
+                                :response rating-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the rating service due to invalid credentials."}}
+                         :body {:message "Unable to access the rating service due to invalid credentials."
+                                :response rating-resp}}
+          404           {:status 404
+                         :body (:body rating-resp)}
           502           {:status 502
                          :body (:body rating-resp)}
-          400           {:status 500
-                         :body {:message "Malformed request to the rating service."}}
           :else         {:status 500
-                         :body {:message "Error during the rating service call."}}))
+                         :body {:message "Error during the rating service call."
+                                :response rating-resp}}))
     
     :let [library-resp (library-api/-update-all-orders library-service
                                                        {:user-uid uid} {:user-uid nil})]
     
     (not= 200 (:status library-resp))
-    (do (u-ops/-restore user-table uid)
+    (do (when (nil? (try (u-ops/-restore user-table uid)
+                         (catch Exception _ nil)))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
         (when (not= 200 (-> rating-service
                             (rating-api/-restore-user-rating-by-user-uid uid)
                             :status))
@@ -144,15 +157,16 @@
           #_"we are already processing bad response branch.")
         (match (:status library-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the library service call."}}
+                         :body {:message "Error during the library service call."
+                                :response library-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the library service due to invalid credentials."}}
-          400           {:status 500
-                         :body {:message "Malformed request to the library service."}}
+                         :body {:message "Unable to access the library service due to invalid credentials."
+                                :response library-resp}}
           422           {:status 422
                          :body (:body library-resp)}
           :else         {:status 500
-                         :body {:message "Error during the library service call."}}))
+                         :body {:message "Error during the library service call."
+                                :response library-resp}}))
 
     :else
     {:status 200
@@ -173,18 +187,24 @@
     :let [rating-resp (rating-api/-restore-user-rating-by-user-uid rating-service uid)]
    
     (not= 200 (:status rating-resp))
-    (do (u-ops/-delete user-table uid)
+    (do (when (nil? (try (u-ops/-delete user-table uid)
+                         (catch Exception _ nil)))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
         (match (:status rating-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the rating service call."}}
+                         :body {:message "Error during the rating service call."
+                                :response rating-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the rating service due to invalid credentials."}}
+                         :body {:message "Unable to access the rating service due to invalid credentials."
+                                :response rating-resp}}
+          404           {:status 404
+                         :body (:body rating-resp)}
           502           {:status 502
                          :body (:body rating-resp)}
-          400           {:status 500
-                         :body {:message "Malformed request to the rating service."}}
           :else         {:status 500
-                         :body {:message "Error during the rating service call."}}))
+                         :body {:message "Error during the rating service call."
+                                :response rating-resp}}))
 
     :else
     {:status 200

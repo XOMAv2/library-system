@@ -79,12 +79,14 @@
                                                  [:type {:optional true} string?]
                                                  [:message string?]]}
                                      500 {:body any?}
-                                     502 {:body message}}
+                                     502 {:body message
+                                          :response any?}}
                          :handler handlers/delete-book}
                 :put {:responses {200 {:body schemas/book-out}
                                   404 {:body message}
                                   500 {:body any?}
-                                  502 {:body message}}
+                                  502 {:body message
+                                       :response any?}}
                       :handler handlers/restore-book}
                 :patch {:parameters {:body schemas/book-update}
                         :responses {200 {:body schemas/book-out}

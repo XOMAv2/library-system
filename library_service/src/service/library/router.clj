@@ -146,7 +146,8 @@
                                           [:type {:optional true} string?]
                                           [:message string?]]}
                               500 {:body any?}
-                              502 {:body message}}
+                              502 {:body message
+                                   :response any?}}
                   :handler o-handlers/add-order}
            :patch {:parameters {:query schemas/order-query}
                    :responses {200 {:body [:map [:orders [:sequential schemas/order-out]]]}
@@ -169,7 +170,8 @@
                                                 [:type {:optional true} string?]
                                                 [:message string?]]}
                                     500 {:body any?}
-                                    502 {:body message}}
+                                    502 {:body message
+                                         :response any?}}
                         :handler o-handlers/update-order}}]]
 
      ["/auth" {:swagger {:tags ["auth"]}}

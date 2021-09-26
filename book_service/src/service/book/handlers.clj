@@ -67,24 +67,29 @@
                                                                    {:book-uid uid})]
 
     (not= 200 (:status library-book-resp))
-    (do (b-ops/-restore book-table uid)
+    (do (when (nil? (try (b-ops/-restore book-table uid)
+                         (catch Exception _ nil)))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
         (match (:status library-book-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the library service call."}}
+                         :body {:message "Error during the library service call."
+                                :response library-book-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the library service due to invalid credentials."}}
-          400           {:status 500
-                         :body {:message "Malformed request to the library service."}}
-          422           {:status 422
-                         :body (:body library-book-resp)}
+                         :body {:message "Unable to access the library service due to invalid credentials."
+                                :response library-book-resp}}
           :else         {:status 500
-                         :body {:message "Error during the library service call."}}))
+                         :body {:message "Error during the library service call."
+                                :response library-book-resp}}))
 
     :let [order-resp (library-api/-update-all-orders library-service
                                                      {:book-uid uid} {:book-uid nil})]
 
     (not= 200 (:status order-resp))
-    (do (b-ops/-restore book-table uid)
+    (do (when (nil? (try (b-ops/-restore book-table uid)
+                         (catch Exception _ nil)))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
         (when (not= 200 (-> library-service
                             (library-api/-restore-all-library-books {:book-uid uid})
                             :status))
@@ -92,15 +97,16 @@
           #_"we are already processing bad response branch.")
         (match (:status order-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the library service call."}}
+                         :body {:message "Error during the library service call."
+                                :response order-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the library service due to invalid credentials."}}
-          400           {:status 500
-                         :body {:message "Malformed request to the library service."}}
+                         :body {:message "Unable to access the library service due to invalid credentials."
+                                :response order-resp}}
           422           {:status 422
                          :body (:body order-resp)}
           :else         {:status 500
-                         :body {:message "Error during the library service call."}}))
+                         :body {:message "Error during the library service call."
+                                :response order-resp}}))
 
     :else
     {:status 200
@@ -118,21 +124,24 @@
     {:status 404
      :body {:message (str "Book with uid `" uid "` is not found.")}}
 
-    :let [library-resp (-> library-service
-                           (library-api/-restore-all-library-books {:book-uid uid})
-                           :status)]
+    :let [library-resp (library-api/-restore-all-library-books library-service
+                                                               {:book-uid uid})]
 
-    (not= 200 library-resp)
-    (do (b-ops/-delete book-table uid)
-        (match library-resp
+    (not= 200 (:status library-resp))
+    (do (when (nil? (try (b-ops/-delete book-table uid)
+                         (catch Exception _ nil)))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        (match (:status library-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the library service call."}}
+                         :body {:message "Error during the library service call."
+                                :response library-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the library service due to invalid credentials."}}
-          400           {:status 500
-                         :body {:message "Malformed request to the library service."}}
+                         :body {:message "Unable to access the library service due to invalid credentials."
+                                :response library-resp}}
           :else         {:status 500
-                         :body {:message "Error during the library service call."}}))
+                         :body {:message "Error during the library service call."
+                                :response library-resp}}))
 
     :else
     {:status 200

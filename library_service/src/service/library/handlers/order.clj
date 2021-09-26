@@ -28,15 +28,18 @@
     (not= 200 (:status return-resp))
     (match (:status return-resp)
       (:or 500 503) {:status 502
-                     :body {:message "Error during the return service call."}}
+                     :body {:message "Error during the return service call."
+                            :response return-resp}}
       (:or 401 403) {:status 500
-                     :body {:message "Unable to acces the return service due to invalid credentials."}}
+                     :body {:message "Unable to access the return service due to invalid credentials."
+                            :response return-resp}}
       404           {:status 404
-                     :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
+                     :body (:body return-resp)}
       422           {:status 422
                      :body (:body return-resp)}
       :else         {:status 500
-                     :body {:message "Error during the return service call."}})
+                     :body {:message "Error during the return service call."
+                            :response return-resp}})
     
     :let [order (try (o-ops/-add order-table order)
                      (catch Exception e e))]
@@ -118,15 +121,18 @@
     (not= 200 (:status return-resp))
     (match (:status return-resp)
       (:or 500 503) {:status 502
-                     :body {:message "Error during the return service call."}}
+                     :body {:message "Error during the return service call."
+                            :response return-resp}}
       (:or 401 403) {:status 500
-                     :body {:message "Unable to acces the return service due to invalid credentials."}}
+                     :body {:message "Unable to access the return service due to invalid credentials."
+                            :response return-resp}}
       404           {:status 404
-                     :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
+                     :body (:body return-resp)}
       422           {:status 422
                      :body (:body return-resp)}
       :else         {:status 500
-                     :body {:message "Error during the return service call."}})
+                     :body {:message "Error during the return service call."
+                            :response return-resp}})
 
     :let [order (try (o-ops/-update order-table uid order)
                      (catch Exception e e))]
@@ -167,15 +173,18 @@
           #_"we are already processing bad response branch.")
         (match (:status rating-resp)
           (:or 500 503) {:status 502
-                         :body {:message "Error during the rating service call."}}
+                         :body {:message "Error during the rating service call."
+                                :response return-resp}}
           (:or 401 403) {:status 500
-                         :body {:message "Unable to acces the rating service due to invalid credentials."}}
+                         :body {:message "Unable to access the rating service due to invalid credentials."
+                                :response return-resp}}
           404           {:status 404
-                         :body {:message (str "User rating with user uid `" user-uid "` is not found.")}}
+                         :body (:body return-resp)}
           422           {:status 422
                          :body (:body rating-resp)}
           :else         {:status 500
-                         :body {:message "Error during the rating service call."}}))
+                         :body {:message "Error during the rating service call."
+                                :response return-resp}}))
     
     :else
     {:status 200

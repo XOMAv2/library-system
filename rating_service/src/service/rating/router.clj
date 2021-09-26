@@ -65,7 +65,8 @@
                                           [:type {:optional true} string?]
                                           [:message string?]]}
                               500 {:body any?}
-                              502 {:body message}}
+                              502 {:body message
+                                   :response any?}}
                   :handler handlers/add-user-rating}}]
       ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
 
@@ -75,12 +76,14 @@
                 :delete {:responses {200 {:body schemas/user-rating-out}
                                      404 {:body message}
                                      500 {:body any?}
-                                     502 {:body message}}
+                                     502 {:body message
+                                          :response any?}}
                          :handler handlers/delete-user-rating}
                 :put {:responses {200 {:body schemas/user-rating-out}
                                   404 {:body message}
                                   500 {:body any?}
-                                  502 {:body message}}
+                                  502 {:body message
+                                       :response any?}}
                       :handler handlers/restore-user-rating}
                 :patch {:parameters {:body schemas/user-rating-update}
                         :responses {200 {:body schemas/user-rating-out}
@@ -89,7 +92,8 @@
                                                 [:message string?]]}
                                     404 {:body message}
                                     500 {:body any?}
-                                    502 {:body message}}
+                                    502 {:body message
+                                         :response any?}}
                         :handler handlers/update-user-rating}}]
       ["/user-uid/:user-uid" {:get {:parameters {:path [:map [:user-uid uuid?]]}
                                     :responses {200 {:body schemas/user-rating-out}
@@ -98,12 +102,14 @@
                               :delete {:responses {200 {:body schemas/user-rating-out}
                                                    404 {:body message}
                                                    500 {:body any?}
-                                                   502 {:body message}}
+                                                   502 {:body message
+                                                        :response any?}}
                                        :handler handlers/delete-user-rating-by-user-uid}
                               :put {:responses {200 {:body schemas/user-rating-out}
                                                 404 {:body message}
                                                 500 {:body any?}
-                                                502 {:body message}}
+                                                502 {:body message
+                                                     :response any?}}
                                     :handler handlers/restore-user-rating-by-user-uid}}]
       ["/user-uid/:user-uid/rating/:condition"
        {:patch {:parameters {:path [:map
@@ -115,7 +121,8 @@
                                         [:type {:optional true} string?]
                                         [:message string?]]}
                             500 {:body any?}
-                            502 {:body message}}
+                            502 {:body message
+                                 :response any?}}
                 :handler handlers/update-rating-by-user-uid}}]]
 
      ["/auth" {:swagger {:tags ["auth"]}}
