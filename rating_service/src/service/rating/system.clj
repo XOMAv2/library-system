@@ -11,6 +11,7 @@
             [malli.core :as m]
             [utilities.core :refer [non-empty-string?]]
             [utilities.schemas :as schemas]
+            [utilities.api.return :refer [ReturnAPI make-return-service]]
             [utilities.api.stats :refer [StatsAPI map->StatsService]])
   (:gen-class))
 
@@ -26,11 +27,16 @@
     {:tables {:user-rating user-rating-table
               :client client-table}}))
 
-(defmethod ig/init-key :service.rating.system/services [_ {:keys [stats services-uri]}]
-  {:stats (map->StatsService stats)})
+(defmethod ig/init-key :service.rating.system/services
+  [_ {:keys [stats services-uri cb-options client-id client-secret]}]
+  {:return (make-return-service (:return services-uri) cb-options client-id client-secret)
+   :stats (map->StatsService stats)})
 
-(defmethod ig/init-key :service.rating.system/app [_ {:keys [db services services-uri]}]
-  (app db services services-uri))
+(defmethod ig/init-key :service.rating.system/app [_ {:keys [db services services-uri client-id]}]
+  (app {:db db
+        :services services
+        :services-uri services-uri
+        :client-id client-id}))
 
 (defmethod ig/init-key :service.rating.system/server [_ {:keys [app server-options]}]
   (run-server app server-options))
@@ -49,8 +55,14 @@
                         [:user-rating [:fn (fn [x] (satisfies? UserRatingTableOperations x))]]
                         [:client [:fn (fn [x] (satisfies? ClientTableOperations x))]]]]]))
 (s/def ::services (m/validator [:map
+                                [:return [:fn (fn [x] (satisfies? ReturnAPI x))]]
                                 [:stats [:fn (fn [x] (satisfies? StatsAPI x))]]]))
 (s/def ::services-uri (m/validator schemas/services-uri))
+(s/def ::cb-options (m/validator [:map
+                                  [:failure-threshold-ratio [:tuple pos-int? pos-int?]]
+                                  [:delay-ms nat-int?]]))
+(s/def ::client-id non-empty-string?)
+(s/def ::client-secret non-empty-string?)
 (s/def ::app fn?)
 (s/def ::server-options (m/validator schemas/server-options))
 (s/def ::qname non-empty-string?)
@@ -61,10 +73,10 @@
   (s/keys :req-un [::db-config]))
 
 (defmethod ig/pre-init-spec :service.rating.system/services [_]
-  (s/keys :req-un [::stats ::services-uri]))
+  (s/keys :req-un [::stats ::services-uri ::cb-options ::client-id ::client-secret]))
 
 (defmethod ig/pre-init-spec :service.rating.system/app [_]
-  (s/keys :req-un [::db ::services ::services-uri]))
+  (s/keys :req-un [::db ::services ::services-uri ::client-id]))
 
 (defmethod ig/pre-init-spec :service.rating.system/server [_]
   (s/keys :req-un [::app ::server-options]))

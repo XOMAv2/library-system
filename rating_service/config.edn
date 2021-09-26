@@ -24,12 +24,17 @@
           :amqp-url #profile {:local "amqp://guest:guest@localhost:8081"
                               :docker "amqp://guest:guest@rabbitmq:5672"
                               :heroku ""}}
-  :services-uri #ref [:service.rating.system/app :services-uri]}
+  :cb-options {:failure-threshold-ratio [3 6]
+               :delay-ms 10000}
+  :client-id "rating"
+  :client-secret "rating"
+  :services-uri #profile #include "../services_uri.edn"}
 
  :service.rating.system/app
  {:db #ig/ref :service.rating.system/db
   :services #ig/ref :service.rating.system/services
-  :services-uri #profile #include "../services_uri.edn"}
+  :services-uri #ref [:service.rating.system/services :services-uri]
+  :client-id #ref [:service.rating.system/services :client-id]}
 
  :service.rating.system/server
  {:app #ig/ref :service.rating.system/app
