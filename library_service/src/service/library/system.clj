@@ -18,7 +18,6 @@
             [utilities.api.book :refer [BookAPI make-book-service]]
             [utilities.api.rating :refer [RatingAPI make-rating-service]]
             [utilities.api.return :refer [ReturnAPI make-return-service]]
-            [utilities.api.session :refer [SessionAPI make-session-service]]
             [utilities.api.stats :refer [StatsAPI make-stats-service]])
   (:gen-class))
 
@@ -47,7 +46,6 @@
   {:book (make-book-service (:book services-uri) cb-options client-id client-secret)
    :rating (make-rating-service (:rating services-uri) cb-options client-id client-secret)
    :return (make-return-service (:return services-uri) cb-options client-id client-secret)
-   :session (make-session-service (:session services-uri) cb-options client-id client-secret)
    :stats (make-stats-service (:stats services-uri) cb-options client-id client-secret rabbit-opts)})
 
 (defmethod ig/init-key :service.library.system/app [_ {:keys [db services services-uri client-id]}]
@@ -78,7 +76,6 @@
                                 [:book [:fn (fn [x] (satisfies? BookAPI x))]]
                                 [:rating [:fn (fn [x] (satisfies? RatingAPI x))]]
                                 [:return [:fn (fn [x] (satisfies? ReturnAPI x))]]
-                                [:session [:fn (fn [x] (satisfies? SessionAPI x))]]
                                 [:stats [:fn (fn [x] (satisfies? StatsAPI x))]]]))
 (s/def ::services-uri (m/validator schemas/services-uri))
 (s/def ::cb-options (m/validator [:map

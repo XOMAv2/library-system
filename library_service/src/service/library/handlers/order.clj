@@ -6,7 +6,6 @@
             [utilities.api.book :as book-api]
             [utilities.api.rating :as rating-api]
             [utilities.api.return :as return-api]
-            [utilities.api.session :as session-api]
             [better-cond.core :as b]
             [clojure.core.match :refer [match]]))
 
@@ -79,14 +78,11 @@
     (let [book (book-api/-get-book book-service (:book-uid order))
           book (when (= 200 (:status book))
                  {:book (:body book)})
-          user (session-api/-get-user session-service (:user-uid order))
-          user (when (= 200 (:status user))
-                 {:user (:body user)})
           library (l-ops/-get library-table (:library-uid order))
           library (when (some? library)
                     {:library library})]
       {:status 200
-       :body (merge order book user library)})))
+       :body (merge order book library)})))
 
 (defn get-all-orders
   [{{order-query          :query}  :parameters

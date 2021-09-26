@@ -226,7 +226,6 @@
     [:book-uid [:maybe uuid?]]
     [:book (mu/update-properties book-out assoc :optional true)]
     [:user-uid [:maybe uuid?]]
-    [:user (mu/update-properties user-out assoc :optional true)]
     [:booking-date inst?]
     [:receiving-date [:maybe inst?]]
     [:return-date [:maybe inst?]]
