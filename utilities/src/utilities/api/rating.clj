@@ -1,7 +1,7 @@
 (ns utilities.api.rating
   (:require [utilities.core :refer [remove-trailing-slash]]
             [utilities.api.core
-             :refer [cb-sync-request with-relogin make-cb make-request]
+             :refer [cb-sync-request make-cb make-request]
              :rename {make-request mr}])
   (:import [net.jodah.failsafe CircuitBreaker]))
 

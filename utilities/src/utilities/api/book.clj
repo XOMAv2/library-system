@@ -1,6 +1,6 @@
 (ns utilities.api.book
   (:require [utilities.core :refer [remove-trailing-slash]]
-            [utilities.api.core :refer [cb-sync-request with-relogin make-cb make-request]])
+            [utilities.api.core :refer [cb-sync-request make-cb make-request]])
   (:import [net.jodah.failsafe CircuitBreaker]))
 
 (defprotocol BookAPI
