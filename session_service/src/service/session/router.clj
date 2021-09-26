@@ -111,7 +111,10 @@
                                      404 {:body message}}
                          :handler handlers/refresh-tokens}}]
       ["/verify" {:post {:parameters {:body [:map [:access-token schemas/non-empty-string]]}
-                         :responses {200 {}
+                         :responses {200 {:body [:map
+                                                 [:uid uuid?]
+                                                 [:role schemas/role]
+                                                 [:exp nat-int?]]}
                                      401 {:body message}}
                          :handler handlers/verify-token}}]]]
     {:data {:db db

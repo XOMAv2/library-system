@@ -242,10 +242,10 @@
 
 (defn verify-token
   [{{{:keys [access-token]} :body} :parameters}]
-  (try (auth/unsign-jwt access-token)
-       {:status 200
-        :body ""
-        :headers {}}
+  (try (let [credentials (auth/unsign-jwt access-token)
+             credentials (update credentials :uid #(java.util.UUID/fromString %))]
+         {:status 200
+          :body credentials})
        (catch Exception _
          {:status 401
           :body {:message "Token seems corrupt or manipulated."}})))
