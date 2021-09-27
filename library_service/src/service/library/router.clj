@@ -88,8 +88,8 @@
      
      ["/library-books" {:swagger {:tags ["library-books"]}
 
-                 :roles #{"admin"}
-                 :middleware [authorization-middleware]}
+                        :roles #{"admin"}
+                        :middleware [authorization-middleware]}
       ["" {:get {:parameters {:query schemas/library-book-query}
                  :responses {200 {:body [:map [:library-books [:sequential schemas/library-book-out]]]}}
                  :handler lb-handlers/get-all-library-books}
