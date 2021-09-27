@@ -16,7 +16,14 @@
 **/.hgignore
 **/.hg/
 
+**/.lein-deps-sum
+**/.lein-repl-history
+**/.lein-plugins/
+**/.repl
+**/.rebel_readline_history
+
 **/.calva/
 **/out/
 _doc/
 **/.cache/
+**/cljs-out/
