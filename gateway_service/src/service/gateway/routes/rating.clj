@@ -1,14 +1,19 @@
 (ns service.gateway.routes.rating
   (:require [utilities.api.rating :as rating-api]
             [utilities.schemas :as schemas :refer [message]]
-            [service.gateway.util :refer [api-fn]]))
+            [service.gateway.util :refer [api-fn]]
+            [utilities.auth :refer [authorization-middleware]]))
 
 (def rating-routes
   ["/ratings" {:swagger {:tags ["ratings"]}}
-   ["" {:get {:responses {200 {:body [:map [:ratings [:sequential schemas/user-rating-out]]]}}
+   ["" {:get {:roles nil
+              :middleware [authorization-middleware]
+              :responses {200 {:body [:map [:ratings [:sequential schemas/user-rating-out]]]}}
               :handler (api-fn []
                                (rating-api/-get-all-user-ratings rating-service))}
-        :post {:parameters {:body schemas/user-rating-add}
+        :post {:roles #{"admin"}
+               :middleware [authorization-middleware]
+               :parameters {:body schemas/user-rating-add}
                :responses {201 {:body schemas/user-rating-out
                                 :headers {"Location" {:schema {:type "string"}}}}
                            422 {:body [:map
@@ -21,25 +26,33 @@
                                 (rating-api/-add-user-rating rating-service user-rating))}}]
    ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
 
-             :get {:responses {200 {:body schemas/user-rating-out}
+             :get {:roles nil
+                   :middleware [authorization-middleware]
+                   :responses {200 {:body schemas/user-rating-out}
                                404 {:body message}}
                    :handler (api-fn [{{:keys [uid]} :path}]
                                     (rating-api/-get-user-rating rating-service uid))}
-             :delete {:responses {200 {:body schemas/user-rating-out}
+             :delete {:roles #{"admin"}
+                      :middleware [authorization-middleware]
+                      :responses {200 {:body schemas/user-rating-out}
                                   404 {:body message}
                                   500 {:body any?}
                                   502 {:body message
                                        :response any?}}
                       :handler (api-fn [{{:keys [uid]} :path}]
                                        (rating-api/-delete-user-rating rating-service uid))}
-             :put {:responses {200 {:body schemas/user-rating-out}
+             :put {:roles #{"admin"}
+                   :middleware [authorization-middleware]
+                   :responses {200 {:body schemas/user-rating-out}
                                404 {:body message}
                                500 {:body any?}
                                502 {:body message
                                     :response any?}}
                    :handler (api-fn [{{:keys [uid]} :path}]
                                     (rating-api/-restore-user-rating rating-service uid))}
-             :patch {:parameters {:body schemas/user-rating-update}
+             :patch {:roles #{"admin"}
+                     :middleware [authorization-middleware]
+                     :parameters {:body schemas/user-rating-update}
                      :responses {200 {:body schemas/user-rating-out}
                                  422 {:body [:map
                                              [:type {:optional true} string?]
@@ -49,28 +62,41 @@
                                  502 {:body message
                                       :response any?}}
                      :handler (api-fn [{{:keys [uid]} :path user-rating :body}]
-                                      (rating-api/-update-user-rating rating-service uid user-rating))}}]
-   ["/user-uid/:user-uid" {:get {:parameters {:path [:map [:user-uid uuid?]]}
+                                      (rating-api/-update-user-rating rating-service
+                                                                      uid
+                                                                      user-rating))}}]
+   ["/user-uid/:user-uid" {:get {:roles nil
+                                 :middleware [authorization-middleware]
+                                 :parameters {:path [:map [:user-uid uuid?]]}
                                  :responses {200 {:body schemas/user-rating-out}
                                              404 {:body message}}
                                  :handler (api-fn [{{:keys [user-uid]} :path}]
-                                                  (rating-api/-get-user-rating-by-user-uid rating-service user-uid))}
-                           :delete {:responses {200 {:body schemas/user-rating-out}
+                                                  (rating-api/-get-user-rating-by-user-uid rating-service
+                                                                                           user-uid))}
+                           :delete {:roles #{"admin"}
+                                    :middleware [authorization-middleware]
+                                    :responses {200 {:body schemas/user-rating-out}
                                                 404 {:body message}
                                                 500 {:body any?}
                                                 502 {:body message
                                                      :response any?}}
                                     :handler (api-fn [{{:keys [user-uid]} :path}]
-                                                     (rating-api/-delete-user-rating-by-user-uid rating-service user-uid))}
-                           :put {:responses {200 {:body schemas/user-rating-out}
+                                                     (rating-api/-delete-user-rating-by-user-uid rating-service
+                                                                                                 user-uid))}
+                           :put {:roles #{"admin"}
+                                 :middleware [authorization-middleware]
+                                 :responses {200 {:body schemas/user-rating-out}
                                              404 {:body message}
                                              500 {:body any?}
                                              502 {:body message
                                                   :response any?}}
                                  :handler (api-fn [{{:keys [user-uid]} :path}]
-                                                  (rating-api/-restore-user-rating-by-user-uid rating-service user-uid))}}]
+                                                  (rating-api/-restore-user-rating-by-user-uid rating-service
+                                                                                               user-uid))}}]
    ["/user-uid/:user-uid/rating/:condition"
-    {:patch {:parameters {:path [:map
+    {:patch {:roles #{"admin"}
+             :middleware [authorization-middleware]
+             :parameters {:path [:map
                                  [:user-uid uuid?]
                                  [:condition schemas/condition]]}
              :responses {200 {:body schemas/user-rating-out}
@@ -82,4 +108,6 @@
                          502 {:body message
                               :response any?}}
              :handler (api-fn [{{:keys [user-uid condition]} :path}]
-                              (rating-api/-update-rating-by-user-uid rating-service user-uid condition))}}]])
+                              (rating-api/-update-rating-by-user-uid rating-service
+                                                                     user-uid
+                                                                     condition))}}]])

@@ -21,8 +21,7 @@
             [service.gateway.routes.session :refer [session-routes]]
             [service.gateway.routes.stats :refer [stats-routes]]
             [utilities.muuntaja :refer [muuntaja-instance]]
-            [service.gateway.middlewares :refer [authentication-middleware]]
-            [utilities.auth :refer [authorization-middleware]]))
+            [service.gateway.middlewares :refer [authentication-middleware]]))
 
 #_"TODO: swagger query params explode"
 
@@ -36,18 +35,18 @@
                              :swagger {:info {:title "gateway-api"
                                               :description "Swagger 2.0"}}
                              :handler (create-swagger-handler)}}]
-     book-routes
-     library-routes
-     rating-routes
-     return-routes
-     session-routes
-     stats-routes]
+     ["" {:responses {500 {:body any?}}}
+      book-routes
+      library-routes
+      rating-routes
+      return-routes
+      session-routes
+      stats-routes]]
     {:data {:services services
             :stats/service client-id
             :coercion reitit.coercion.malli/coercion #_"Schemas closing, extra keys stripping, ..."
             #_"... transformers adding for json-body, path and query params."
             :muuntaja muuntaja-instance
-            #_#_:roles nil
             :middleware [swagger/swagger-feature #_"Swagger feature."
                          format-negotiate-middleware #_"Content negotiation."
                          format-response-middleware #_"Response body encoding."
@@ -58,8 +57,7 @@
                          coercion/coerce-request-middleware #_"Request parameters coercion."
                          request->stats-middleware
                          response->stats-middleware
-                         authentication-middleware #_"Obtaining data from authorization header."
-                         #_authorization-middleware]}
+                         authentication-middleware #_"Obtaining data from authorization header."]}
      #_#_:reitit.middleware/transform print-request-diffs #_"Middleware chain transformation."
      :validate reitit.ring.spec/validate #_"Routes structure validation."
      :reitit.spec/explain expound-str #_"Routes structure error explanation."})
