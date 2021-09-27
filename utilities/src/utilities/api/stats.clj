@@ -9,10 +9,10 @@
 (defprotocol StatsAPI
   (-add-stat-record [this stat-record] "")
   (-get-stat-record [this uid] "")
-  (-get-all-stat-records [this] "")
+  (-get-all-stat-records [this] [this service] "")
   (-update-stat-record [this uid stat-record] "")
   (-delete-stat-record [this uid] "")
-  (-delete-all-stat-records [this uid] "")
+  (-delete-all-stat-records [this] "")
   (-get-token [this] "")
   (-refresh-token [this] "")
   (-verify-token [this] ""))
@@ -34,9 +34,10 @@
       (rmq/close conn)))
   (-get-stat-record [this uid]                (make-request :get (str "/api/stats/" uid)))
   (-get-all-stat-records [this]               (make-request :get "/api/stats"))
+  (-get-all-stat-records [this service]       (make-request :get "/api/stats" nil {:service service}))
   (-update-stat-record [this uid stat-record] (make-request :patch (str "/api/stats/" uid) stat-record))
   (-delete-stat-record [this uid]             (make-request :delete (str "/api/stats/" uid)))
-  (-delete-all-stat-records [this uid]        (make-request :delete "/api/stats"))
+  (-delete-all-stat-records [this]            (make-request :delete "/api/stats"))
   (-get-token [this]
     (cb-sync-request cb {:method :post
                          :url (str (remove-trailing-slash uri) "/api/auth/login")

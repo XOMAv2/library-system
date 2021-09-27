@@ -5,10 +5,11 @@
 
 (defprotocol SessionAPI
   (-add-user [this user] "")
-  (-get-user [this access-token uid] "")
-  (-get-all-users [this access-token] "")
-  (-update-user [this access-token uid user] "")
-  (-delete-user [this access-token uid] "")
+  (-get-user [this authorization uid] "")
+  (-get-all-users [this authorization] "")
+  (-update-user [this authorization uid user] "")
+  (-delete-user [this authorization uid] "")
+  (-restore-user [this authorization uid] "")
   (-get-tokens [this email password] "")
   (-refresh-tokens [this refresh-token] "")
   (-verify-token [this access-token] ""))
@@ -21,27 +22,32 @@
                          :headers {"Content-Type" "application/edn; charset=utf-8"
                                    "Accept" "application/edn; charset=utf-8"}
                          :body (str user)}))
-  (-get-user [this access-token uid]
+  (-get-user [this authorization uid]
     (cb-sync-request cb {:method :get
                          :url (str (remove-trailing-slash uri) "/api/users/" uid)
-                         :headers {"Authorization" (str "Bearer " access-token)
+                         :headers {"Authorization" authorization
                                    "Accept" "application/edn; charset=utf-8"}}))
-  (-get-all-users [this access-token]
+  (-get-all-users [this authorization]
     (cb-sync-request cb {:method :get
                          :url (str (remove-trailing-slash uri) "/api/users")
-                         :headers {"Authorization" (str "Bearer " access-token)
+                         :headers {"Authorization" authorization
                                    "Accept" "application/edn; charset=utf-8"}}))
-  (-update-user [this access-token uid user]
+  (-update-user [this authorization uid user]
     (cb-sync-request cb {:method :patch
                          :url (str (remove-trailing-slash uri) "/api/users/" uid)
-                         :headers {"Authorization" (str "Bearer " access-token)
+                         :headers {"Authorization" authorization
                                    "Content-Type" "application/edn; charset=utf-8"
                                    "Accept" "application/edn; charset=utf-8"}
                          :body (str user)}))
-  (-delete-user [this access-token uid]
+  (-delete-user [this authorization uid]
     (cb-sync-request cb {:method :delete
                          :url (str (remove-trailing-slash uri) "/api/users/" uid)
-                         :headers {"Authorization" (str "Bearer " access-token)
+                         :headers {"Authorization" authorization
+                                   "Accept" "application/edn; charset=utf-8"}}))
+  (-restore-user [this authorization uid]
+    (cb-sync-request cb {:method :put
+                         :url (str (remove-trailing-slash uri) "/api/users/" uid)
+                         :headers {"Authorization" authorization
                                    "Accept" "application/edn; charset=utf-8"}}))
   (-get-tokens [this email password]
     (cb-sync-request cb {:method :post
