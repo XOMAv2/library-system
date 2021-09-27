@@ -8,8 +8,14 @@
                  [com.github.seancorfield/next.jdbc "1.2.689"]
                  [org.postgresql/postgresql "42.2.23.jre7"]
                  [metosin/reitit "0.5.15"]
+                 [expound "0.8.9"]
                  [http-kit "2.5.3"]
-                 [javax.servlet/servlet-api "2.5"]]
+                 [javax.servlet/servlet-api "2.5"]
+                 [integrant "0.8.0"]
+                 [buddy/buddy-auth "3.0.1"]
+                 [camel-snake-kebab "0.4.2"]
+                 [better-cond "2.1.0"]
+                 [org.clojure/core.match "1.0.0"]]
   :main ^:skip-aot service.gateway.system
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all

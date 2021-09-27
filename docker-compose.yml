@@ -28,29 +28,15 @@ services:
             - service_network
             - rabbitmq_network
 
-    gateway_db:
-        image: postgres
-        restart: always
-        container_name: gateway_db
-        ports: ["4001:5432"]
-        environment:
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
-            POSTGRES_DB: gateway_db
-        volumes: [gateway_volume:/var/lib/postgresql/data]
-        networks: 
-            - gateway_network
     gateway:
         build:
             context: ./
             dockerfile: ./Dockerfile
             args: {APPNAME: gateway_service}
-        depends_on: [gateway_db, stats, session, book, library, rating, return]
+        depends_on: [stats, session, book, library, rating, return]
         container_name: gateway
         ports: ["3001:3000"]
-        links: [gateway_db:postgres]
-        networks: 
-            - gateway_network
+        networks:
             - service_network
             - rabbitmq_network
 
@@ -195,7 +181,6 @@ services:
         
 volumes:
     book_volume: {}
-    gateway_volume: {}
     library_volume: {}
     rating_volume: {}
     return_volume: {}
@@ -206,7 +191,6 @@ volumes:
 networks:
     service_network: {driver: bridge}
     book_network: {driver: bridge}
-    gateway_network: {driver: bridge}
     library_network: {driver: bridge}
     rating_network: {driver: bridge}
     return_network: {driver: bridge}
