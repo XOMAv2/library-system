@@ -1,0 +1,20 @@
+{
+	"name": "service.frontend",
+	"scripts": {
+		"ancient": "clojure -Sdeps '{:deps {com.github.liquidz/antq {:mvn/version \"RELEASE\"}}}' -m antq.core",
+		"watch": "npx shadow-cljs watch app browser-test karma-test",
+		"release": "npx shadow-cljs release app",
+		"build-report": "npx shadow-cljs run shadow.cljs.build-report app target/build-report.html"
+	},
+	"dependencies": {
+		"react": "^17.0.2",
+		"react-dom": "^17.0.2"
+	},
+	"devDependencies": {
+		"shadow-cljs": "^2.15.10",
+		"autoprefixer": "^10.3.6",
+		"cssnano": "^5.0.8",
+		"postcss-cli": "^9.0.1",
+		"tailwindcss": "^2.2.16"
+	}
+}

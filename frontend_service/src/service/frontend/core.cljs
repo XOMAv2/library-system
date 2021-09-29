@@ -1,38 +1,21 @@
-(ns ^:figwheel-hooks service.frontend.core
-  (:require [goog.dom :as gdom]
-            [reagent.core :as reagent :refer [atom]]
-            [reagent.dom :as rdom]))
+(ns service.frontend.core
+  (:require [reagent.dom :as rdom]
+            [re-frame.core :as rf]
+            [service.frontend.events :as events]
+            [service.frontend.views :as views]
+            [service.frontend.config :as config]))
 
-(println "This text is printed from src/service/frontend/core.cljs. Go ahead and edit it and see reloading in action.")
+(defn dev-setup []
+  (when config/debug?
+    (println "dev mode")))
 
-(defn multiply [a b] (* a b))
+(defn ^:dev/after-load mount-root []
+  (rf/clear-subscription-cache!)
+  (let [root-el (.getElementById js/document "app")]
+    (rdom/unmount-component-at-node root-el)
+    (rdom/render [views/main-panel] root-el)))
 
-;; define your app data so that it doesn't get over-written on reload
-(defonce app-state (atom {:text "Hello world!"}))
-
-(defn get-app-element []
-  (gdom/getElement "app"))
-
-(defn hello-world []
-  [:div
-   [:h1 (:text @app-state)]
-   [:h3 "Edit this in src/service/frontend/core.cljs and watch it change!"]])
-
-(defn mount [el]
-  (rdom/render [hello-world] el))
-
-(defn mount-app-element []
-  (when-let [el (get-app-element)]
-    (mount el)))
-
-;; conditionally start your application based on the presence of an "app" element
-;; this is particularly helpful for testing this ns without launching the app
-(mount-app-element)
-
-;; specify reload hook with ^;after-load metadata
-(defn ^:after-load on-reload []
-  (mount-app-element)
-  ;; optionally touch your app-state to force rerendering depending on
-  ;; your application
-  ;; (swap! app-state update-in [:__figwheel_counter] inc)
-  )
+(defn init []
+  (rf/dispatch-sync [::events/initialize-db])
+  (dev-setup)
+  (mount-root))

@@ -27,3 +27,10 @@
 _doc/
 **/.cache/
 **/cljs-out/
+**/.clj-kondo/
+
+**/resources/public/js/compiled/
+**/*-init.clj
+**/*.log
+**/node_modules/
+**/.shadow-cljs/
