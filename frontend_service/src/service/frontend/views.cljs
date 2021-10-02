@@ -76,6 +76,13 @@
   [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
    [registration-form]])
 
+(defn modal-view [& forms]
+  [:div {:class ["h-full w-full z-20 absolute flex justify-center items-center"
+                 "backdrop-blur backdrop-brightness-90"]
+         :on-click #(.log js/console "kek")}
+   [:div {:on-click #(.stopPropagation %)}
+    [:<> forms]]])
+
 (defn main-panel []
   (let [name (rf/subscribe [::subs/name])]
     [:div
