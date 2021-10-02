@@ -83,6 +83,21 @@
    [:div {:on-click #(.stopPropagation %)}
     [:<> forms]]])
 
+(defn three-dot-loader [{:keys [class]}]
+  (let [class (if (coll? class) class [class])]
+  [:div.flex
+   [:div {:class (concat ["h-2 w-2 rounded-full animate-bounce mr-1"] class)}]
+   [:div {:class (concat ["h-2 w-2 rounded-full animate-bounce200 mr-1"] class)}]
+   [:div {:class (concat ["h-2 w-2 rounded-full animate-bounce400"] class)}]]))
+
+(defn loader-button [{:keys [text]}]
+  [:button {:class ["flex flex-row items-center"
+                    "py-2 px-4 text-sm font-medium rounded-md text-white"
+                    "bg-blue-500 hover:bg-blue-600 focus:outline-none"
+                    "focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"]}
+   [:span.mr-2 text]
+   [three-dot-loader {:class "bg-white"}]])
+
 (def ^:private sections
   [[icons/user-circle "My profile" false]
    [icons/users "Users" false]

@@ -29,7 +29,11 @@
         {:build-hooks [(teknql.tailwind/compile-release!)]}
 
         :tailwind/output "resources/public/css/site.css"
-        
-        :tailwind/config {:mode "jit"
-                          :theme {:extend {:transform ["hover"]
-                                           :box-shadow {:3xl "0 25px 25px -10px rgba(0, 0, 0, 0.35)"}}}}}}}
+
+        #_"Automatically encodes kebab cased keys into camel cased."
+        :tailwind/config
+        {:mode "jit"
+         :theme {:extend {:animation {:bounce-200 "bounce 1s infinite 200ms"
+                                      :bounce-400 "bounce 1s infinite 400ms"}
+                          :transform ["hover"]
+                          :box-shadow {:3xl "0 25px 25px -10px rgba(0, 0, 0, 0.35)"}}}}}}}
