@@ -139,6 +139,26 @@
                                   (when (> index 0) "leading-tight")]}
                       item]])]]])]]])
 
+(defn navigation-view []
+  (let [common-section-style ["py-2 px-3 text-sm flex items-center rounded-md"
+                              "block font-medium focus:ring-2 focus:ring-offset-2"
+                              "focus:ring-blue-500 focus:outline-none"]
+        section-style (conj common-section-style
+                            "bg-blue-50 hover:bg-blue-200")
+        active-section-style (conj common-section-style
+                                   "bg-gradient-to-r from-blue-200 to-green-100 hover:to-blue-200")]
+    [:div.flex.flex-row.h-screen
+     [:nav.p-3.w-52.overflow-y-auto.flex-none #_"TODO: think about responsive design."
+      [:ul.space-y-2
+       (for [[icon section active?] sections]
+         ^{:key section}
+         [:li [:a {:class (if active? active-section-style section-style)
+                   :href "#"}
+               [icon]
+               [:span.ml-2 section]]])]]
+     [:div.py-3.pr-3.flex-grow
+      [libraries-panel]]]))
+
 (defn main-panel []
   (let [name (rf/subscribe [::subs/name])]
     [:div
