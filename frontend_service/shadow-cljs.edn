@@ -3,7 +3,9 @@
  :dependencies [[reagent "1.1.0"]
                 [re-frame "1.2.0"]
                 [binaryage/devtools "1.0.3"]
-                [com.teknql/shadow-cljs-tailwind-jit "0.2.2"]]
+                [com.teknql/shadow-cljs-tailwind-jit "0.2.2"]
+                [metosin/malli "0.6.2"]
+                [utilities "0.1.0-SNAPSHOT"]]
 
  :dev-http {8280 "resources/public"
             8290 "target/browser-test"}
@@ -26,4 +28,6 @@
         :release
         {:build-hooks [(teknql.tailwind/compile-release!)]}
 
-        :tailwind/output "resources/public/css/site.css"}}}
+        :tailwind/output "resources/public/css/site.css"
+        
+        :tailwind/config {:mode "jit"}}}}
