@@ -40,6 +40,42 @@
   [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
    [sign-in-form]])
 
+(defn registration-form []
+  [:div {:class card-style}
+   [:form.space-y-4 {:on-change #(when config/debug? (.log js/console %))
+                     :on-submit #(.preventDefault %)}
+    [:h2.text-center.text-3xl.font-extrabold.text-gray-900
+     "Register new account"]
+    [:div
+     [:label.font-medium "Name"
+      [:input {:class [input-style "mt-2"]
+               :type "text"}]]]
+    [:div
+     [:label.font-medium "Email"
+      [:input {:class [input-style "mt-2"]
+               :type "email"}]]]
+    [:div
+     [:label.font-medium "Password"
+      [:input {:class [input-style "mt-2"]
+               :type "password"}]]]
+    [:div
+     [:label.font-medium "Password once again"
+      [:input {:class [input-style "mt-2"]
+               :type "password"}]]]
+    [:div.flex.justify-between.items-center
+     [:button {:class ["py-2 px-4 text-sm font-medium rounded-md text-white"
+                       "bg-blue-500 hover:bg-blue-600 focus:outline-none"
+                       "focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"]
+               :type "button"}
+      "Register"]
+     [:a {:class "px-1 font-medium hover:underline text-blue-500"
+          :href "#"}
+      "Go to sign in"]]]])
+
+(defn registration-view []
+  [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
+   [registration-form]])
+
 (defn main-panel []
   (let [name (rf/subscribe [::subs/name])]
     [:div
