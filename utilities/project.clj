@@ -8,7 +8,7 @@
                  [integrant "0.8.0"]
                  [aero "1.1.6"]
                  [com.lucasbradstreet/cljs-uuid-utils "1.0.2"]
-                 [metosin/malli "0.6.1"]
+                 [metosin/malli "0.6.2"]
                  [com.github.seancorfield/next.jdbc "1.2.689"]
                  [org.postgresql/postgresql "42.2.23.jre7"]
                  [metosin/muuntaja "0.6.8"]
