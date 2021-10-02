@@ -30,4 +30,6 @@
 
         :tailwind/output "resources/public/css/site.css"
         
-        :tailwind/config {:mode "jit"}}}}
+        :tailwind/config {:mode "jit"
+                          :theme {:extend {:transform ["hover"]
+                                           :box-shadow {:3xl "0 25px 25px -10px rgba(0, 0, 0, 0.35)"}}}}}}}
