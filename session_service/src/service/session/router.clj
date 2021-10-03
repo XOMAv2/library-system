@@ -71,8 +71,9 @@
                                           [:type {:optional true} string?]
                                           [:message string?]]}
                               500 {:body any?}
-                              502 {:body message
-                                   :response any?}}
+                              502 {:body [:map
+                                          [:response any?]
+                                          [:message string?]]}}
                   :handler handlers/add-user}}]
       ["/:uid" {:roles nil
                 :middleware [authorization-middleware]
@@ -88,14 +89,16 @@
                                                  [:type {:optional true} string?]
                                                  [:message string?]]}
                                      500 {:body any?}
-                                     502 {:body message
-                                          :response any?}}
+                                     502 {:body [:map
+                                                 [:response any?]
+                                                 [:message string?]]}}
                          :handler handlers/delete-user}
                 :put {:responses {200 {:body schemas/user-out}
                                   404 {:body message}
                                   500 {:body any?}
-                                  502 {:body message
-                                       :response any?}}
+                                  502 {:body [:map
+                                              [:response any?]
+                                              [:message string?]]}}
                       :handler handlers/restore-user}
                 :patch {:parameters {:body schemas/user-update}
                         :responses {200 {:body schemas/user-out}

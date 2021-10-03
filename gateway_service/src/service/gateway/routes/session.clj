@@ -21,8 +21,9 @@
                                         [:type {:optional true} string?]
                                         [:message string?]]}
                             500 {:body any?}
-                            502 {:body message
-                                 :response any?}}
+                            502 {:body [:map
+                                        [:response any?]
+                                        [:message string?]]}}
                 :handler (api-fn [{user :body}]
                                  (session-api/-add-user session-service user))}}]
     ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
@@ -41,8 +42,9 @@
                                                [:type {:optional true} string?]
                                                [:message string?]]}
                                    500 {:body any?}
-                                   502 {:body message
-                                        :response any?}}
+                                   502 {:body [:map
+                                               [:response any?]
+                                               [:message string?]]}}
                        :handler (api-fn [{{:keys [uid]} :path} :headers-dtor {a "authorization"}]
                                         (session-api/-delete-user session-service a uid))}
               :put {:roles #{"admin"}
@@ -50,8 +52,9 @@
                     :responses {200 {:body schemas/user-out}
                                 404 {:body message}
                                 500 {:body any?}
-                                502 {:body message
-                                     :response any?}}
+                                502 {:body [:map
+                                            [:response any?]
+                                            [:message string?]]}}
                     :handler (api-fn [{{:keys [uid]} :path} :headers-dtor {a "authorization"}]
                                      (session-api/-restore-user session-service a uid))}
               :patch {:roles nil

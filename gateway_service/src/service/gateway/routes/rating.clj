@@ -20,8 +20,9 @@
                                        [:type {:optional true} string?]
                                        [:message string?]]}
                            500 {:body any?}
-                           502 {:body message
-                                :response any?}}
+                           502 {:body [:map
+                                       [:response any?]
+                                       [:message string?]]}}
                :handler (api-fn [{user-rating :body}]
                                 (rating-api/-add-user-rating rating-service user-rating))}}]
    ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
@@ -37,8 +38,9 @@
                       :responses {200 {:body schemas/user-rating-out}
                                   404 {:body message}
                                   500 {:body any?}
-                                  502 {:body message
-                                       :response any?}}
+                                  502 {:body [:map
+                                              [:response any?]
+                                              [:message string?]]}}
                       :handler (api-fn [{{:keys [uid]} :path}]
                                        (rating-api/-delete-user-rating rating-service uid))}
              :put {:roles #{"admin"}
@@ -46,8 +48,9 @@
                    :responses {200 {:body schemas/user-rating-out}
                                404 {:body message}
                                500 {:body any?}
-                               502 {:body message
-                                    :response any?}}
+                               502 {:body [:map
+                                           [:response any?]
+                                           [:message string?]]}}
                    :handler (api-fn [{{:keys [uid]} :path}]
                                     (rating-api/-restore-user-rating rating-service uid))}
              :patch {:roles #{"admin"}
@@ -59,8 +62,9 @@
                                              [:message string?]]}
                                  404 {:body message}
                                  500 {:body any?}
-                                 502 {:body message
-                                      :response any?}}
+                                 502 {:body [:map
+                                             [:response any?]
+                                             [:message string?]]}}
                      :handler (api-fn [{{:keys [uid]} :path user-rating :body}]
                                       (rating-api/-update-user-rating rating-service
                                                                       uid
@@ -78,8 +82,9 @@
                                     :responses {200 {:body schemas/user-rating-out}
                                                 404 {:body message}
                                                 500 {:body any?}
-                                                502 {:body message
-                                                     :response any?}}
+                                                502 {:body [:map
+                                                            [:response any?]
+                                                            [:message string?]]}}
                                     :handler (api-fn [{{:keys [user-uid]} :path}]
                                                      (rating-api/-delete-user-rating-by-user-uid rating-service
                                                                                                  user-uid))}
@@ -88,8 +93,9 @@
                                  :responses {200 {:body schemas/user-rating-out}
                                              404 {:body message}
                                              500 {:body any?}
-                                             502 {:body message
-                                                  :response any?}}
+                                             502 {:body [:map
+                                                         [:response any?]
+                                                         [:message string?]]}}
                                  :handler (api-fn [{{:keys [user-uid]} :path}]
                                                   (rating-api/-restore-user-rating-by-user-uid rating-service
                                                                                                user-uid))}}]
@@ -105,8 +111,9 @@
                                      [:type {:optional true} string?]
                                      [:message string?]]}
                          500 {:body any?}
-                         502 {:body message
-                              :response any?}}
+                         502 {:body [:map
+                                     [:response any?]
+                                     [:message string?]]}}
              :handler (api-fn [{{:keys [user-uid condition]} :path}]
                               (rating-api/-update-rating-by-user-uid rating-service
                                                                      user-uid

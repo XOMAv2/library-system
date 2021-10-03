@@ -133,8 +133,9 @@
                                         [:type {:optional true} string?]
                                         [:message string?]]}
                             500 {:body any?}
-                            502 {:body message
-                                 :response any?}}
+                            502 {:body [:map
+                                        [:response any?]
+                                        [:message string?]]}}
                 :handler (api-fn [{order :body}]
                                  (library-api/-add-order library-service order))}
          :patch {:roles #{"admin"}
@@ -171,7 +172,8 @@
                                               [:type {:optional true} string?]
                                               [:message string?]]}
                                   500 {:body any?}
-                                  502 {:body message
-                                       :response any?}}
+                                  502 {:body [:map
+                                              [:response any?]
+                                              [:message string?]]}}
                       :handler (api-fn [{{:keys [uid]} :path order :body}]
                                        (library-api/-update-order library-service uid order))}}]]])

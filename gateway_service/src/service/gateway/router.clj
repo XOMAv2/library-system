@@ -22,6 +22,7 @@
             [service.gateway.routes.stats :refer [stats-routes]]
             [utilities.muuntaja :refer [muuntaja-instance]]
             [ring.middleware.cors :refer [wrap-cors]]
+            [utilities.schemas :as schemas :refer [message]]
             [clojure.spec.alpha :as s]
             [service.gateway.middlewares :refer [authentication-middleware]]))
 
@@ -45,7 +46,10 @@
                              :swagger {:info {:title "gateway-api"
                                               :description "Swagger 2.0"}}
                              :handler (create-swagger-handler)}}]
-     ["" {:responses {500 {:body any?}}}
+     ["" {:responses {500 {:body ^:displace any?}
+                      502 {:body ^:displace [:map
+                                             [:response any?]
+                                             [:message string?]]}}}
       book-routes
       library-routes
       rating-routes

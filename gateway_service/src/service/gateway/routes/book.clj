@@ -39,8 +39,9 @@
                                               [:type {:optional true} string?]
                                               [:message string?]]}
                                   500 {:body any?}
-                                  502 {:body message
-                                       :response any?}}
+                                  502 {:body [:map
+                                              [:response any?]
+                                              [:message string?]]}}
                       :handler (api-fn [{{:keys [uid]} :path}]
                                        (book-api/-delete-book book-service uid))}
              :put {:roles #{"admin"}
@@ -48,8 +49,9 @@
                    :responses {200 {:body schemas/book-out}
                                404 {:body message}
                                500 {:body any?}
-                               502 {:body message
-                                    :response any?}}
+                               502 {:body [:map
+                                           [:response any?]
+                                           [:message string?]]}}
                    :handler (api-fn [{{:keys [uid]} :path}]
                                     (book-api/-restore-book book-service uid))}
              :patch {:roles #{"admin"}
