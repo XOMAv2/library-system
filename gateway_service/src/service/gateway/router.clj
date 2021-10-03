@@ -21,7 +21,16 @@
             [service.gateway.routes.session :refer [session-routes]]
             [service.gateway.routes.stats :refer [stats-routes]]
             [utilities.muuntaja :refer [muuntaja-instance]]
+            [clojure.spec.alpha :as s]
             [service.gateway.middlewares :refer [authentication-middleware]]))
+
+(def services-middleware
+  {:name ::services-middleware
+   :spec (s/keys :req-un [:service.gateway.system/services])
+   :compile (fn [{:keys [services]} _]
+              (fn [handler]
+                (fn [request]
+                  (handler (assoc request :services services)))))})
 
 #_"TODO: swagger query params explode"
 
@@ -57,7 +66,8 @@
                          coercion/coerce-request-middleware #_"Request parameters coercion."
                          request->stats-middleware
                          response->stats-middleware
-                         authentication-middleware #_"Obtaining data from authorization header."]}
+                         authentication-middleware #_"Obtaining data from authorization header."
+                         services-middleware]}
      #_#_:reitit.middleware/transform print-request-diffs #_"Middleware chain transformation."
      :validate reitit.ring.spec/validate #_"Routes structure validation."
      :reitit.spec/explain expound-str #_"Routes structure error explanation."})

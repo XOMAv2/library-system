@@ -38,6 +38,14 @@
                 (fn [request]
                   (handler (assoc request :services-uri services-uri)))))})
 
+(def services-middleware
+  {:name ::services-middleware
+   :spec (s/keys :req-un [:service.rating.system/services])
+   :compile (fn [{:keys [services]} _]
+              (fn [handler]
+                (fn [request]
+                  (handler (assoc request :services services)))))})
+
 (defn app [{:keys [db services services-uri client-id]}]
   (ring/ring-handler
    (ring/router
@@ -161,7 +169,8 @@
                          coercion/coerce-request-middleware #_"Request parameters coercion."
                          request->stats-middleware
                          response->stats-middleware
-                         [wrap-authentication backend] #_"Obtaining data from authorization header."]}
+                         [wrap-authentication backend] #_"Obtaining data from authorization header."
+                         services-middleware]}
      #_#_:reitit.middleware/transform print-request-diffs #_"Middleware chain transformation."
      :validate reitit.ring.spec/validate #_"Routes structure validation."
      :reitit.spec/explain expound-str #_"Routes structure error explanation."})
