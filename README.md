@@ -1,25 +1,5 @@
 # Template for KP RSOI
 
-## Frontend
-
-To get an interactive development environment run:
-```zsh
-lein fig:build
-```
-
-To clean all compiled files:
-```zsh
-lein clean
-```
-
-To create a production build run:
-```zsh
-lein clean
-```
-```zsh
-lein fig:min
-```
-
 ## docker
 
 ### PostgreSQL
