@@ -21,6 +21,7 @@
             [service.gateway.routes.session :refer [session-routes]]
             [service.gateway.routes.stats :refer [stats-routes]]
             [utilities.muuntaja :refer [muuntaja-instance]]
+            [ring.middleware.cors :refer [wrap-cors]]
             [clojure.spec.alpha :as s]
             [service.gateway.middlewares :refer [authentication-middleware]]))
 
@@ -56,7 +57,10 @@
             :coercion reitit.coercion.malli/coercion #_"Schemas closing, extra keys stripping, ..."
             #_"... transformers adding for json-body, path and query params."
             :muuntaja muuntaja-instance
-            :middleware [swagger/swagger-feature #_"Swagger feature."
+            :middleware [[wrap-cors
+                          :access-control-allow-origin [#".*"]
+                          :access-control-allow-methods [:get :post :delete :patch :put]]
+                         swagger/swagger-feature #_"Swagger feature."
                          format-negotiate-middleware #_"Content negotiation."
                          format-response-middleware #_"Response body encoding."
                          exception-middleware #_"Exception handling."
