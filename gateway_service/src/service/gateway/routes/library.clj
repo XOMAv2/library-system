@@ -2,11 +2,14 @@
   (:require [utilities.api.library :as library-api]
             [utilities.schemas :as schemas :refer [message]]
             [service.gateway.util :refer [api-fn]]
-            [utilities.auth :refer [authorization-middleware]]))
+            [utilities.auth :refer [authorization-middleware]]
+            [service.gateway.middlewares :refer [authentication-middleware]]))
 
 (def library-routes
   [""
-   ["/libraries" {:swagger {:tags ["libraries"]}}
+   ["/libraries" {:swagger {:tags ["libraries"]}
+                  
+                  :middleware [authentication-middleware]}
     ["" {:get {:roles nil
                :middleware [authorization-middleware]
                :parameters {:query schemas/library-query}

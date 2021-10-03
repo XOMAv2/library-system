@@ -23,8 +23,7 @@
             [utilities.muuntaja :refer [muuntaja-instance]]
             [ring.middleware.cors :refer [wrap-cors]]
             [utilities.schemas :as schemas :refer [message]]
-            [clojure.spec.alpha :as s]
-            [service.gateway.middlewares :refer [authentication-middleware]]))
+            [clojure.spec.alpha :as s]))
 
 (def services-middleware
   {:name ::services-middleware
@@ -74,7 +73,6 @@
                          coercion/coerce-request-middleware #_"Request parameters coercion."
                          request->stats-middleware
                          response->stats-middleware
-                         authentication-middleware #_"Obtaining data from authorization header."
                          services-middleware]}
      #_#_:reitit.middleware/transform print-request-diffs #_"Middleware chain transformation."
      :validate reitit.ring.spec/validate #_"Routes structure validation."

@@ -2,10 +2,13 @@
   (:require [utilities.api.return :as return-api]
             [utilities.schemas :as schemas :refer [message]]
             [service.gateway.util :refer [api-fn]]
-            [utilities.auth :refer [authorization-middleware]]))
+            [utilities.auth :refer [authorization-middleware]]
+            [service.gateway.middlewares :refer [authentication-middleware]]))
 
 (def return-routes
-  ["/limits" {:swagger {:tags ["limits"]}}
+  ["/limits" {:swagger {:tags ["limits"]}
+              
+              :middleware [authentication-middleware]}
    ["" {:get {:roles nil
               :middleware [authorization-middleware]
               :responses {200 {:body [:map [:limits [:sequential schemas/user-limit-out]]]}}

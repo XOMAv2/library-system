@@ -2,10 +2,13 @@
   (:require [utilities.api.rating :as rating-api]
             [utilities.schemas :as schemas :refer [message]]
             [service.gateway.util :refer [api-fn]]
-            [utilities.auth :refer [authorization-middleware]]))
+            [utilities.auth :refer [authorization-middleware]]
+            [service.gateway.middlewares :refer [authentication-middleware]]))
 
 (def rating-routes
-  ["/ratings" {:swagger {:tags ["ratings"]}}
+  ["/ratings" {:swagger {:tags ["ratings"]}
+               
+               :middleware [authentication-middleware]}
    ["" {:get {:roles nil
               :middleware [authorization-middleware]
               :responses {200 {:body [:map [:ratings [:sequential schemas/user-rating-out]]]}}

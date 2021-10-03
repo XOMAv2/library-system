@@ -2,10 +2,13 @@
   (:require [utilities.api.book :as book-api]
             [utilities.schemas :as schemas :refer [message]]
             [service.gateway.util :refer [api-fn]]
-            [utilities.auth :refer [authorization-middleware]]))
+            [utilities.auth :refer [authorization-middleware]]
+            [service.gateway.middlewares :refer [authentication-middleware]]))
 
 (def book-routes
-  ["/books" {:swagger {:tags ["books"]}}
+  ["/books" {:swagger {:tags ["books"]}
+
+             :middleware [authentication-middleware]}
    ["" {:get {:roles nil
               :middleware [authorization-middleware]
               :parameters {:query schemas/book-query}

@@ -2,10 +2,13 @@
   (:require [utilities.api.stats :as stats-api]
             [utilities.schemas :as schemas :refer [message]]
             [service.gateway.util :refer [api-fn]]
-            [utilities.auth :refer [authorization-middleware]]))
+            [utilities.auth :refer [authorization-middleware]]
+            [service.gateway.middlewares :refer [authentication-middleware]]))
 
 (def stats-routes
-  ["/stats" {:swagger {:tags ["stats"]}}
+  ["/stats" {:swagger {:tags ["stats"]}
+             
+             :middleware [authentication-middleware]}
    ["" {:get {:roles nil
               :middleware [authorization-middleware]
               :parameters {:query [:map [:service {:optional true} schemas/non-empty-string]]}

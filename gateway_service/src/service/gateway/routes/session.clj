@@ -2,11 +2,14 @@
   (:require [utilities.api.session :as session-api]
             [utilities.schemas :as schemas :refer [message]]
             [service.gateway.util :refer [api-fn]]
-            [utilities.auth :refer [authorization-middleware]]))
+            [utilities.auth :refer [authorization-middleware]]
+            [service.gateway.middlewares :refer [authentication-middleware]]))
 
 (def session-routes
   [""
-   ["/users" {:swagger {:tags ["users"]}}
+   ["/users" {:swagger {:tags ["users"]}
+              
+              :middleware [authentication-middleware]}
     ["" {:get {:roles #{"admin"}
                :middleware [authorization-middleware]
                :responses {200 {:body [:map [:users [:sequential schemas/user-out]]]}}
