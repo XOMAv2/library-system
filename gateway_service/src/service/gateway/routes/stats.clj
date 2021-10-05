@@ -8,9 +8,9 @@
 (def stats-routes
   ["/stats" {:swagger {:tags ["stats"]}
 
-             :middleware [authentication-middleware]
              :roles #{"admin"}
-             :middleware [authorization-middleware]}
+             :middleware [authentication-middleware
+                          authorization-middleware]}
    ["" {:get {:parameters {:query [:map [:service {:optional true} schemas/non-empty-string]]}
               :responses {200 {:body [:map [:stats [:sequential schemas/stat-record-out]]]}}
               #_"TODO: check is it work when service is nil."
