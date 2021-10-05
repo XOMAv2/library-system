@@ -7,6 +7,7 @@
   (:import [net.jodah.failsafe CircuitBreaker]))
 
 (defprotocol StatsAPI
+  (-add-stat-record-queue [this stat-record] "")
   (-add-stat-record [this stat-record] "")
   (-get-stat-record [this uid] "")
   (-get-all-stat-records [this] [this service] "")
@@ -25,13 +26,14 @@
                          client-id client-secret
                          amqp-url qname]
   StatsAPI
-  (-add-stat-record [this stat-record]
+  (-add-stat-record-queue [this stat-record]
     (let [conn (rmq/connect {:uri amqp-url})
           ch (lch/open conn)]
       (lb/publish ch default-exchange-name qname (str stat-record)
                   {:content-type "application/edn; charset=utf-8"})
       (rmq/close ch)
       (rmq/close conn)))
+  (-add-stat-record [this stat-record]        (make-request :post "/api/stats" stat-record))
   (-get-stat-record [this uid]                (make-request :get (str "/api/stats/" uid)))
   (-get-all-stat-records [this]               (make-request :get "/api/stats"))
   (-get-all-stat-records [this service]       (make-request :get "/api/stats" nil {:service service}))

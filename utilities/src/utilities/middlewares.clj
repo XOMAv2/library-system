@@ -1,5 +1,5 @@
 (ns utilities.middlewares
-  (:require [utilities.api.stats :refer [StatsAPI -add-stat-record]]
+  (:require [utilities.api.stats :refer [StatsAPI -add-stat-record-queue]]
             [clojure.spec.alpha :as s]
             [utilities.time :as time]
             [utilities.core :refer [non-empty-string?]]))
@@ -22,7 +22,7 @@
                                      :body (str body)
                                      :content-type "application/edn; charset=utf-8"
                                      :send-time (time/now)}]
-                    (-add-stat-record stats stat-record)
+                    (-add-stat-record-queue stats stat-record)
                     (handler request)))))})
 
 (def response->stats-middleware
@@ -39,7 +39,7 @@
                                      :body (str body)
                                      :content-type "application/edn; charset=utf-8"
                                      :send-time (time/now)}]
-                    (-add-stat-record stats stat-record)
+                    (-add-stat-record-queue stats stat-record)
                     response))))})
 
 (defn key->request

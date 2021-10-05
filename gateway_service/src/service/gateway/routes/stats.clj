@@ -16,15 +16,14 @@
               #_"TODO: check is it work when service is nil."
               :handler (api-fn [{{:keys [service]} :query}]
                                (stats-api/-get-all-stat-records stats-service service))}
-        #_"TODO: add sync version of -add-stat-record function into stats API."
-        #_#_:post {:parameters {:body schemas/stat-record-add}
-                   :responses {201 {:body schemas/stat-record-out
-                                    :headers {"Location" {:schema {:type "string"}}}}
-                               422 {:body [:map
-                                           [:type {:optional true} string?]
-                                           [:message string?]]}}
-                   :handler (api-fn [{stat-record :body}]
-                                    (stats-api/-add-stat-record stats-service stat-record))}
+        :post {:parameters {:body schemas/stat-record-add}
+               :responses {201 {:body schemas/stat-record-out
+                                :headers {"Location" {:schema {:type "string"}}}}
+                           422 {:body [:map
+                                       [:type {:optional true} string?]
+                                       [:message string?]]}}
+               :handler (api-fn [{stat-record :body}]
+                                (stats-api/-add-stat-record stats-service stat-record))}
         :delete {:roles #{"admin"}
                  :middleware [authorization-middleware]
                  :responses {200 {:body [:map [:stats [:sequential schemas/stat-record-out]]]}}
