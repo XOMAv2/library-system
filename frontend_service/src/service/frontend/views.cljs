@@ -141,11 +141,10 @@
               [:h1.font-normal.truncate {:class "text-2xl"} "Библиотека имени Ленина"]
               [:div.flex.flex-row.gap-1
                [:button {:class ["rounded-xl transform hover:scale-125 focus:outline-none"
-                                 "focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"]}
+                                 "focus:scale-125"]}
                 [icons/pencil]]
-               [:button {:class ["rounded-xl transform hover:scale-125 focus:outline-none"
-                                 "focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                                 "hover:text-red-500 focus:outline-none"]}
+               [:button {:class ["rounded-xl transform hover:scale-125 hover:text-red-500"
+                                 "focus:scale-125 focus:text-red-500 focus:outline-none"]}
                 [icons/trash {:class "stroke-current"}]]]]
              [:p.font-medium.truncate.leading-snug "ул. Бажова, дом 3, корпус 2"]
              [:ul
