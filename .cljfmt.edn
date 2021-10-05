@@ -1,5 +1,7 @@
 {:indents ^:uppend {reg-event-fx [[:inner 0]]
                     reg-event-db [[:inner 0]]
+                    reg-fx [[:inner 0]]
+                    reg-cofx [[:inner 0]]
                     reg-sub [[:inner 0]]}
  :test-code
  (rf/reg-event-db :initialize-db
