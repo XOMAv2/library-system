@@ -1,6 +1,7 @@
 (ns service.frontend.core
   (:require [reagent.dom :as rdom]
             [re-frame.core :as rf]
+            [service.frontend.router :refer [start-router!]]
             [service.frontend.events :as events]
             [service.frontend.views :as views]
             [service.frontend.config :as config]))
@@ -16,6 +17,7 @@
     (rdom/render [views/main-panel] root-el)))
 
 (defn init []
-  (rf/dispatch-sync [::events/initialize-db])
+  (rf/dispatch-sync [::events/init-db])
   (dev-setup)
+  (start-router!)
   (mount-root))

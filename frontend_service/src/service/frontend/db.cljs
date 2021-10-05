@@ -1,4 +1,12 @@
-(ns service.frontend.db)
+(ns service.frontend.db
+  (:require [service.frontend.views :as views]))
 
 (def default-db
-  {:name "re-frame"})
+  {:ui-state {:view [views/login-view]
+              :view-scope nil
+              :modal nil
+              :modal-scope nil}
+   :user-uid nil
+   :tokens {:access-token nil
+            :refresh-token nil}
+   :entities nil})

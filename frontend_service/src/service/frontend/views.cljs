@@ -2,7 +2,10 @@
   (:require [re-frame.core :as rf]
             [service.frontend.subs :as subs]
             [service.frontend.config :as config]
-            [service.frontend.icons.outline :as icons]))
+            [service.frontend.icons.outline :as icons]
+            [service.frontend.events :as-alias events]
+            [service.frontend.router :as-alias routes]
+            [reitit.frontend.easy :refer [href]]))
 
 (def input-style
   "block w-full py-2 px-3 border-2 border-blue-500 text-sm
@@ -33,7 +36,7 @@
                :type "button"}
       "Log in"]
      [:a {:class "px-1 font-medium hover:underline text-blue-500"
-          :href "#"}
+          :href (href ::routes/register)}
       "Go to registration"]]]])
 
 (defn login-view []
@@ -69,7 +72,7 @@
                :type "button"}
       "Register"]
      [:a {:class "px-1 font-medium hover:underline text-blue-500"
-          :href "#"}
+          :href (href ::routes/login)}
       "Go to log in"]]]])
 
 (defn registration-view []
@@ -99,12 +102,12 @@
    [three-dot-loader {:class "bg-white"}]])
 
 (def ^:private sections
-  [[icons/user-circle "My profile" false]
-   [icons/users "Users" false]
-   [icons/book-open "Books" false]
-   [icons/library "Libraries" true]
-   [icons/shopping-bag "Orders" false]
-   [icons/trending-up "Statistics" false]])
+  [[icons/user-circle  "My profile" []]
+   [icons/users        "Users"      [::routes/users]]
+   [icons/book-open    "Books"      [::routes/books]]
+   [icons/library      "Libraries"  [::routes/libraries]]
+   [icons/shopping-bag "Orders"     [::routes/orders]]
+   [icons/trending-up  "Statistics" [::routes/stats]]])
 
 (def ^:private schedule
   ["Пн: 10:00-19:00"
@@ -153,8 +156,21 @@
                                   (when (> index 0) "leading-tight")]}
                       item]])]]])]]])
 
-(defn navigation-view []
-  (let [common-section-style ["py-2 px-3 text-sm flex items-center rounded-md"
+(defn books-panel []
+  [:div "books"])
+
+(defn users-panel []
+  [:div "users"])
+
+(defn orders-panel []
+  [:div "orders"])
+
+(defn stats-panel []
+  [:div "statistics"])
+
+(defn navigation-view [& forms]
+  (let [current-route-name @(rf/subscribe [::subs/current-route-name])
+        common-section-style ["py-2 px-3 text-sm flex items-center rounded-md"
                               "block font-medium focus:ring-2 focus:ring-offset-2"
                               "focus:ring-blue-500 focus:outline-none"]
         section-style (conj common-section-style
@@ -164,17 +180,20 @@
     [:div.flex.flex-row.h-screen
      [:nav.p-3.w-52.overflow-y-auto.flex-none #_"TODO: think about responsive design."
       [:ul.space-y-2
-       (for [[icon section active?] sections]
+       (for [[icon section [route path-params query-params]] sections]
          ^{:key section}
-         [:li [:a {:class (if active? active-section-style section-style)
-                   :href "#"}
+         [:li [:a {:class (if (= route current-route-name)
+                            active-section-style
+                            section-style)
+                   :href (href route path-params query-params)}
                [icon]
                [:span.ml-2 section]]])]]
      [:div.py-3.pr-3.flex-grow
-      [libraries-panel]]]))
+      [:<> forms]]]))
 
 (defn main-panel []
-  (let [name (rf/subscribe [::subs/name])]
-    [:div
-     [:h1
-      "Hello from " @name]]))
+  (let [view @(rf/subscribe [::subs/current-view])
+        modal @(rf/subscribe [::subs/current-modal])]
+    [:div.relative
+     modal
+     view]))

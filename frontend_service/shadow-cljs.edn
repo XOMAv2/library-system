@@ -6,7 +6,8 @@
                 [com.teknql/shadow-cljs-tailwind-jit "0.2.2"]
                 [metosin/malli "0.6.2"]
                 [utilities "0.1.0-SNAPSHOT"]
-                [day8.re-frame/http-fx "0.2.3"]]
+                [day8.re-frame/http-fx "0.2.3"]
+                [metosin/reitit "0.5.15"]]
 
  :dev-http {8280 "resources/public"
             8290 "target/browser-test"}
