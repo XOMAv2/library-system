@@ -2,7 +2,7 @@
   (:require [utilities.core :refer [remove-trailing-slash]]
             [utilities.api.core
              :refer [cb-sync-request make-cb make-request]
-             :rename {make-request mk}])
+             :rename {make-request mr}])
   (:import [net.jodah.failsafe CircuitBreaker]))
 
 (defprotocol LibraryAPI
@@ -38,30 +38,30 @@
                            client-id client-secret]
   LibraryAPI
   #_"libraries"
-  (-add-library [this library]             (mk :post "/api/libraries" library))
-  (-get-library [this uid]                 (mk :get (str "/api/libraries/" uid)))
-  (-get-all-libraries [this]               (mk :get "/api/libraries"))
-  (-get-all-libraries [this library-query] (mk :get "/api/libraries" nil library-query))
-  (-update-library [this uid library]      (mk :patch (str "/api/libraries/" uid) library))
-  (-delete-library [this uid]              (mk :delete (str "/api/libraries/" uid)))
+  (-add-library [this library]             (mr :post "/api/libraries" library))
+  (-get-library [this uid]                 (mr :get (str "/api/libraries/" uid)))
+  (-get-all-libraries [this]               (mr :get "/api/libraries"))
+  (-get-all-libraries [this library-query] (mr :get "/api/libraries" nil library-query))
+  (-update-library [this uid library]      (mr :patch (str "/api/libraries/" uid) library))
+  (-delete-library [this uid]              (mr :delete (str "/api/libraries/" uid)))
   #_"library-books"
-  (-add-library-book [this library-book]                (mk :post "/api/library-books" library-book))
-  (-get-library-book [this uid]                         (mk :get (str "/api/library-books/" uid)))
-  (-get-all-library-books [this]                        (mk :get "/api/library-books"))
-  (-get-all-library-books [this library-book-query]     (mk :get "/api/library-books" nil library-book-query))
-  (-update-library-book [this uid library-book]         (mk :patch (str "/api/library-books/" uid) library-book))
-  (-delete-library-book [this uid]                      (mk :delete (str "/api/library-books/" uid)))
-  (-delete-all-library-books [this library-book-query]  (mk :delete "/api/library-books" nil library-book-query))
-  (-restore-library-book [this uid]                     (mk :put (str "/api/library-books/" uid)))
-  (-restore-all-library-books [this library-book-query] (mk :put "/api/library-books" nil library-book-query))
+  (-add-library-book [this library-book]                (mr :post "/api/library-books" library-book))
+  (-get-library-book [this uid]                         (mr :get (str "/api/library-books/" uid)))
+  (-get-all-library-books [this]                        (mr :get "/api/library-books"))
+  (-get-all-library-books [this library-book-query]     (mr :get "/api/library-books" nil library-book-query))
+  (-update-library-book [this uid library-book]         (mr :patch (str "/api/library-books/" uid) library-book))
+  (-delete-library-book [this uid]                      (mr :delete (str "/api/library-books/" uid)))
+  (-delete-all-library-books [this library-book-query]  (mr :delete "/api/library-books" nil library-book-query))
+  (-restore-library-book [this uid]                     (mr :put (str "/api/library-books/" uid)))
+  (-restore-all-library-books [this library-book-query] (mr :put "/api/library-books" nil library-book-query))
   #_"orders"
-  (-add-order [this order]                      (mk :post "/api/orders" order))
-  (-get-order [this uid]                        (mk :get (str "/api/orders/" uid)))
-  (-get-all-orders [this]                       (mk :get "/api/orders"))
-  (-get-all-orders [this order-query]           (mk :get "/api/orders" nil order-query))
-  (-update-order [this uid order]               (mk :patch (str "/api/orders/" uid) order))
-  (-update-all-orders [this order-query order]  (mk :patch "/api/orders" order order-query))
-  (-delete-order [this uid]                     (mk :delete (str "/api/orders/" uid)))
+  (-add-order [this order]                      (mr :post "/api/orders" order))
+  (-get-order [this uid]                        (mr :get (str "/api/orders/" uid)))
+  (-get-all-orders [this]                       (mr :get "/api/orders"))
+  (-get-all-orders [this order-query]           (mr :get "/api/orders" nil order-query))
+  (-update-order [this uid order]               (mr :patch (str "/api/orders/" uid) order))
+  (-update-all-orders [this order-query order]  (mr :patch "/api/orders" order order-query))
+  (-delete-order [this uid]                     (mr :delete (str "/api/orders/" uid)))
 
   #_"auth"
   (-get-token [this]
