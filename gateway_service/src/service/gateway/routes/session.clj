@@ -15,9 +15,7 @@
                :responses {200 {:body [:map [:users [:sequential schemas/user-out]]]}}
                :handler (api-fn [nil :headers-dtor {a "authorization"}]
                                 (session-api/-get-all-users session-service a))}
-         :post {:roles nil
-                :middleware [authorization-middleware]
-                :parameters {:body schemas/user-add}
+         :post {:parameters {:body schemas/user-add}
                 :responses {201 {:body schemas/user-out-extended
                                  :headers {"Location" {:schema {:type "string"}}}}
                             422 {:body [:map

@@ -7,11 +7,11 @@
 
 (def stats-routes
   ["/stats" {:swagger {:tags ["stats"]}
-             
-             :middleware [authentication-middleware]}
-   ["" {:get {:roles nil
-              :middleware [authorization-middleware]
-              :parameters {:query [:map [:service {:optional true} schemas/non-empty-string]]}
+
+             :middleware [authentication-middleware]
+             :roles #{"admin"}
+             :middleware [authorization-middleware]}
+   ["" {:get {:parameters {:query [:map [:service {:optional true} schemas/non-empty-string]]}
               :responses {200 {:body [:map [:stats [:sequential schemas/stat-record-out]]]}}
               #_"TODO: check is it work when service is nil."
               :handler (api-fn [{{:keys [service]} :query}]
@@ -24,28 +24,20 @@
                                        [:message string?]]}}
                :handler (api-fn [{stat-record :body}]
                                 (stats-api/-add-stat-record stats-service stat-record))}
-        :delete {:roles #{"admin"}
-                 :middleware [authorization-middleware]
-                 :responses {200 {:body [:map [:stats [:sequential schemas/stat-record-out]]]}}
+        :delete {:responses {200 {:body [:map [:stats [:sequential schemas/stat-record-out]]]}}
                  :handler (api-fn []
                                   (stats-api/-delete-all-stat-records stats-service))}}]
    ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
 
-             :get {:roles nil
-                   :middleware [authorization-middleware]
-                   :responses {200 {:body schemas/stat-record-out}
+             :get {:responses {200 {:body schemas/stat-record-out}
                                404 {:body message}}
                    :handler (api-fn [{{:keys [uid]} :path}]
                                     (stats-api/-get-stat-record stats-service uid))}
-             :delete {:roles #{"admin"}
-                      :middleware [authorization-middleware]
-                      :responses {200 {:body schemas/stat-record-out}
+             :delete {:responses {200 {:body schemas/stat-record-out}
                                   404 {:body message}}
                       :handler (api-fn [{{:keys [uid]} :path}]
                                        (stats-api/-delete-stat-record stats-service uid))}
-             :patch {:roles #{"admin"}
-                     :middleware [authorization-middleware]
-                     :parameters {:body schemas/stat-record-update}
+             :patch {:parameters {:body schemas/stat-record-update}
                      :responses {200 {:body schemas/stat-record-out}
                                  422 {:body [:map
                                              [:type {:optional true} string?]

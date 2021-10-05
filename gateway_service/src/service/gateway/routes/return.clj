@@ -9,14 +9,13 @@
   ["/limits" {:swagger {:tags ["limits"]}
               
               :middleware [authentication-middleware]}
-   ["" {:get {:roles nil
-              :middleware [authorization-middleware]
-              :responses {200 {:body [:map [:limits [:sequential schemas/user-limit-out]]]}}
+   ["" {:roles #{"admin"}
+        :middleware [authorization-middleware]
+
+        :get {:responses {200 {:body [:map [:limits [:sequential schemas/user-limit-out]]]}}
               :handler (api-fn []
                                (return-api/-get-all-user-limits return-service))}
-        :post {:roles #{"admin"}
-               :middleware [authorization-middleware]
-               :parameters {:body schemas/user-limit-add}
+        :post {:parameters {:body schemas/user-limit-add}
                :responses {201 {:body schemas/user-limit-out
                                 :headers {"Location" {:schema {:type "string"}}}}
                            422 {:body [:map

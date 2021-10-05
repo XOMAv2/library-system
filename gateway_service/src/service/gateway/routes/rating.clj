@@ -9,14 +9,13 @@
   ["/ratings" {:swagger {:tags ["ratings"]}
                
                :middleware [authentication-middleware]}
-   ["" {:get {:roles nil
-              :middleware [authorization-middleware]
-              :responses {200 {:body [:map [:ratings [:sequential schemas/user-rating-out]]]}}
+   ["" {:roles #{"admin"}
+        :middleware [authorization-middleware]
+
+        :get {:responses {200 {:body [:map [:ratings [:sequential schemas/user-rating-out]]]}}
               :handler (api-fn []
                                (rating-api/-get-all-user-ratings rating-service))}
-        :post {:roles #{"admin"}
-               :middleware [authorization-middleware]
-               :parameters {:body schemas/user-rating-add}
+        :post {:parameters {:body schemas/user-rating-add}
                :responses {201 {:body schemas/user-rating-out
                                 :headers {"Location" {:schema {:type "string"}}}}
                            422 {:body [:map
