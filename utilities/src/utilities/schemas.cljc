@@ -6,10 +6,13 @@
             #?(:clj [utilities.time :as time])
             [#?(:clj clojure.core.match :cljs cljs.core.match) :refer [match]]))
 
+#_"TODO: check the uniqueness of elements in vectors, for example in authors and genres."
+
 (def non-empty-string
   [:and
    string?
-   [:fn (fn [x] (not (clojure.string/blank? x)))]])
+   [:fn {:error/message "should be non-blank string"}
+    (fn [x] (not (clojure.string/blank? x)))]])
 
 (def message
   [:map
@@ -83,8 +86,10 @@
     [:user-uid uuid?]
     [:total-limit nat-int?]
     [:available-limit int?]]
-   [:fn (fn [{:keys [total-limit available-limit]}]
-          (<= available-limit total-limit))]])
+   [:fn {:error/message "available limit should be less than or equal to total limit"
+         :error/path [:available-limit]}
+    (fn [{:keys [total-limit available-limit]}]
+      (<= available-limit total-limit))]])
 
 (def user-limit-update
   [:map
@@ -94,10 +99,12 @@
       [:user-uid {:optional true} uuid?]
       [:total-limit {:optional true} nat-int?]
       [:available-limit {:optional true} int?]]
-     [:fn (fn [{:keys [total-limit available-limit]}]
-            (if (and total-limit available-limit)
-              (<= available-limit total-limit)
-              true))]])
+     [:fn {:error/message "available limit should be less than or equal to total limit"
+           :error/path [:available-limit]}
+      (fn [{:keys [total-limit available-limit]}]
+        (if (and total-limit available-limit)
+          (<= available-limit total-limit)
+          true))]])
 
 (def user-limit-out
   [:and
@@ -106,8 +113,10 @@
     [:user-uid uuid?]
     [:total-limit nat-int?]
     [:available-limit int?]]
-   [:fn (fn [{:keys [total-limit available-limit]}]
-          (<= available-limit total-limit))]])
+   [:fn {:error/message "available limit should be less than or equal to total limit"
+         :error/path [:available-limit]}
+    (fn [{:keys [total-limit available-limit]}]
+      (<= available-limit total-limit))]])
 
 (def user-rating-add
   [:map
@@ -173,10 +182,12 @@
     [:user-uid uuid?]
     [:booking-date inst?]
     [:receiving-date {:optional true} inst?]]
-   [:fn (fn [{:keys [booking-date receiving-date]}]
-          (if (some? receiving-date)
-            (#?(:clj time/<= :cljs <=) booking-date receiving-date)
-            true))]])
+   [:fn {:error/message "booking date should be less than or equal to receiving date"
+         :error/path [:receiving-date]}
+    (fn [{:keys [booking-date receiving-date]}]
+      (if receiving-date
+        (#?(:clj time/<= :cljs <=) booking-date receiving-date)
+        true))]])
 
 (def order-update
   [:and
@@ -189,14 +200,18 @@
      [:receiving-date inst?]
      [:return-date inst?]
      [:condition condition]])
-   [:fn (fn [{:keys [booking-date receiving-date return-date]}]
-          (let [loe #?(:clj time/<= :cljs <=)]
-            (match (mapv some? [booking-date receiving-date return-date])
-              [false true  true]  (loe receiving-date return-date)
-              [true  false true]  (loe booking-date return-date)
-              [true  true  false] (loe booking-date receiving-date)
-              [true  true  true]  (loe booking-date receiving-date return-date)
-              :else true)))]])
+   #_"TODO: use :error/fn (fn [{:keys [...]} _])"
+   [:fn {:error/message (str "booking date should be less than or equal to receiving date and "
+                             "receiving date should be less than or equal to return date")
+         :error/path [:malli/error]}
+    (fn [{:keys [booking-date receiving-date return-date]}]
+      (let [loe #?(:clj time/<= :cljs <=)]
+        (match (mapv some? [booking-date receiving-date return-date])
+          [false true  true]  (loe receiving-date return-date)
+          [true  false true]  (loe booking-date return-date)
+          [true  true  false] (loe booking-date receiving-date)
+          [true  true  true]  (loe booking-date receiving-date return-date)
+          :else true)))]])
 
 (def order-out
   [:and
@@ -209,13 +224,18 @@
     [:receiving-date [:maybe inst?]]
     [:return-date [:maybe inst?]]
     [:condition [:maybe condition]]]
-   [:fn (fn [{:keys [receiving-date return-date condition]}]
-          (let [loe #?(:clj time/<= :cljs <=)]
-            (match (mapv some? [receiving-date return-date condition])
-              [false false false] true
-              [true  false false] true
-              [true  true  true]  (loe receiving-date return-date)
-              :else false)))]])
+   #_"TODO: use :error/fn (fn [{:keys [...]} _])"
+   [:fn {:error/message (str "booking date should be less than or equal to receiving date and "
+                             "receiving date should be less than or equal to return date and "
+                             "if return date is set, condition must also be set")
+         :error/path [:malli/error]}
+    (fn [{:keys [booking-date receiving-date return-date condition]}]
+      (let [loe #?(:clj time/<= :cljs <=)]
+        (match (mapv some? [receiving-date return-date condition])
+          [false false false] true
+          [true  false false] (loe booking-date receiving-date)
+          [true  true  true]  (loe booking-date receiving-date return-date)
+          :else false)))]])
 
 (def order-out-extended
   [:and
@@ -230,13 +250,18 @@
     [:receiving-date [:maybe inst?]]
     [:return-date [:maybe inst?]]
     [:condition [:maybe condition]]]
-   [:fn (fn [{:keys [receiving-date return-date condition]}]
-          (let [loe #?(:clj time/<= :cljs <=)]
-            (match (mapv some? [receiving-date return-date condition])
-              [false false false] true
-              [true  false false] true
-              [true  true  true]  (loe receiving-date return-date)
-              :else false)))]])
+   #_"TODO: use :error/fn (fn [{:keys [...]} _])"
+   [:fn {:error/message (str "booking date should be less than or equal to receiving date and "
+                             "receiving date should be less than or equal to return date and "
+                             "if return date is set, condition must also be set")
+         :error/path [:malli/error]}
+    (fn [{:keys [booking-date receiving-date return-date condition]}]
+      (let [loe #?(:clj time/<= :cljs <=)]
+        (match (mapv some? [receiving-date return-date condition])
+          [false false false] true
+          [true  false false] (loe booking-date receiving-date)
+          [true  true  true]  (loe booking-date receiving-date return-date)
+          :else false)))]])
 
 (def order-query
   (-> order-update
@@ -252,8 +277,10 @@
     [:total-quantity nat-int?]
     [:granted-quantity nat-int?]
     [:is-available boolean?]]
-   [:fn (fn [{:keys [total-quantity granted-quantity]}]
-          (<= granted-quantity total-quantity))]])
+   [:fn {:error/message "granted quantity should be less than or equal to total quantity"
+         :error/path [:granted-quantity]}
+    (fn [{:keys [total-quantity granted-quantity]}]
+      (<= granted-quantity total-quantity))]])
 
 (def library-book-update
   [:and
@@ -264,10 +291,12 @@
      [:total-quantity nat-int?]
      [:granted-quantity nat-int?]
      [:is-available boolean?]])
-   [:fn (fn [{:keys [total-quantity granted-quantity]}]
-          (if (and total-quantity granted-quantity)
-            (<= granted-quantity total-quantity)
-            true))]])
+   [:fn {:error/message "granted quantity should be less than or equal to total quantity"
+         :error/path [:granted-quantity]}
+    (fn [{:keys [total-quantity granted-quantity]}]
+      (if (and total-quantity granted-quantity)
+        (<= granted-quantity total-quantity)
+        true))]])
 
 (def library-book-out
   [:and
@@ -278,8 +307,10 @@
     [:total-quantity nat-int?]
     [:granted-quantity nat-int?]
     [:is-available boolean?]]
-   [:fn (fn [{:keys [total-quantity granted-quantity]}]
-          (<= granted-quantity total-quantity))]])
+   [:fn {:error/message "granted quantity should be less than or equal to total quantity"
+         :error/path [:granted-quantity]}
+    (fn [{:keys [total-quantity granted-quantity]}]
+      (<= granted-quantity total-quantity))]])
 
 (def library-book-query
   [:map
