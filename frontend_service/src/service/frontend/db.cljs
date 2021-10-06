@@ -9,4 +9,6 @@
    :user-uid nil
    :tokens {:access-token nil
             :refresh-token nil}
-   :entities nil})
+   :entities {:users {}
+              :libraries {}
+              :books {}}})

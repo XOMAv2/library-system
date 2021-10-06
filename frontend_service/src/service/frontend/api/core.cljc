@@ -58,8 +58,8 @@
              (let [tokens (when new-tokens
                             new-tokens
                             (get-in db tokens-path-vec))
-                   _ (when config/debug? (.log js/console ["API call... "
-                                                           {:new-tokens new-tokens}]))
+                   _ (when config/debug?
+                       (.log js/console ["API call... " {:new-tokens new-tokens}]))
                    props {:on-success on-success
                           :on-failure on-failure
                           :retry-count retry-count
@@ -85,8 +85,8 @@
                                                        [response request-response])]
                (if (and (pos? retry-count)
                         (= 401 (:status request-response)))
-                 (let [_ (when config/debug? (.log js/console ["Relogin... "
-                                                               {:login-response login-response}]))
+                 (let [_ (when config/debug?
+                           (.log js/console ["Relogin... " {:login-response login-response}]))
                        props {:on-success on-success
                               :on-failure on-failure
                               :retry-count (dec retry-count)

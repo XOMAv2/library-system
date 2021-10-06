@@ -133,8 +133,8 @@
 (def-re ::add-stat-record [stat-record]        (mr :post "/api/stats" stat-record))
 (def-re ::get-stat-record [uid]                (mr :get (str "/api/stats/" uid)))
 (def-re ::get-all-stat-records [service]       (when service
-                                                            (mr :get "/api/stats" nil {:service service})
-                                                            (mr :get "/api/stats")))
+                                                 (mr :get "/api/stats" nil {:service service})
+                                                 (mr :get "/api/stats")))
 (def-re ::update-stat-record [uid stat-record] (mr :patch (str "/api/stats/" uid) stat-record))
 (def-re ::delete-stat-record [uid]             (mr :delete (str "/api/stats/" uid)))
 (def-re ::delete-all-stat-records []           (mr :delete "/api/stats"))

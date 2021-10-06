@@ -9,8 +9,8 @@
       (reitit.frontend.easy/push-state route route-params query-params))))
 
 (rf/reg-fx ::console-log
-  (fn [& forms]
-    (apply js/console.log forms)))
+  (fn [msg]
+    (.log js/console msg)))
 
 (rf/reg-fx ::show-alert
   (fn [msg]

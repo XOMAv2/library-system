@@ -67,3 +67,17 @@
           (xf m k (apply f v (map #(get % k) colls)))
           m)))
     c1)))
+
+(defn any-or-coll->coll [any-or-coll]
+  (if (coll? any-or-coll)
+    any-or-coll
+    [any-or-coll]))
+
+(defn class-concat
+  "`class` - either a string or a collection of strings in terms of hiccup html classes.
+   Returns collection of strings."
+  [& classes]
+  (->> classes
+       (filter some?)
+       (map any-or-coll->coll)
+       (apply concat)))

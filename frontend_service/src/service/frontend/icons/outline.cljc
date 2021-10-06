@@ -1,10 +1,5 @@
-(ns service.frontend.icons.outline)
-
-(defn class-concat [& classes]
-  (->> classes
-       (filter some?)
-       (map #(if (coll? %) % [%]))
-       (apply concat)))
+(ns service.frontend.icons.outline
+  (:require [utilities.core :refer [class-concat]]))
 
 #_"https://heroicons.com/"
 
