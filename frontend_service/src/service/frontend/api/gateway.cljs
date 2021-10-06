@@ -20,14 +20,14 @@
 #_"users"
 (rf/reg-event-fx ::add-user
   [(rf/inject-cofx ::uri)]
-  (fn [{:keys [uri]} [_ success failure user]]
+  (fn [{:keys [uri]} [_ on-success on-failure user]]
     {:http-xhrio {:method :post
                   :uri (str (remove-trailing-slash uri) "/api/users")
                   :body (str user)
                   :headers {"Content-Type" "application/edn; charset=utf-8"}
                   :response-format (ajax.edn/edn-response-format)
-                  :on-success success
-                  :on-failure failure}}))
+                  :on-success on-success
+                  :on-failure on-failure}}))
 
 (def-re ::get-user [uid]         (mr :get (str "/api/users/" uid)))
 (def-re ::get-all-users []       (mr :get "/api/users"))
@@ -38,37 +38,37 @@
 #_"auth"
 (rf/reg-event-fx ::get-tokens
   [(rf/inject-cofx ::uri)]
-  (fn [{:keys [uri]} [_ success failure email password]]
+  (fn [{:keys [uri]} [_ on-success on-failure email password]]
     {:http-xhrio {:method :post
                   :uri (str (remove-trailing-slash uri) "/api/auth/login")
                   :body (str {:email email
                               :password password})
                   :headers {"Content-Type" "application/edn; charset=utf-8"}
                   :response-format (ajax.edn/edn-response-format)
-                  :on-success success
-                  :on-failure failure}}))
+                  :on-success on-success
+                  :on-failure on-failure}}))
 
 (rf/reg-event-fx ::refresh-tokens
   [(rf/inject-cofx ::uri)]
-  (fn [{:keys [uri]} [_ success failure refresh-token]]
+  (fn [{:keys [uri]} [_ on-success on-failure refresh-token]]
     {:http-xhrio {:method :put
                   :uri (str (remove-trailing-slash uri) "/api/auth/refresh")
                   :body (str {:refresh-token refresh-token})
                   :headers {"Content-Type" "application/edn; charset=utf-8"}
                   :response-format (ajax.edn/edn-response-format)
-                  :on-success success
-                  :on-failure failure}}))
+                  :on-success on-success
+                  :on-failure on-failure}}))
 
 (rf/reg-event-fx ::verify-token
   [(rf/inject-cofx ::uri)]
-  (fn [{:keys [uri]} [_ success failure access-token]]
+  (fn [{:keys [uri]} [_ on-success on-failure access-token]]
     {:http-xhrio {:method :post
                   :uri (str (remove-trailing-slash uri) "/api/auth/verify")
                   :body (str {:access-token access-token})
                   :headers {"Content-Type" "application/edn; charset=utf-8"}
                   :response-format (ajax.edn/edn-response-format)
-                  :on-success success
-                  :on-failure failure}}))
+                  :on-success on-success
+                  :on-failure on-failure}}))
 
 #_"books"
 (def-re ::add-book [book]            (mr :post "/api/books" book))
