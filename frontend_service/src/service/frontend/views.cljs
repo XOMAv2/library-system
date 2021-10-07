@@ -3,7 +3,7 @@
             [malli.core :as m]
             [clojure.string]
             [utilities.schemas :as schemas]
-            [utilities.core :refer [class-concat any-or-coll->coll]]
+            [reagent.core :as reagent]
             [service.frontend.subs :as subs]
             [service.frontend.config :as config]
             [service.frontend.forms :as forms]
@@ -81,32 +81,37 @@
   (let [schema [:map
                 [:email schemas/non-empty-string]
                 [:password schemas/non-empty-string]]
-        explainer (m/explainer schema)
-        _ (rf/dispatch [::forms/set-form-explainer form-path explainer])]
-    (fn [{:keys [form-path]} submit-button]
-      (let [loading? @(rf/subscribe [::forms/get-form-loading? form-path])]
-        [:div.relative
-         (when loading?
-           [three-dot-card-layer])
-         [:div {:class card-style}
+        explainer (m/explainer schema)]
+    (reagent/create-class
+     {:component-did-mount
+      (fn [_]
+        (rf/dispatch [::forms/set-form-explainer form-path explainer]))
 
-          [:form.space-y-4 {:on-change #(rf/dispatch [::forms/explain-form form-path])
-                            :on-submit #(.preventDefault %)}
-           [:h2.text-center.text-3xl.font-extrabold.text-gray-900
-            "Log in to your account"]
-           [input {:label "Email"
-                   :type "email"
-                   :form-path form-path
-                   :field-path :email}]
-           [input {:label "Password"
-                   :type "password"
-                   :form-path form-path
-                   :field-path :password}]
-           [:div.flex.justify-between.items-center
-            submit-button
-            [:a {:class "px-1 font-medium hover:underline text-blue-500"
-                 :href (href ::routes/register)}
-             "Go to registration"]]]]]))))
+      :reagent-render
+      (fn [{:keys [form-path]} submit-button]
+        (let [loading? @(rf/subscribe [::forms/get-form-loading? form-path])]
+          [:div.relative
+           (when loading?
+             [three-dot-card-layer])
+           [:div {:class card-style}
+
+            [:form.space-y-4 {:on-change #(rf/dispatch [::forms/explain-form form-path])
+                              :on-submit #(.preventDefault %)}
+             [:h2.text-center.text-3xl.font-extrabold.text-gray-900
+              "Log in to your account"]
+             [input {:label "Email"
+                     :type "email"
+                     :form-path form-path
+                     :field-path :email}]
+             [input {:label "Password"
+                     :type "password"
+                     :form-path form-path
+                     :field-path :password}]
+             [:div.flex.justify-between.items-center
+              submit-button
+              [:a {:class "px-1 font-medium hover:underline text-blue-500"
+                   :href (href ::routes/register)}
+               "Go to registration"]]]]]))})))
 
 (defn login-view []
   (let [form-path [:ui-state :view-scope :login-form]
@@ -136,39 +141,44 @@
                       :error/path [:password-repeat]}
                  (fn [{:keys [password password-repeat]}]
                    (= password password-repeat))]]
-        explainer (m/explainer schema)
-        _ (rf/dispatch [::forms/set-form-explainer form-path explainer])]
-    (fn [{:keys [form-path]} submit-button]
-      (let [loading? @(rf/subscribe [::forms/get-form-loading? form-path])]
-        [:div.relative
-         (when loading?
-           [three-dot-card-layer])
-         [:div {:class card-style}
-          [:form.space-y-4 {:on-change #(rf/dispatch [::forms/explain-form form-path])
-                            :on-submit #(.preventDefault %)}
-           [:h2.text-center.text-3xl.font-extrabold.text-gray-900
-            "Register new account"]
-           [input {:label "Name"
-                   :type "text"
-                   :form-path form-path
-                   :field-path :name}]
-           [input {:label "Email"
-                   :type "email"
-                   :form-path form-path
-                   :field-path :email}]
-           [input {:label "Password"
-                   :type "password"
-                   :form-path form-path
-                   :field-path :password}]
-           [input {:label "Password once again"
-                   :type "password"
-                   :form-path form-path
-                   :field-path :password-repeat}]
-           [:div.flex.justify-between.items-center
-            submit-button
-            [:a {:class "px-1 font-medium hover:underline text-blue-500"
-                 :href (href ::routes/login)}
-             "Go to log in"]]]]]))))
+        explainer (m/explainer schema)]
+    (reagent/create-class
+     {:component-did-mount
+      (fn [_]
+        (rf/dispatch [::forms/set-form-explainer form-path explainer]))
+
+      :reagent-render
+      (fn [{:keys [form-path]} submit-button]
+        (let [loading? @(rf/subscribe [::forms/get-form-loading? form-path])]
+          [:div.relative
+           (when loading?
+             [three-dot-card-layer])
+           [:div {:class card-style}
+            [:form.space-y-4 {:on-change #(rf/dispatch [::forms/explain-form form-path])
+                              :on-submit #(.preventDefault %)}
+             [:h2.text-center.text-3xl.font-extrabold.text-gray-900
+              "Register new account"]
+             [input {:label "Name"
+                     :type "text"
+                     :form-path form-path
+                     :field-path :name}]
+             [input {:label "Email"
+                     :type "email"
+                     :form-path form-path
+                     :field-path :email}]
+             [input {:label "Password"
+                     :type "password"
+                     :form-path form-path
+                     :field-path :password}]
+             [input {:label "Password once again"
+                     :type "password"
+                     :form-path form-path
+                     :field-path :password-repeat}]
+             [:div.flex.justify-between.items-center
+              submit-button
+              [:a {:class "px-1 font-medium hover:underline text-blue-500"
+                   :href (href ::routes/login)}
+               "Go to log in"]]]]]))})))
 
 (defn registration-view []
   (let [form-path [:ui-state :view-scope :registration-form]
