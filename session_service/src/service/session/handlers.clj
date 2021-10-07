@@ -217,11 +217,11 @@
     (if (:valid (hashers/verify password
                                 (:password-hash user)
                                 {:limit #{:bcrypt+sha512}}))
-      {:status 200
-       :body {:tokens {:access-token (auth/sign-jwt-access (select-keys user [:uid :role]))
-                       :refresh-token (auth/sign-jwt-refresh (select-keys user [:uid :role]))}
-              :payload {:uid (:user user)
-                        :role (:role user)}}}
+      (let [payload (select-keys user [:uid :role])]
+        {:status 200
+         :body {:tokens {:access-token (auth/sign-jwt-access payload)
+                         :refresh-token (auth/sign-jwt-refresh payload)}
+                :payload payload}})
       {:status 401
        :body {:message "Incorrect password."}})
     {:status 404
