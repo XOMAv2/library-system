@@ -36,6 +36,33 @@
   (fn [{:keys [db]} [_ path entity]]
     {:db (assoc-in db (conj (any-or-coll->coll path) (:uid entity)) entity)}))
 
+(rf/reg-event-fx ::form-submit
+  (fn [_ [_ form-path event-to-dispatch]]
+    (when form-path
+      {:fx [[:dispatch [::forms/explain-form form-path]]
+            [:dispatch [::forms/set-form-submitted? form-path true]]
+            [:dispatch [::form-valid? form-path event-to-dispatch]]]})))
+
+(rf/reg-event-fx ::form-valid?
+  (fn [{:keys [db]} [_ form-path event-to-dispatch]]
+    (when form-path
+      (let [form-path (any-or-coll->coll form-path)
+            form-errors (get-in db (conj form-path :errors))]
+        (when (empty? form-errors)
+          {:fx [[:dispatch [::forms/set-form-loading? form-path true]]
+                [:dispatch event-to-dispatch]]})))))
+
+(rf/reg-event-fx ::form-failure
+  (fn [_ [_ form-path response]]
+    (when form-path
+      {:fx [[:dispatch [::forms/set-form-loading? form-path false]]
+            [:dispatch [::forms/set-form-disabled? form-path false]]
+            [::effects/show-alert (or (-> response :response :message)
+                                      (-> response :status-text))]
+            (cond
+              (= 401 (:status response)) [::effects/navigate {:route ::routes/login}]
+              (= 403 (:status response)) [::effects/navigate {:route ::routes/books}])]})))
+
 (rf/reg-event-db ::init-db
   (fn [_ _]
     db/default-db))
@@ -72,26 +99,6 @@
     {:fx [[:dispatch [::change-modal]]
           [:dispatch [::change-view [views/login-view]]]]}))
 
-(rf/reg-event-fx ::login-form-submit
-  (fn [_ [_ form-path]]
-    (when form-path
-      {:fx [[:dispatch [::forms/explain-form form-path]]
-            [:dispatch [::forms/set-form-submitted? form-path true]]
-            [:dispatch [::login-form-valid? form-path]]]})))
-
-(rf/reg-event-fx ::login-form-valid?
-  (fn [{:keys [db]} [_ form-path]]
-    (when form-path
-      (let [form-path (any-or-coll->coll form-path)
-            form-value (get-in db (conj form-path :value))
-            form-errors (get-in db (conj form-path :errors))]
-        (when (empty? form-errors)
-          {:fx [[:dispatch [::forms/set-form-loading? form-path true]]
-                [:dispatch [::gateway/get-tokens
-                            [::login-success form-path]
-                            [::login-failure form-path]
-                            (:email form-value) (:password form-value)]]]})))))
-
 (rf/reg-event-fx ::login-success
   (fn [{:keys [db]} [_ form-path {:keys [tokens payload]}]]
     (when form-path
@@ -101,54 +108,17 @@
                   #_#_:user-role (:uid payload))
        :fx [[:dispatch [::navigate {:route ::routes/books}]]]})))
 
-(rf/reg-event-fx ::login-failure
-  (fn [_ [_ form-path response]]
-    (when form-path
-      {:fx [[:dispatch [::forms/set-form-loading? form-path false]]
-            [:dispatch [::forms/set-form-disabled? form-path false]]
-            [::effects/show-alert (or (-> response :response :message)
-                                      (-> response :status-text))]]})))
-
 (rf/reg-event-fx ::init-register
   (fn [_ _]
     {:fx [[:dispatch [::change-modal]]
           [:dispatch [::change-view [views/registration-view]]]]}))
 
-(rf/reg-event-fx ::registration-form-submit
-  (fn [_ [_ form-path]]
-    (when form-path
-      {:fx [[:dispatch [::forms/explain-form form-path]]
-            [:dispatch [::forms/set-form-submitted? form-path true]]
-            [:dispatch [::registration-form-valid? form-path]]]})))
-
-(rf/reg-event-fx ::registration-form-valid?
-  (fn [{:keys [db]} [_ form-path]]
-    (when form-path
-      (let [form-path (any-or-coll->coll form-path)
-            form-value (get-in db (conj form-path :value))
-            form-errors (get-in db (conj form-path :errors))]
-        (when (empty? form-errors)
-          {:fx [[:dispatch [::forms/set-form-loading? form-path true]]
-                [:dispatch [::gateway/add-user
-                            [::registration-success form-path]
-                            [::registration-failure form-path]
-                            (-> form-value
-                                (assoc :role "reader")
-                                (dissoc :password-repeat))]]]})))))
 
 (rf/reg-event-fx ::registration-success
   (fn [_ [_ form-path user]]
     (when form-path
       {:fx [[:dispatch [::assoc-in-db-entity [:entities :users] user]]
             [:dispatch [::navigate {:route ::routes/login}]]]})))
-
-(rf/reg-event-fx ::registration-failure
-  (fn [_ [_ form-path response]]
-    (when form-path
-      {:fx [[:dispatch [::forms/set-form-loading? form-path false]]
-            [:dispatch [::forms/set-form-disabled? form-path false]]
-            [::effects/show-alert (or (-> response :response :message)
-                                      (-> response :status-text))]]})))
 
 (rf/reg-event-fx ::init-books
   (fn [_ _]

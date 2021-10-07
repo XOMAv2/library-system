@@ -8,6 +8,7 @@
             [service.frontend.subs :as subs]
             [service.frontend.config :as config]
             [service.frontend.forms :as forms]
+            [service.frontend.api.gateway :as-alias gateway]
             [service.frontend.icons.outline :as icons]
             [service.frontend.events :as-alias events]
             [service.frontend.router :as-alias routes]
@@ -118,7 +119,8 @@
            ^{:key [form-path field-path e]}
            [:p.text-red-500.text-sm.font-medium e]))])))
 
-(defn form [{:keys [form-path title submit-name on-submit footer explainer]} & inputs]
+(defn form
+  [{:keys [form-path title submit-name event-ctor footer explainer]} & inputs]
   (reagent/create-class
    {:component-did-mount
     (fn [_]
@@ -126,35 +128,44 @@
       (rf/dispatch [::forms/set-form-explainer form-path explainer]))
 
     :reagent-render
-    (let [errors @(rf/subscribe [::forms/get-form-level-errors form-path])
-          submitted? @(rf/subscribe [::forms/get-form-submitted? form-path])
-          disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])
-          modal? @(rf/subscribe [::subs/modal?])]
-      (fn [{:keys [form-path title submit-name on-submit footer explainer]} & inputs]
-        (let [loading? @(rf/subscribe [::forms/get-form-loading? form-path])]
-          [:div.relative
-           (when loading?
-             [three-dot-card-layer {:modal? modal?}])
-           [:div {:class card-style}
+    (fn [{:keys [form-path title submit-name event-ctor footer explainer]} & inputs]
+      (let [value @(rf/subscribe [::forms/get-form-value form-path])
+            errors @(rf/subscribe [::forms/get-form-level-errors form-path])
+            submitted? @(rf/subscribe [::forms/get-form-submitted? form-path])
+            disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])
+            modal? @(rf/subscribe [::subs/modal?])
+            loading? @(rf/subscribe [::forms/get-form-loading? form-path])]
+        [:div.relative
+         (when loading?
+           [three-dot-card-layer {:modal? modal?}])
+         [:div {:class card-style}
 
-            [:form.space-y-4 {:on-change #(rf/dispatch [::forms/explain-form form-path])
-                              :on-submit #(.preventDefault %)}
-             (when title
-               [:h2.text-center.text-3xl.font-extrabold.text-gray-900
-                title])
-             inputs
-             [:div.flex.justify-between.items-center
-              (when submit-name
-                [:button {:class button-style
-                          :type "submit"
-                          :on-click on-submit
-                          :disabled (when disabled? true)}
-                 submit-name])
-              footer]
-             (when submitted?
-               (for [e (when (coll? errors) errors)]
-                 ^{:key [form-path e]}
-                 [:p.text-red-500.text-sm.font-medium e]))]]])))}))
+          [:form.space-y-4 {:on-change #(rf/dispatch [::forms/explain-form form-path])
+                            :on-submit #(.preventDefault %)}
+           (when title
+             [:h2.text-center.text-3xl.font-extrabold.text-gray-900
+              title])
+           #_"TODO: form body overflow scroll"
+           #_[:div.space-y-4.overflow-y-auto.p-1.max-h-full #_{:class "max-h-[35rem]"}
+              inputs]
+           inputs
+           [:div.flex.justify-between.items-center
+            (when submit-name
+              [:button {:class button-style
+                        :type "submit"
+                        :on-click #(do (.log js/console "submit" value)
+                                       (rf/dispatch [::events/form-submit
+                                                     form-path
+                                                     (if event-ctor
+                                                       (event-ctor value)
+                                                       [::events/form-failure form-path])]))
+                        :disabled (when disabled? true)}
+               submit-name])
+            footer]
+           (when submitted?
+             (for [e (when (coll? errors) errors)]
+               ^{:key [form-path e]}
+               [:p.text-red-500.text-sm.font-medium e]))]]]))}))
 
 (defn login-form [{:keys [form-path]}]
   (let [schema [:map
@@ -164,13 +175,18 @@
     [form {:form-path form-path
            :title "Log in to your account"
            :submit-name "Log in"
-           :on-submit #(do #_"In case of a cold start of the application from the login screen, the explainer does not load."
-                           (let [schemas [:map
-                                          [:email schemas/non-empty-string]
-                                          [:password schemas/non-empty-string]]
-                                 explainer (m/explainer schemas)
-                                 _ (rf/dispatch [::forms/set-form-explainer form-path explainer])])
-                           (rf/dispatch [::events/login-form-submit form-path]))
+           :event-ctor (fn [form-value]
+                         [::gateway/get-tokens
+                          [::events/login-success form-path]
+                          [::events/form-failure form-path]
+                          (:email form-value) (:password form-value)])
+           #_#(do #_"TODO: In case of a cold start of the application from the login screen, the explainer does not load."
+                  (let [schemas [:map
+                                 [:email schemas/non-empty-string]
+                                 [:password schemas/non-empty-string]]
+                        explainer (m/explainer schemas)
+                        _ (rf/dispatch [::forms/set-form-explainer form-path explainer])])
+                  (rf/dispatch [::events/login-form-submit form-path]))
            :footer [:a {:class "px-1 font-medium hover:underline text-blue-500"
                         :href (href ::routes/register)}
                     "Go to registration"]
@@ -203,7 +219,13 @@
     [form {:form-path form-path
            :title "Register new account"
            :submit-name "Register"
-           :on-submit #(rf/dispatch [::events/registration-form-submit form-path])
+           :event-ctor (fn [form-value]
+                         [::gateway/add-user
+                          [::events/registration-success form-path]
+                          [::events/form-failure form-path]
+                          (-> form-value
+                              (assoc :role "reader")
+                              (dissoc :password-repeat))])
            :footer [:a {:class "px-1 font-medium hover:underline text-blue-500"
                         :href (href ::routes/login)}
                     "Go to log in"]
