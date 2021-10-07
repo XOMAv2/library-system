@@ -15,3 +15,7 @@
 (rf/reg-fx ::show-alert
   (fn [msg]
     (js/alert msg)))
+
+(rf/reg-fx ::local-storage
+  (fn [[key value]]
+    (.setItem js/localStorage (name key) (str value))))

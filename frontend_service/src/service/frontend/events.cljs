@@ -6,8 +6,16 @@
             [service.frontend.router :as routes]
             [service.frontend.views :as views]
             [service.frontend.forms :as forms]
+            [cljs.reader :refer [read-string]]
             [utilities.core :refer [any-or-coll->coll]]
             [service.frontend.api.gateway :as gateway]))
+
+(rf/reg-cofx ::local-storage
+  (fn [coeffects key]
+    (->> (name key)
+         (.getItem js/localStorage)
+         (read-string)
+         (assoc-in coeffects [:local-storage key]))))
 
 (rf/reg-cofx ::gateway/uri
   (fn [coeffects _]
@@ -55,17 +63,20 @@
 (rf/reg-event-fx ::form-failure
   (fn [_ [_ form-path response]]
     (when form-path
-      {:fx [[:dispatch [::forms/set-form-loading? form-path false]]
-            [:dispatch [::forms/set-form-disabled? form-path false]]
-            [::effects/show-alert (or (-> response :response :message)
-                                      (-> response :status-text))]
-            (cond
-              (= 401 (:status response)) [::effects/navigate {:route ::routes/login}]
-              (= 403 (:status response)) [::effects/navigate {:route ::routes/books}])]})))
+      {:fx (->> (case (:status response)
+                  401 [[::effects/local-storage [:tokens nil]]
+                       [::effects/navigate {:route ::routes/login}]]
+                  403 [[::effects/navigate {:route ::routes/books}]]
+                  nil)
+                (into [[:dispatch [::forms/set-form-loading? form-path false]]
+                       [:dispatch [::forms/set-form-disabled? form-path false]]
+                       [::effects/show-alert (or (-> response :response :message)
+                                                 (-> response :status-text))]]))})))
 
-(rf/reg-event-db ::init-db
-  (fn [_ _]
-    db/default-db))
+(rf/reg-event-fx ::init-db
+  [(rf/inject-cofx ::local-storage :tokens)]
+  (fn [{:keys [local-storage]} _]
+    {:db (assoc db/default-db :tokens (:tokens local-storage))}))
 
 (rf/reg-event-fx ::navigate
   (fn [_ [_ params]]
@@ -106,7 +117,8 @@
                   :tokens tokens
                   :user-uid (:uid payload)
                   #_#_:user-role (:uid payload))
-       :fx [[:dispatch [::navigate {:route ::routes/books}]]]})))
+       :fx [[:dispatch [::navigate {:route ::routes/books}]]
+            [::effects/local-storage [:tokens tokens]]]})))
 
 (rf/reg-event-fx ::init-register
   (fn [_ _]
