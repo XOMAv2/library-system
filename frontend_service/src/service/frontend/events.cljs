@@ -139,6 +139,19 @@
      :fx [[:dispatch [::change-modal]]
           [:dispatch [::change-view [views/navigation-view [views/libraries-panel]]]]]}))
 
+(rf/reg-event-fx ::init-library-add
+  (fn [{:keys [db]} _]
+    {:db (assoc-in db [:entities :libraries] nil)
+     :fx [[:dispatch [::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/libraries}]}
+                                      [views/library-add-form {:form-path [:ui-state :modal-scope :add-librar-form]}]]]]
+          [:dispatch [::change-view [views/navigation-view [views/libraries-panel]]]]]}))
+
+(rf/reg-event-fx ::library-add-success
+  (fn [_ [_ form-path library]]
+    (when form-path
+      {:fx [[:dispatch [::assoc-in-db-entity [:entities :libraries] library]]
+            [:dispatch [::navigate {:route ::routes/libraries}]]]})))
+
 (rf/reg-event-fx ::init-library
   (fn [{:keys [db]} [_ uid]]
     {}))

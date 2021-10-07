@@ -251,10 +251,11 @@
   [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
    [registration-form {:form-path [:ui-state :view-scope :registration-form]}]])
 
-(defn modal-view [& forms]
+(defn modal-view [{:keys [on-close-event]} & forms]
   [:div {:class ["h-full w-full z-30 absolute flex justify-center items-center"
                  "backdrop-blur backdrop-brightness-90"]
-         :on-click #(.log js/console "kek")}
+         :on-click (when on-close-event
+                     #(rf/dispatch on-close-event))}
    [:div {:on-click #(.stopPropagation %)}
     [:<> forms]]])
 
@@ -285,7 +286,7 @@
 (defn libraries-panel []
   [:div.h-full.flex.flex-col.relative
    [:div.px-1.absolute.z-20.bottom-2.right-2
-    [add-button {:text "Add library" :on-click identity}]]
+    [add-button {:text "Add library" :on-click #(rf/dispatch [::events/navigate {:route ::routes/library-add}])}]]
    [:div.px-1
     [:input {:type "text" :class [input-style "w-[30rem]"]}]
     [:div.h-2]]
@@ -311,6 +312,37 @@
                 [:li [:p {:class ["text-sm text-gray-500 font-light"
                                   (when (> index 0) "leading-tight")]}
                       item]])]]])]]])
+
+(defn library-generic-form [{:keys [form-path title submit-name event-ctor explainer]}]
+  [form {:form-path form-path
+         :title title
+         :submit-name submit-name
+         :event-ctor event-ctor
+         :explainer explainer}
+   [input {:label "Name"
+           :type "text"
+           :form-path form-path
+           :field-path :name}]
+   [input {:label "Address"
+           :type "text"
+           :form-path form-path
+           :field-path :address}]
+   [sequential-input {:label "Schedule"
+                      :form-path form-path
+                      :field-path :schedule}
+    [input {:type "text"}]]])
+
+(defn library-add-form [{:keys [form-path]}]
+  (let [explainer (m/explainer schemas/library-add)]
+    [library-generic-form {:form-path form-path
+                           :title "Add new library"
+                           :submit-name "Add"
+                           :event-ctor (fn [form-value]
+                                         [::gateway/add-library
+                                          [::events/library-add-success form-path]
+                                          [::events/form-failure form-path]
+                                          form-value])
+                           :explainer explainer}]))
 
 (defn books-panel []
   [:div "books"])

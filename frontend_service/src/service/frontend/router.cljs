@@ -14,10 +14,10 @@
 
 (def routes
   [["/login" {:name ::login
-                :controllers [{:start (fn [_]
-                                        (when config/debug?
-                                          (.log js/console "Entering" ::login))
-                                        (rf/dispatch [::events/init-login]))}]}]
+              :controllers [{:start (fn [_]
+                                      (when config/debug?
+                                        (.log js/console "Entering" ::login))
+                                      (rf/dispatch [::events/init-login]))}]}]
 
    ["/register" {:name ::register
                  :controllers [{:start (fn [_]
@@ -31,6 +31,11 @@
                                  (when config/debug?
                                    (.log js/console "Entering" ::libraries))
                                  (rf/dispatch [::events/init-libraries]))}]}]
+    ["/" {:name ::library-add
+          :controllers [{:start (fn [_]
+                                  (when config/debug?
+                                    (.log js/console "Entering" ::library-add))
+                                  (rf/dispatch [::events/init-library-add]))}]}]
     ["/:uid" {:parameters {:path [:map [:uid uuid?]]}}
      ["" {:name ::library
           :controllers [{:parameters {:path [:uid]}
@@ -78,7 +83,7 @@
                                   (when config/debug?
                                     (.log js/console "Entering" ::user))
                                   (rf/dispatch [::events/init-user uid]))}]}]
-     ["/edit" {:name ::user-edit 
+     ["/edit" {:name ::user-edit
                :controllers [{:parameters {:path [:uid]}
                               :start (fn [{{uid :uid} :path}]
                                        (when config/debug?
