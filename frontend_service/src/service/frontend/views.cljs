@@ -126,7 +126,9 @@
       (rf/dispatch [::forms/set-form-explainer form-path explainer]))
 
     :reagent-render
-    (let [disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])
+    (let [errors @(rf/subscribe [::forms/get-form-level-errors form-path])
+          submitted? @(rf/subscribe [::forms/get-form-submitted? form-path])
+          disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])
           modal? @(rf/subscribe [::subs/modal?])]
       (fn [{:keys [form-path title submit-name on-submit footer explainer]} & inputs]
         (let [loading? @(rf/subscribe [::forms/get-form-loading? form-path])]
@@ -148,7 +150,11 @@
                           :on-click on-submit
                           :disabled (when disabled? true)}
                  submit-name])
-              footer]]]])))}))
+              footer]
+             (when submitted?
+               (for [e (when (coll? errors) errors)]
+                 ^{:key [form-path e]}
+                 [:p.text-red-500.text-sm.font-medium e]))]]])))}))
 
 (defn login-form [{:keys [form-path]}]
   (let [schema [:map
