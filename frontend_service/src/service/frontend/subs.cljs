@@ -35,3 +35,8 @@
   :<- [::users]
   (fn [[user-uid users] _]
     (-> users user-uid)))
+
+(rf/reg-sub ::modal?
+  :<- [::current-modal]
+  (fn [current-modal _]
+    (some? current-modal)))

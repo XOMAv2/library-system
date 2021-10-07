@@ -47,9 +47,10 @@
    [:div {:class (class-concat "h-3 w-3 rounded-full animate-bounce200 mr-1" class)}]
    [:div {:class (class-concat "h-3 w-3 rounded-full animate-bounce400" class)}]])
 
-(defn three-dot-card-layer [{:keys [class]}]
-  [:div {:class ["h-full w-full z-auto absolute flex justify-center items-center"
-                 "rounded-xl backdrop-blur-sm backdrop-brightness-95"]}
+(defn three-dot-card-layer [{:keys [class modal?]}]
+  [:div {:class (class-concat "h-full w-full absolute flex justify-center items-center"
+                              "rounded-xl backdrop-blur-sm backdrop-brightness-95"
+                              (if modal? "z-40" "z-10"))}
    [three-dot-loader {:class (class-concat "bg-blue-500" class)}]])
 
 (defn loader-button [{:keys [text]}]
@@ -124,12 +125,13 @@
       (rf/dispatch [::forms/set-form-explainer form-path explainer]))
 
     :reagent-render
-    (let [disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
+    (let [disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])
+          modal? @(rf/subscribe [::subs/modal?])]
       (fn [{:keys [form-path title submit-name on-submit footer explainer]} & inputs]
         (let [loading? @(rf/subscribe [::forms/get-form-loading? form-path])]
           [:div.relative
            (when loading?
-             [three-dot-card-layer])
+             [three-dot-card-layer {:modal? modal?}])
            [:div {:class card-style}
 
             [:form.space-y-4 {:on-change #(rf/dispatch [::forms/explain-form form-path])
