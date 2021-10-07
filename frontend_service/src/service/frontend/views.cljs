@@ -122,6 +122,7 @@
   (reagent/create-class
    {:component-did-mount
     (fn [_]
+      (rf/dispatch [::forms/set-form-value form-path {}])
       (rf/dispatch [::forms/set-form-explainer form-path explainer]))
 
     :reagent-render

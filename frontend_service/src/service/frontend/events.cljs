@@ -70,7 +70,7 @@
 (rf/reg-event-fx ::init-login
   (fn [_ _]
     {:fx [[:dispatch [::change-modal]]
-          [:dispatch [::change-view [views/login-view] {:login-form {:value {}}}]]]}))
+          [:dispatch [::change-view [views/login-view]]]]}))
 
 (rf/reg-event-fx ::login-form-submit
   (fn [_ [_ form-path]]
@@ -112,7 +112,7 @@
 (rf/reg-event-fx ::init-register
   (fn [_ _]
     {:fx [[:dispatch [::change-modal]]
-          [:dispatch [::change-view [views/registration-view] {:registration-form {:value {}}}]]]}))
+          [:dispatch [::change-view [views/registration-view]]]]}))
 
 (rf/reg-event-fx ::registration-form-submit
   (fn [_ [_ form-path]]
