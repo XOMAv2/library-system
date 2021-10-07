@@ -1,97 +1,26 @@
 (ns service.frontend.views
   (:require [re-frame.core :as rf]
+            [malli.core :as m]
+            [utilities.schemas :as schemas]
+            [utilities.core :refer [class-concat]]
             [service.frontend.subs :as subs]
             [service.frontend.config :as config]
+            [service.frontend.forms :as forms]
             [service.frontend.icons.outline :as icons]
             [service.frontend.events :as-alias events]
             [service.frontend.router :as-alias routes]
             [reitit.frontend.easy :refer [href]]))
 
-(def input-style
-  "block w-full py-2 px-3 border-2 border-blue-500 text-sm
-   font-medium rounded-md focus:ring-2 focus:ring-offset-2
-   focus:ring-blue-500 focus:outline-none bg-blue-50")
-
-(def card-style
-  "shadow-md rounded-xl p-6 bg-white w-[26rem]")
-
-(defn login-form [{:keys [value-path]}]
-  [:div {:class card-style}
-   [:form.space-y-4 {:on-change #(when config/debug? (.log js/console %))
-                     :on-submit #(.preventDefault %)}
-    [:h2.text-center.text-3xl.font-extrabold.text-gray-900
-     "Log in to your account"]
-    [:div
-     [:label.font-medium "Email"
-      [:input {:class [input-style "mt-2"]
-               :type "email"}]]]
-    [:div
-     [:label.font-medium "Password"
-      [:input {:class [input-style "mt-2"]
-               :type "password"}]]]
-    [:div.flex.justify-between.items-center
-     [:button {:class ["py-2 px-4 text-sm font-medium rounded-md text-white"
-                       "bg-blue-500 hover:bg-blue-600 focus:outline-none"
-                       "focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"]
-               :type "button"}
-      "Log in"]
-     [:a {:class "px-1 font-medium hover:underline text-blue-500"
-          :href (href ::routes/register)}
-      "Go to registration"]]]])
-
-(defn login-view []
-  [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
-   [login-form]])
-
-(defn registration-form []
-  [:div {:class card-style}
-   [:form.space-y-4 {:on-change #(when config/debug? (.log js/console %))
-                     :on-submit #(.preventDefault %)}
-    [:h2.text-center.text-3xl.font-extrabold.text-gray-900
-     "Register new account"]
-    [:div
-     [:label.font-medium "Name"
-      [:input {:class [input-style "mt-2"]
-               :type "text"}]]]
-    [:div
-     [:label.font-medium "Email"
-      [:input {:class [input-style "mt-2"]
-               :type "email"}]]]
-    [:div
-     [:label.font-medium "Password"
-      [:input {:class [input-style "mt-2"]
-               :type "password"}]]]
-    [:div
-     [:label.font-medium "Password once again"
-      [:input {:class [input-style "mt-2"]
-               :type "password"}]]]
-    [:div.flex.justify-between.items-center
-     [:button {:class ["py-2 px-4 text-sm font-medium rounded-md text-white"
-                       "bg-blue-500 hover:bg-blue-600 focus:outline-none"
-                       "focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"]
-               :type "button"}
-      "Register"]
-     [:a {:class "px-1 font-medium hover:underline text-blue-500"
-          :href (href ::routes/login)}
-      "Go to log in"]]]])
-
-(defn registration-view []
-  [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
-   [registration-form]])
-
-(defn modal-view [& forms]
-  [:div {:class ["h-full w-full z-20 absolute flex justify-center items-center"
-                 "backdrop-blur backdrop-brightness-90"]
-         :on-click #(.log js/console "kek")}
-   [:div {:on-click #(.stopPropagation %)}
-    [:<> forms]]])
-
 (defn three-dot-loader [{:keys [class]}]
-  (let [class (if (coll? class) class [class])]
   [:div.flex
-   [:div {:class (concat ["h-2 w-2 rounded-full animate-bounce mr-1"] class)}]
-   [:div {:class (concat ["h-2 w-2 rounded-full animate-bounce200 mr-1"] class)}]
-   [:div {:class (concat ["h-2 w-2 rounded-full animate-bounce400"] class)}]]))
+   [:div {:class (class-concat "h-3 w-3 rounded-full animate-bounce mr-1" class)}]
+   [:div {:class (class-concat "h-3 w-3 rounded-full animate-bounce200 mr-1" class)}]
+   [:div {:class (class-concat "h-3 w-3 rounded-full animate-bounce400" class)}]])
+
+(defn three-dot-card-layer [{:keys [class]}]
+  [:div {:class ["h-full w-full z-10 absolute flex justify-center items-center"
+                 "rounded-xl backdrop-blur-sm backdrop-brightness-95"]}
+   [three-dot-loader {:class (class-concat "bg-blue-500" class)}]])
 
 (defn loader-button [{:keys [text]}]
   [:button {:class ["flex flex-row items-center"
@@ -100,6 +29,151 @@
                     "focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"]}
    [:span.mr-2 text]
    [three-dot-loader {:class "bg-white"}]])
+
+(def input-style
+  "block w-full py-2 px-3 border-2 border-blue-500 text-sm
+   font-medium rounded-md focus:ring-2 focus:ring-offset-2
+   focus:ring-blue-500 focus:outline-none bg-blue-50")
+
+(defn input [{:keys [label class type form-path field-path]}]
+  (let [value @(rf/subscribe [::forms/get-field-value form-path field-path])
+        errors @(rf/subscribe [::forms/get-field-errors form-path field-path])
+        submitted? @(rf/subscribe [::forms/get-form-submitted? form-path])
+        disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
+    [:div.space-y-2
+     [:label.font-medium label
+      [:input {:class (class-concat input-style
+                                    "disabled:bg-gray-100 disabled:text-gray-500"
+                                    (when label "mt-2")
+                                    class)
+               :disabled (when disabled? true)
+               :type type
+               :value value
+               :on-change #(rf/dispatch [::forms/set-field-value form-path field-path (-> % .-target .-value)])}]]
+     (when submitted?
+       (for [e errors]
+         ^{:key [form-path field-path e]}
+         [:p.text-red-500.text-sm.font-medium e]))]))
+
+(def card-style
+  "shadow-md rounded-xl p-6 bg-white w-[26rem]")
+
+(defn login-form [{:keys [form-path]} submit-button]
+  (let [schema [:map
+                [:email schemas/non-empty-string]
+                [:password schemas/non-empty-string]]
+        explainer (m/explainer schema)
+        _ (rf/dispatch [::forms/set-form-explainer form-path explainer])]
+    (fn [{:keys [form-path]} submit-button]
+      (let [loading? @(rf/subscribe [::forms/get-form-loading? form-path])]
+        [:div.relative
+         (when loading?
+           [three-dot-card-layer])
+         [:div {:class card-style}
+
+          [:form.space-y-4 {:on-change #(rf/dispatch [::forms/explain-form form-path])
+                            :on-submit #(.preventDefault %)}
+           [:h2.text-center.text-3xl.font-extrabold.text-gray-900
+            "Log in to your account"]
+           [input {:label "Email"
+                   :type "email"
+                   :form-path form-path
+                   :field-path :email}]
+           [input {:label "Password"
+                   :type "password"
+                   :form-path form-path
+                   :field-path :password}]
+           [:div.flex.justify-between.items-center
+            submit-button
+            [:a {:class "px-1 font-medium hover:underline text-blue-500"
+                 :href (href ::routes/register)}
+             "Go to registration"]]]]]))))
+
+(defn login-view []
+  (let [form-path [:ui-state :view-scope :login-form]
+        disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
+    [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
+     [login-form {:form-path form-path}
+      [:button {:class ["py-2 px-4 text-sm font-medium rounded-md text-white"
+                        "bg-blue-500 hover:bg-blue-600 focus:outline-none"
+                        "focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        "disabled:bg-blue-400"]
+                :type "submit"
+                :on-click #(do #_"In case of a cold start of the application from the login screen, the explainer does not load."
+                               (let [schemas [:map
+                                              [:email schemas/non-empty-string]
+                                              [:password schemas/non-empty-string]]
+                                     explainer (m/explainer schemas)
+                                     _ (rf/dispatch [::forms/set-form-explainer form-path explainer])])
+                               (rf/dispatch [::events/login-form-submit form-path]))
+                :disabled (when disabled? true)}
+       "Log in"]]]))
+
+(defn registration-form [{:keys [form-path]} submit-button]
+  (let [schema [:and
+                [:map
+                 [:name schemas/non-empty-string]
+                 [:email schemas/non-empty-string]
+                 [:password schemas/non-empty-string]
+                 [:password-repeat schemas/non-empty-string]]
+                [:fn {:error/message "repeated password should match the original one"
+                      :error/path [:password-repeat]}
+                 (fn [{:keys [password password-repeat]}]
+                   (= password password-repeat))]]
+        explainer (m/explainer schema)
+        _ (rf/dispatch [::forms/set-form-explainer form-path explainer])]
+    (fn [{:keys [form-path]} submit-button]
+      (let [loading? @(rf/subscribe [::forms/get-form-loading? form-path])]
+        [:div.relative
+         (when loading?
+           [three-dot-card-layer])
+         [:div {:class card-style}
+          [:form.space-y-4 {:on-change #(rf/dispatch [::forms/explain-form form-path])
+                            :on-submit #(.preventDefault %)}
+           [:h2.text-center.text-3xl.font-extrabold.text-gray-900
+            "Register new account"]
+           [input {:label "Name"
+                   :type "text"
+                   :form-path form-path
+                   :field-path :name}]
+           [input {:label "Email"
+                   :type "email"
+                   :form-path form-path
+                   :field-path :email}]
+           [input {:label "Password"
+                   :type "password"
+                   :form-path form-path
+                   :field-path :password}]
+           [input {:label "Password once again"
+                   :type "password"
+                   :form-path form-path
+                   :field-path :password-repeat}]
+           [:div.flex.justify-between.items-center
+            submit-button
+            [:a {:class "px-1 font-medium hover:underline text-blue-500"
+                 :href (href ::routes/login)}
+             "Go to log in"]]]]]))))
+
+(defn registration-view []
+  (let [form-path [:ui-state :view-scope :registration-form]
+        disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
+    [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
+     [registration-form {:form-path form-path}
+      [:button {:class ["py-2 px-4 text-sm font-medium rounded-md text-white"
+                        "bg-blue-500 hover:bg-blue-600 focus:outline-none"
+                        "focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                        "disabled:bg-blue-400"]
+                :type "submit"
+                :on-click #(rf/dispatch [::events/registration-form-submit form-path])
+                :disabled (when disabled? true)}
+       "Register"]]]))
+
+(defn modal-view [& forms]
+  [:div {:class ["h-full w-full z-30 absolute flex justify-center items-center"
+                 "backdrop-blur backdrop-brightness-90"]
+         :on-click #(.log js/console "kek")}
+   [:div {:on-click #(.stopPropagation %)}
+    [:<> forms]]])
 
 (def ^:private sections
   [[icons/user-circle  "My profile" []]
@@ -127,7 +201,7 @@
 
 (defn libraries-panel []
   [:div.h-full.flex.flex-col.relative
-   [:div.px-1.absolute.z-10.bottom-2.right-2
+   [:div.px-1.absolute.z-20.bottom-2.right-2
     [add-button {:text "Add library" :on-click identity}]]
    [:div.px-1
     [:input {:type "text" :class [input-style "w-[30rem]"]}]
