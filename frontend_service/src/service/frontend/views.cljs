@@ -4,6 +4,7 @@
             [clojure.string]
             [utilities.schemas :as schemas]
             [reagent.core :as reagent]
+            [utilities.core :refer [class-concat any-or-coll->coll remove-nth dissoc-in]]
             [service.frontend.subs :as subs]
             [service.frontend.config :as config]
             [service.frontend.forms :as forms]
@@ -70,12 +71,51 @@
                :value value
                :on-change #(rf/dispatch [::forms/set-field-value form-path field-path (-> % .-target .-value)])}]]
      (when submitted?
-       (for [e errors]
+       (for [e (when (coll? errors) errors)]
          ^{:key [form-path field-path e]}
          [:p.text-red-500.text-sm.font-medium e]))]))
 
-(def card-style
-  "shadow-md rounded-xl p-6 bg-white w-[26rem]")
+(defn sequential-input [{:keys [label form-path field-path]} [input-component input-props]]
+  (let [errors @(rf/subscribe [::forms/get-field-errors form-path field-path])
+        submitted? @(rf/subscribe [::forms/get-form-submitted? form-path])
+        disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
+    (let [value @(rf/subscribe [::forms/get-field-value form-path field-path])]
+      [:div.space-y-2
+       [:label.font-medium label
+        (for [[index item] (map-indexed #(vector % %2) value)]
+          ^{:key [form-path field-path index]}
+          [:div.relative.mt-2
+           [input-component (-> input-props
+                                (assoc :form-path form-path)
+                                (assoc :field-path (conj (any-or-coll->coll field-path) index)))]
+           [:div.absolute.top-2.right-2
+            [:button {:class (class-concat icon-button-style
+                                           "flex-none hover:text-red-500 focus:text-red-500")
+                      :on-click #(rf/dispatch
+                                  [::forms/update-form-value
+                                   form-path (fn [m]
+                                               (if field-path
+                                                 (let [path (any-or-coll->coll field-path)
+                                                       update-fn (fn [c] (vec (remove-nth index c)))
+                                                       m (update-in m path update-fn)
+                                                       new-val-empty? (empty? (get-in m path))
+                                                       m (if new-val-empty? (dissoc-in m path) m)]
+                                                   m)
+                                                 m))])
+                      :disabled (when disabled? true)}
+             [icons/trash {:class "stroke-current"}]]]])
+        [:div.mt-2
+         [:button {:class (class-concat outline-button-style "w-full")
+                   :on-click #(rf/dispatch [::forms/update-field-value
+                                            form-path field-path
+                                            (fn [m] (vec (conj m nil)))])
+                   :disabled (when disabled? true)}
+          [:div.flex.justify-center.items-center
+           [icons/plus]]]]]
+       (when submitted?
+         (for [e (filter #(and (some? %) (not (coll? %))) errors)]
+           ^{:key [form-path field-path e]}
+           [:p.text-red-500.text-sm.font-medium e]))])))
 
 (defn login-form [{:keys [form-path]} submit-button]
   (let [schema [:map

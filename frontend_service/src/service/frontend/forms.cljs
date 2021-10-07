@@ -17,6 +17,20 @@
                                 [:value]
                                 (any-or-coll->coll field-path)) value)})))
 
+(rf/reg-event-fx ::update-field-value
+  (fn [{:keys [db]} [_ form-path field-path f & args]]
+    (when (and form-path field-path)
+      (let [path (concat (any-or-coll->coll form-path)
+                         [:value]
+                         (any-or-coll->coll field-path))]
+        {:db (apply update-in db path f args)}))))
+
+(rf/reg-event-fx ::update-form-value
+  (fn [{:keys [db]} [_ form-path f & args]]
+    (when form-path
+      (let [path (conj (any-or-coll->coll form-path) :value)]
+        {:db (apply update-in db path f args)}))))
+
 (rf/reg-event-fx ::set-form-explainer
   (fn [{:keys [db]} [_ form-path explainer]]
     (when form-path

@@ -81,3 +81,43 @@
        (filter some?)
        (map any-or-coll->coll)
        (apply concat)))
+
+(defn remove-nth
+  "Returns a lazy sequence of the items in coll, except for the item at the
+  supplied index. Runs in O(n) time. Returns a transducer when no collection is
+  provided."
+  {:added "1.2.0"}
+  ([index]
+   (fn [rf]
+     (let [idx (volatile! (inc index))]
+       (fn
+         ([] (rf))
+         ([result] (rf result))
+         ([result x]
+          (if (zero? (vswap! idx dec))
+            result
+            (rf result x)))))))
+  ([index coll]
+   (lazy-seq
+    (if (zero? index)
+      (rest coll)
+      (when (seq coll)
+        (cons (first coll) (remove-nth (dec index) (rest coll))))))))
+
+(defn dissoc-in
+  "Dissociate a value in a nested associative structure, identified by a sequence
+  of keys. Any collections left empty by the operation will be dissociated from
+  their containing structures."
+  ([m ks]
+   (if-let [[k & ks] (seq ks)]
+     (if (seq ks)
+       (let [v (dissoc-in (get m k) ks)]
+         (if (empty? v)
+           (dissoc m k)
+           (assoc m k v)))
+       (dissoc m k))
+     m))
+  ([m ks & kss]
+   (if-let [[ks' & kss] (seq kss)]
+     (recur (dissoc-in m ks) ks' kss)
+     (dissoc-in m ks))))
