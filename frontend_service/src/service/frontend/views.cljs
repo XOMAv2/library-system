@@ -1,8 +1,9 @@
 (ns service.frontend.views
   (:require [re-frame.core :as rf]
             [malli.core :as m]
+            [clojure.string]
             [utilities.schemas :as schemas]
-            [utilities.core :refer [class-concat]]
+            [utilities.core :refer [class-concat any-or-coll->coll]]
             [service.frontend.subs :as subs]
             [service.frontend.config :as config]
             [service.frontend.forms :as forms]
@@ -10,6 +11,34 @@
             [service.frontend.events :as-alias events]
             [service.frontend.router :as-alias routes]
             [reitit.frontend.easy :refer [href]]))
+
+(def input-style
+  "block w-full py-2 px-3 border-2 border-blue-500 text-sm
+   font-medium rounded-md focus:ring-2 focus:ring-offset-2
+   focus:ring-blue-500 focus:outline-none bg-blue-50
+   disabled:bg-gray-100 disabled:text-gray-500")
+
+(def icon-button-style
+  "rounded-xl transform hover:scale-125 focus:scale-125 focus:outline-none
+   disabled:text-gray-500"
+  #_"TODO: tailwind combine prefixes"
+  #_"hover:disabled:scale-100")
+
+(def button-style
+  "py-2 px-4 text-sm font-medium rounded-md text-white
+   bg-blue-500 hover:bg-blue-600 focus:outline-none
+   focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+   disabled:bg-blue-400")
+
+(def outline-button-style
+  "py-2 px-3 text-sm rounded-md
+   font-medium focus:ring-2 focus:ring-offset-2
+   focus:ring-blue-500 focus:outline-none
+   bg-blue-50 hover:bg-blue-200
+   disabled:bg-gray-100 disabled:text-gray-500")
+
+(def card-style
+  "shadow-md rounded-xl p-6 bg-white w-[26rem]")
 
 (defn three-dot-loader [{:keys [class]}]
   [:div.flex
@@ -23,17 +52,10 @@
    [three-dot-loader {:class (class-concat "bg-blue-500" class)}]])
 
 (defn loader-button [{:keys [text]}]
-  [:button {:class ["flex flex-row items-center"
-                    "py-2 px-4 text-sm font-medium rounded-md text-white"
-                    "bg-blue-500 hover:bg-blue-600 focus:outline-none"
-                    "focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"]}
-   [:span.mr-2 text]
-   [three-dot-loader {:class "bg-white"}]])
-
-(def input-style
-  "block w-full py-2 px-3 border-2 border-blue-500 text-sm
-   font-medium rounded-md focus:ring-2 focus:ring-offset-2
-   focus:ring-blue-500 focus:outline-none bg-blue-50")
+  [:button {:class button-style}
+   [:div.flex.flex-row.items-center
+    [:span.mr-2 text]
+    [three-dot-loader {:class "bg-white"}]]])
 
 (defn input [{:keys [label class type form-path field-path]}]
   (let [value @(rf/subscribe [::forms/get-field-value form-path field-path])
@@ -42,10 +64,7 @@
         disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
     [:div.space-y-2
      [:label.font-medium label
-      [:input {:class (class-concat input-style
-                                    "disabled:bg-gray-100 disabled:text-gray-500"
-                                    (when label "mt-2")
-                                    class)
+      [:input {:class (class-concat input-style (when label "mt-2") class)
                :disabled (when disabled? true)
                :type type
                :value value
@@ -94,10 +113,7 @@
         disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
     [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
      [login-form {:form-path form-path}
-      [:button {:class ["py-2 px-4 text-sm font-medium rounded-md text-white"
-                        "bg-blue-500 hover:bg-blue-600 focus:outline-none"
-                        "focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        "disabled:bg-blue-400"]
+      [:button {:class button-style
                 :type "submit"
                 :on-click #(do #_"In case of a cold start of the application from the login screen, the explainer does not load."
                                (let [schemas [:map
@@ -159,10 +175,7 @@
         disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
     [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
      [registration-form {:form-path form-path}
-      [:button {:class ["py-2 px-4 text-sm font-medium rounded-md text-white"
-                        "bg-blue-500 hover:bg-blue-600 focus:outline-none"
-                        "focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        "disabled:bg-blue-400"]
+      [:button {:class button-style
                 :type "submit"
                 :on-click #(rf/dispatch [::events/registration-form-submit form-path])
                 :disabled (when disabled? true)}
@@ -191,13 +204,13 @@
    "Пн: 10:00-19:00"])
 
 (defn add-button [{:keys [text on-click]}]
-  [:button {:class ["shadow-3xl py-2 px-4 text-lg font-medium rounded-full text-white"
-                    "bg-blue-500 hover:bg-blue-600 focus:outline-none flex items-center"
-                    "focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"]
+  [:button {:class (class-concat (clojure.string/replace button-style #"\srounded-md\s" " ")
+                                 "shadow-3xl text-lg rounded-full")
             :type "button"
             :on-click on-click}
-   [icons/plus]
-   [:span.ml-2 text]])
+   [:div.flex.items-center
+    [icons/plus]
+    [:span.ml-2 text]]])
 
 (defn libraries-panel []
   [:div.h-full.flex.flex-col.relative
@@ -217,11 +230,10 @@
              [:div.flex.flex-row.justify-between.items-center
               [:h1.font-normal.truncate {:class "text-2xl"} "Библиотека имени Ленина"]
               [:div.flex.flex-row.gap-1
-               [:button {:class ["rounded-xl transform hover:scale-125 focus:outline-none"
-                                 "focus:scale-125"]}
+               [:button {:class icon-button-style}
                 [icons/pencil]]
-               [:button {:class ["rounded-xl transform hover:scale-125 hover:text-red-500"
-                                 "focus:scale-125 focus:text-red-500 focus:outline-none"]}
+               [:button {:class (class-concat icon-button-style
+                                              "hover:text-red-500 focus:text-red-500")}
                 [icons/trash {:class "stroke-current"}]]]]
              [:p.font-medium.truncate.leading-snug "ул. Бажова, дом 3, корпус 2"]
              [:ul
@@ -243,25 +255,21 @@
   [:div "statistics"])
 
 (defn navigation-view [& forms]
-  (let [current-route-name @(rf/subscribe [::subs/current-route-name])
-        common-section-style ["py-2 px-3 text-sm flex items-center rounded-md"
-                              "block font-medium focus:ring-2 focus:ring-offset-2"
-                              "focus:ring-blue-500 focus:outline-none"]
-        section-style (conj common-section-style
-                            "bg-blue-50 hover:bg-blue-200")
-        active-section-style (conj common-section-style
-                                   "bg-gradient-to-r from-blue-200 to-green-100 hover:to-blue-200")]
+  (let [current-route-name @(rf/subscribe [::subs/current-route-name])]
     [:div.flex.flex-row.h-screen
      [:nav.p-3.w-52.overflow-y-auto.flex-none #_"TODO: think about responsive design."
       [:ul.space-y-2
        (for [[icon section [route path-params query-params]] sections]
          ^{:key section}
          [:li [:a {:class (if (= route current-route-name)
-                            active-section-style
-                            section-style)
+                            (class-concat outline-button-style "block"
+                                          "bg-gradient-to-r from-blue-200 to-green-100"
+                                          "hover:to-blue-200")
+                            (class-concat outline-button-style "block"))
                    :href (href route path-params query-params)}
-               [icon]
-               [:span.ml-2 section]]])]]
+               [:div.flex.items-center
+                [icon]
+                [:span.ml-2 section]]]])]]
      [:div.py-3.pr-3.flex-grow
       [:<> forms]]]))
 
