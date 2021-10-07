@@ -218,8 +218,10 @@
                                 (:password-hash user)
                                 {:limit #{:bcrypt+sha512}}))
       {:status 200
-       :body {:access-token (auth/sign-jwt-access (select-keys user [:uid :role]))
-              :refresh-token (auth/sign-jwt-refresh (select-keys user [:uid :role]))}}
+       :body {:tokens {:access-token (auth/sign-jwt-access (select-keys user [:uid :role]))
+                       :refresh-token (auth/sign-jwt-refresh (select-keys user [:uid :role]))}
+              :payload {:uid (:user user)
+                        :role (:role user)}}}
       {:status 401
        :body {:message "Incorrect password."}})
     {:status 404

@@ -112,7 +112,11 @@
       ["/login" {:post {:parameters {:body [:map
                                             [:email schemas/non-empty-string]
                                             [:password schemas/non-empty-string]]}
-                        :responses {200 {:body schemas/token-pair}
+                        :responses {200 {:body [:map
+                                                [:tokens schemas/token-pair]
+                                                [:payload [:map
+                                                           [:uid uuid?]
+                                                           [:role schemas/role]]]]}
                                     401 {:body message}
                                     404 {:body message}}
                         :handler handlers/get-tokens}}]
