@@ -7,6 +7,7 @@
             [service.frontend.views :as views]
             [service.frontend.forms :as forms]
             [cljs.reader :refer [read-string]]
+            [utilities.core :refer [dissoc-in]]
             [utilities.core :refer [any-or-coll->coll]]
             [service.frontend.api.gateway :as gateway]))
 
@@ -31,18 +32,30 @@
 
 (rf/reg-event-fx ::assoc-in-db
   (fn [{:keys [db]} [_ path value]]
-    {:db (assoc-in db (any-or-coll->coll path) value)}))
+    {:db (assoc-in db (cons :entities (any-or-coll->coll path)) value)}))
 
-(rf/reg-event-fx ::assoc-in-db-entites
+(rf/reg-event-fx ::assoc-in-db-entities
   (fn [{:keys [db]} [_ path entities]]
     {:db (->> entities
               (map #(vector (:uid %) %))
               (into {})
-              (assoc-in db (any-or-coll->coll path)))}))
+              (assoc-in db (cons :entities (any-or-coll->coll path))))}))
 
 (rf/reg-event-fx ::assoc-in-db-entity
   (fn [{:keys [db]} [_ path entity]]
-    {:db (assoc-in db (conj (any-or-coll->coll path) (:uid entity)) entity)}))
+    {:db (assoc-in db (concat [:entities]
+                              (any-or-coll->coll path)
+                              [(:uid entity)]) entity)}))
+
+(rf/reg-event-fx ::dissoc-in-db-entities
+  (fn [{:keys [db]} [_ path]]
+    {:db (dissoc-in db (cons :entities (any-or-coll->coll path)))}))
+
+(rf/reg-event-fx ::dissoc-in-db-entity
+  (fn [{:keys [db]} [_ path entity]]
+    {:db (dissoc-in db (concat [:entities]
+                               (any-or-coll->coll path)
+                               [(:uid entity)]))}))
 
 (rf/reg-event-fx ::form-submit
   (fn [_ [_ form-path event-to-dispatch]]
@@ -63,15 +76,19 @@
 (rf/reg-event-fx ::form-failure
   (fn [_ [_ form-path response]]
     (when form-path
-      {:fx (->> (case (:status response)
-                  401 [[::effects/local-storage [:tokens nil]]
-                       [::effects/navigate {:route ::routes/login}]]
-                  403 [[::effects/navigate {:route ::routes/books}]]
-                  nil)
-                (into [[:dispatch [::forms/set-form-loading? form-path false]]
-                       [:dispatch [::forms/set-form-disabled? form-path false]]
-                       [::effects/show-alert (or (-> response :response :message)
-                                                 (-> response :status-text))]]))})))
+      {:fx [[:dispatch [::forms/set-form-loading? form-path false]]
+            [:dispatch [::forms/set-form-disabled? form-path false]]
+            [:dispatch [::http-failure response]]]})))
+
+(rf/reg-event-fx ::http-failure
+  (fn [_ [_ response]]
+    {:fx (->> (case (:status response)
+                401 [[::effects/local-storage [:tokens nil]]
+                     [::effects/navigate {:route ::routes/login}]]
+                403 [[::effects/navigate {:route ::routes/books}]]
+                nil)
+              (into [[::effects/show-alert (or (-> response :response :message)
+                                               (-> response :status-text))]]))}))
 
 (rf/reg-event-fx ::init-db
   [(rf/inject-cofx ::local-storage :tokens)]
@@ -129,7 +146,7 @@
 (rf/reg-event-fx ::registration-success
   (fn [_ [_ form-path user]]
     (when form-path
-      {:fx [[:dispatch [::assoc-in-db-entity [:entities :users] user]]
+      {:fx [[:dispatch [::assoc-in-db-entity :users user]]
             [:dispatch [::navigate {:route ::routes/login}]]]})))
 
 (rf/reg-event-fx ::init-books
@@ -149,28 +166,58 @@
   (fn [{:keys [db]} _]
     {:db (assoc-in db [:entities :libraries] nil)
      :fx [[:dispatch [::change-modal]]
-          [:dispatch [::change-view [views/navigation-view [views/libraries-panel]]]]]}))
+          [:dispatch [::change-view [views/navigation-view [views/libraries-panel]]]]
+          [:dispatch [::gateway/get-all-libraries
+                      [::get-all-libraries-success]
+                      [::http-failure]]]]}))
+
+(rf/reg-event-fx ::get-all-libraries-success
+  (fn [{:keys [db]} [_ {:keys [libraries]}]]
+    {:dispatch [::assoc-in-db-entities :libraries libraries]}))
 
 (rf/reg-event-fx ::init-library-add
   (fn [{:keys [db]} _]
-    {:db (assoc-in db [:entities :libraries] nil)
-     :fx [[:dispatch [::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/libraries}]}
+    {:fx [[:dispatch [::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/libraries}]}
                                       [views/library-add-form {:form-path [:ui-state :modal-scope :add-librar-form]}]]]]
           [:dispatch [::change-view [views/navigation-view [views/libraries-panel]]]]]}))
 
 (rf/reg-event-fx ::library-add-success
   (fn [_ [_ form-path library]]
     (when form-path
-      {:fx [[:dispatch [::assoc-in-db-entity [:entities :libraries] library]]
+      {:fx [[:dispatch [::assoc-in-db-entity :libraries library]]
             [:dispatch [::navigate {:route ::routes/libraries}]]]})))
 
 (rf/reg-event-fx ::init-library
   (fn [{:keys [db]} [_ uid]]
-    {}))
+    (if-let [library (get-in db [:entities :libraries uid])]
+      {:dispatch [::init-library-success uid library]}
+      {:dispatch [::gateway/get-library [::init-library-success uid] [::http-failure] uid]})))
+
+(rf/reg-event-fx ::init-library-success
+  (fn [_ [_ uid library]]
+    {:fx [[:dispatch [::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/libraries}]}
+                                      [views/library-disabled-form {:form-path [:ui-state :modal-scope :disabled-librar-form]
+                                                                    :form-value library}]]]]
+          [:dispatch [::change-view [views/navigation-view [views/libraries-panel]]]]]}))
 
 (rf/reg-event-fx ::init-library-edit
   (fn [{:keys [db]} [_ uid]]
-    {}))
+    (if-let [library (get-in db [:entities :libraries uid])]
+      {:dispatch [::init-library-edit-success uid library]}
+      {:dispatch [::gateway/get-library [::init-library-edit-success uid] [::http-failure] uid]})))
+
+(rf/reg-event-fx ::init-library-edit-success
+  (fn [_ [_ uid library]]
+    {:fx [[:dispatch [::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/libraries}]}
+                                      [views/library-edit-form {:form-path [:ui-state :modal-scope :edit-librar-form]
+                                                                :form-value library}]]]]
+          [:dispatch [::change-view [views/navigation-view [views/libraries-panel]]]]]}))
+
+(rf/reg-event-fx ::library-edit-success
+  (fn [_ [_ form-path library]]
+    (when form-path
+      {:fx [[:dispatch [::assoc-in-db-entity :libraries library]]
+            [:dispatch [::navigate {:route ::routes/libraries}]]]})))
 
 (rf/reg-event-fx ::init-users
   (fn [_ _]

@@ -36,6 +36,10 @@
   (fn [[user-uid users] _]
     (-> users user-uid)))
 
+(rf/reg-sub ::libraries
+  (fn [db _]
+    (-> db :entities :libraries)))
+
 (rf/reg-sub ::modal?
   :<- [::current-modal]
   (fn [current-modal _]

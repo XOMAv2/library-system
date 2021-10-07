@@ -120,15 +120,18 @@
            [:p.text-red-500.text-sm.font-medium e]))])))
 
 (defn form
-  [{:keys [form-path title submit-name event-ctor footer explainer]} & inputs]
+  [{:keys [form-path form-value title submit-name event-ctor
+           footer explainer disabled? on-submit]} & inputs]
   (reagent/create-class
    {:component-did-mount
     (fn [_]
-      (rf/dispatch [::forms/set-form-value form-path {}])
-      (rf/dispatch [::forms/set-form-explainer form-path explainer]))
+      (rf/dispatch [::forms/set-form-value form-path (or form-value {})])
+      (rf/dispatch [::forms/set-form-explainer form-path explainer])
+      (rf/dispatch [::forms/set-form-disabled? form-path disabled?]))
 
     :reagent-render
-    (fn [{:keys [form-path title submit-name event-ctor footer explainer]} & inputs]
+    (fn [{:keys [form-path title submit-name event-ctor
+                 footer explainer disabled? on-submit]} & inputs]
       (let [value @(rf/subscribe [::forms/get-form-value form-path])
             errors @(rf/subscribe [::forms/get-form-level-errors form-path])
             submitted? @(rf/subscribe [::forms/get-form-submitted? form-path])
@@ -148,20 +151,24 @@
            #_"TODO: form body overflow scroll"
            #_[:div.space-y-4.overflow-y-auto.p-1.max-h-full #_{:class "max-h-[35rem]"}
               inputs]
-           inputs
-           [:div.flex.justify-between.items-center
-            (when submit-name
-              [:button {:class button-style
-                        :type "submit"
-                        :on-click #(do (.log js/console "submit" value)
-                                       (rf/dispatch [::events/form-submit
-                                                     form-path
-                                                     (if event-ctor
-                                                       (event-ctor value)
-                                                       [::events/form-failure form-path])]))
-                        :disabled (when disabled? true)}
-               submit-name])
-            footer]
+           (for [input inputs]
+             ^{:key [form-path input]} input)
+           (when (or submit-name footer)
+             [:div.flex.justify-between.items-center
+              (when submit-name
+                [:button {:class button-style
+                          :type "submit"
+                          :on-click (if on-submit
+                                      #(on-submit value)
+                                      #(do (.log js/console "submit" value)
+                                           (rf/dispatch [::events/form-submit
+                                                         form-path
+                                                         (if event-ctor
+                                                           (event-ctor value)
+                                                           [::events/form-failure form-path])])))
+                          :disabled (when disabled? true)}
+                 submit-name])
+              footer])
            (when submitted?
              (for [e (when (coll? errors) errors)]
                ^{:key [form-path e]}
@@ -171,22 +178,20 @@
   (let [schema [:map
                 [:email schemas/non-empty-string]
                 [:password schemas/non-empty-string]]
-        explainer (m/explainer schema)]
+        explainer (m/explainer schema)
+        event-ctor (fn [form-value]
+                     [::gateway/get-tokens
+                      [::events/login-success form-path]
+                      [::events/form-failure form-path]
+                      (:email form-value) (:password form-value)])]
     [form {:form-path form-path
            :title "Log in to your account"
            :submit-name "Log in"
-           :event-ctor (fn [form-value]
-                         [::gateway/get-tokens
-                          [::events/login-success form-path]
-                          [::events/form-failure form-path]
-                          (:email form-value) (:password form-value)])
-           #_#(do #_"TODO: In case of a cold start of the application from the login screen, the explainer does not load."
-                  (let [schemas [:map
-                                 [:email schemas/non-empty-string]
-                                 [:password schemas/non-empty-string]]
-                        explainer (m/explainer schemas)
-                        _ (rf/dispatch [::forms/set-form-explainer form-path explainer])])
-                  (rf/dispatch [::events/login-form-submit form-path]))
+           :event-ctor event-ctor
+           #_"TODO: In case of a cold start of the application from the login screen, the explainer does not load."
+           :on-submit (fn [form-value]
+                        (do (rf/dispatch [::forms/set-form-explainer form-path explainer])
+                            (rf/dispatch [::events/form-submit form-path (event-ctor form-value)])))
            :footer [:a {:class "px-1 font-medium hover:underline text-blue-500"
                         :href (href ::routes/register)}
                     "Go to registration"]
@@ -284,40 +289,53 @@
     [:span.ml-2 text]]])
 
 (defn libraries-panel []
-  [:div.h-full.flex.flex-col.relative
-   [:div.px-1.absolute.z-20.bottom-2.right-2
-    [add-button {:text "Add library" :on-click #(rf/dispatch [::events/navigate {:route ::routes/library-add}])}]]
-   [:div.px-1
-    [:input {:type "text" :class [input-style "w-[30rem]"]}]
-    [:div.h-2]]
-   [:div.overflow-y-auto.flex-grow
-    [:ul.space-y-2.p-1
-     (for [i (range 0 100)]
-       ^{:key i}
-       [:li [:a {:class ["w-[30rem] bg-blue-50 rounded-xl space-y-1 py-2 px-3"
-                         "hover:bg-blue-200 focus:ring-2 focus:ring-offset-2"
-                         "focus:ring-blue-500 focus:outline-none block"]
-                 :href "#"}
-             [:div.flex.flex-row.justify-between.items-center
-              [:h1.font-normal.truncate {:class "text-2xl"} "Библиотека имени Ленина"]
-              [:div.flex.flex-row.gap-1
-               [:button {:class icon-button-style}
-                [icons/pencil]]
-               [:button {:class (class-concat icon-button-style
-                                              "hover:text-red-500 focus:text-red-500")}
-                [icons/trash {:class "stroke-current"}]]]]
-             [:p.font-medium.truncate.leading-snug "ул. Бажова, дом 3, корпус 2"]
-             [:ul
-              (for [[index item] (map-indexed #(vector % %2) schedule)]
-                [:li [:p {:class ["text-sm text-gray-500 font-light"
-                                  (when (> index 0) "leading-tight")]}
-                      item]])]]])]]])
+  (let [libraries @(rf/subscribe [::subs/libraries])]
+    [:div.h-full.flex.flex-col.relative
+     [:div.px-1.absolute.z-20.bottom-2.right-2
+      [add-button {:text "Add library" :on-click #(rf/dispatch [::events/navigate {:route ::routes/library-add}])}]]
+     [:div.px-1
+      [:input {:type "text" :class [input-style "w-[30rem]"]}]
+      [:div.h-2]]
+     [:div.overflow-y-auto.flex-grow
+      [:ul.space-y-2.p-1
+       (for [[uid library] libraries]
+         ^{:key uid}
+         [:li [:a {:class ["w-[30rem] bg-blue-50 rounded-xl space-y-1 py-2 px-3"
+                           "hover:bg-blue-200 focus:ring-2 focus:ring-offset-2"
+                           "focus:ring-blue-500 focus:outline-none block"]
+                   :href (href ::routes/library {:uid uid})}
+               [:div.flex.flex-row.justify-between.items-center
+                [:h1.font-normal.truncate {:class "text-2xl"} (:name library)]
+                [:div.flex.flex-row.gap-1
+                 [:button {:class icon-button-style
+                           :on-click #(do (.preventDefault %)
+                                          (rf/dispatch [::events/navigate {:route ::routes/library-edit
+                                                                           :path-params {:uid uid}}]))}
+                  [icons/pencil]]
+                 [:button {:class (class-concat icon-button-style
+                                                "hover:text-red-500 focus:text-red-500")
+                           :on-click #(do (.preventDefault %)
+                                          (rf/dispatch [::gateway/delete-library
+                                                        [::events/dissoc-in-db-entity :libraries]
+                                                        [::events/http-failure]
+                                                        uid]))}
+                  [icons/trash {:class "stroke-current"}]]]]
+               [:p.font-medium.truncate.leading-snug (:address library)]
+               [:ul
+                (for [[index item] (map-indexed #(vector % %2) (:schedule library))]
+                  ^{:key [uid index item]}
+                  [:li [:p {:class ["text-sm text-gray-500 font-light"
+                                    (when (> index 0) "leading-tight")]}
+                        item]])]]])]]]))
 
-(defn library-generic-form [{:keys [form-path title submit-name event-ctor explainer]}]
+(defn library-generic-form [{:keys [form-path form-value title submit-name
+                                    event-ctor explainer disabled?]}]
   [form {:form-path form-path
+         :form-value form-value
          :title title
          :submit-name submit-name
          :event-ctor event-ctor
+         :disabled? disabled?
          :explainer explainer}
    [input {:label "Name"
            :type "text"
@@ -343,6 +361,26 @@
                                           [::events/form-failure form-path]
                                           form-value])
                            :explainer explainer}]))
+
+(defn library-edit-form [{:keys [form-path form-value]}]
+  (let [explainer (m/explainer schemas/library-update)]
+    [library-generic-form {:form-path form-path
+                           :form-value form-value
+                           :title "Edit existing library"
+                           :submit-name "Edit"
+                           :event-ctor (fn [form-value]
+                                         [::gateway/update-library
+                                          [::events/library-edit-success form-path]
+                                          [::events/form-failure form-path]
+                                          (:uid form-value)
+                                          form-value])
+                           :explainer explainer}]))
+
+(defn library-disabled-form [{:keys [form-path form-value]}]
+  [library-generic-form {:form-path form-path
+                         :form-value form-value
+                         :title "Library info"
+                         :disabled? true}])
 
 (defn books-panel []
   [:div "books"])

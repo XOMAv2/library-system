@@ -3,10 +3,10 @@
             [reitit.frontend.easy]))
 
 (rf/reg-fx ::navigate
-  (fn [{:keys [route route-params query-params replace?]}]
+  (fn [{:keys [route path-params query-params replace?]}]
     (if replace?
-      (reitit.frontend.easy/replace-state route route-params query-params)
-      (reitit.frontend.easy/push-state route route-params query-params))))
+      (reitit.frontend.easy/replace-state route path-params query-params)
+      (reitit.frontend.easy/push-state route path-params query-params))))
 
 (rf/reg-fx ::console-log
   (fn [msg]

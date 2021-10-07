@@ -30,9 +30,12 @@
             `(merge {:method ~request-method
                      :uri (str (utilities.core/remove-trailing-slash ~*uri*) ~uri)
                      :response-format (ajax.edn/edn-response-format)}
-                    (when ~body
-                      {:body (str ~body)
-                       :headers {"Content-Type" "application/edn; charset=utf-8"}})
+                    #_"Without body ajax doesn't work"
+                    {:body (str ~body)
+                     :headers {"Content-Type" "application/edn; charset=utf-8"}}
+                    #_(when ~body
+                        {:body (str ~body)
+                         :headers {"Content-Type" "application/edn; charset=utf-8"}})
                     (when ~query-params
                       {:url-params (service.frontend.api.core/normalize-query-params ~query-params)
                        :vec-strategy :java})))))
@@ -59,7 +62,8 @@
                             new-tokens
                             (get-in db tokens-path-vec))
                    _ (when config/debug?
-                       (.log js/console ["API call... " {:new-tokens new-tokens}]))
+                       (.log js/console ["API call... " {:new-tokens new-tokens
+                                                         :tokens-from-db (get-in db tokens-path-vec)}]))
                    props {:on-success on-success
                           :on-failure on-failure
                           :retry-count retry-count
