@@ -48,7 +48,7 @@
    [:div {:class (class-concat "h-3 w-3 rounded-full animate-bounce400" class)}]])
 
 (defn three-dot-card-layer [{:keys [class]}]
-  [:div {:class ["h-full w-full z-10 absolute flex justify-center items-center"
+  [:div {:class ["h-full w-full z-auto absolute flex justify-center items-center"
                  "rounded-xl backdrop-blur-sm backdrop-brightness-95"]}
    [three-dot-loader {:class (class-concat "bg-blue-500" class)}]])
 
@@ -117,18 +117,15 @@
            ^{:key [form-path field-path e]}
            [:p.text-red-500.text-sm.font-medium e]))])))
 
-(defn login-form [{:keys [form-path]} submit-button]
-  (let [schema [:map
-                [:email schemas/non-empty-string]
-                [:password schemas/non-empty-string]]
-        explainer (m/explainer schema)]
-    (reagent/create-class
-     {:component-did-mount
-      (fn [_]
-        (rf/dispatch [::forms/set-form-explainer form-path explainer]))
+(defn form [{:keys [form-path title submit-name on-submit footer explainer]} & inputs]
+  (reagent/create-class
+   {:component-did-mount
+    (fn [_]
+      (rf/dispatch [::forms/set-form-explainer form-path explainer]))
 
-      :reagent-render
-      (fn [{:keys [form-path]} submit-button]
+    :reagent-render
+    (let [disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
+      (fn [{:keys [form-path title submit-name on-submit footer explainer]} & inputs]
         (let [loading? @(rf/subscribe [::forms/get-form-loading? form-path])]
           [:div.relative
            (when loading?
@@ -137,40 +134,52 @@
 
             [:form.space-y-4 {:on-change #(rf/dispatch [::forms/explain-form form-path])
                               :on-submit #(.preventDefault %)}
-             [:h2.text-center.text-3xl.font-extrabold.text-gray-900
-              "Log in to your account"]
-             [input {:label "Email"
-                     :type "email"
-                     :form-path form-path
-                     :field-path :email}]
-             [input {:label "Password"
-                     :type "password"
-                     :form-path form-path
-                     :field-path :password}]
+             (when title
+               [:h2.text-center.text-3xl.font-extrabold.text-gray-900
+                title])
+             inputs
              [:div.flex.justify-between.items-center
-              submit-button
-              [:a {:class "px-1 font-medium hover:underline text-blue-500"
-                   :href (href ::routes/register)}
-               "Go to registration"]]]]]))})))
+              (when submit-name
+                [:button {:class button-style
+                          :type "submit"
+                          :on-click on-submit
+                          :disabled (when disabled? true)}
+                 submit-name])
+              footer]]]])))}))
+
+(defn login-form [{:keys [form-path]}]
+  (let [schema [:map
+                [:email schemas/non-empty-string]
+                [:password schemas/non-empty-string]]
+        explainer (m/explainer schema)]
+    [form {:form-path form-path
+           :title "Log in to your account"
+           :submit-name "Log in"
+           :on-submit #(do #_"In case of a cold start of the application from the login screen, the explainer does not load."
+                           (let [schemas [:map
+                                          [:email schemas/non-empty-string]
+                                          [:password schemas/non-empty-string]]
+                                 explainer (m/explainer schemas)
+                                 _ (rf/dispatch [::forms/set-form-explainer form-path explainer])])
+                           (rf/dispatch [::events/login-form-submit form-path]))
+           :footer [:a {:class "px-1 font-medium hover:underline text-blue-500"
+                        :href (href ::routes/register)}
+                    "Go to registration"]
+           :explainer explainer}
+     [input {:label "Email"
+             :type "email"
+             :form-path form-path
+             :field-path :email}]
+     [input {:label "Password"
+             :type "password"
+             :form-path form-path
+             :field-path :password}]]))
 
 (defn login-view []
-  (let [form-path [:ui-state :view-scope :login-form]
-        disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
-    [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
-     [login-form {:form-path form-path}
-      [:button {:class button-style
-                :type "submit"
-                :on-click #(do #_"In case of a cold start of the application from the login screen, the explainer does not load."
-                               (let [schemas [:map
-                                              [:email schemas/non-empty-string]
-                                              [:password schemas/non-empty-string]]
-                                     explainer (m/explainer schemas)
-                                     _ (rf/dispatch [::forms/set-form-explainer form-path explainer])])
-                               (rf/dispatch [::events/login-form-submit form-path]))
-                :disabled (when disabled? true)}
-       "Log in"]]]))
+  [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
+   [login-form {:form-path [:ui-state :view-scope :login-form]}]])
 
-(defn registration-form [{:keys [form-path]} submit-button]
+(defn registration-form [{:keys [form-path]}]
   (let [schema [:and
                 [:map
                  [:name schemas/non-empty-string]
@@ -182,54 +191,34 @@
                  (fn [{:keys [password password-repeat]}]
                    (= password password-repeat))]]
         explainer (m/explainer schema)]
-    (reagent/create-class
-     {:component-did-mount
-      (fn [_]
-        (rf/dispatch [::forms/set-form-explainer form-path explainer]))
-
-      :reagent-render
-      (fn [{:keys [form-path]} submit-button]
-        (let [loading? @(rf/subscribe [::forms/get-form-loading? form-path])]
-          [:div.relative
-           (when loading?
-             [three-dot-card-layer])
-           [:div {:class card-style}
-            [:form.space-y-4 {:on-change #(rf/dispatch [::forms/explain-form form-path])
-                              :on-submit #(.preventDefault %)}
-             [:h2.text-center.text-3xl.font-extrabold.text-gray-900
-              "Register new account"]
-             [input {:label "Name"
-                     :type "text"
-                     :form-path form-path
-                     :field-path :name}]
-             [input {:label "Email"
-                     :type "email"
-                     :form-path form-path
-                     :field-path :email}]
-             [input {:label "Password"
-                     :type "password"
-                     :form-path form-path
-                     :field-path :password}]
-             [input {:label "Password once again"
-                     :type "password"
-                     :form-path form-path
-                     :field-path :password-repeat}]
-             [:div.flex.justify-between.items-center
-              submit-button
-              [:a {:class "px-1 font-medium hover:underline text-blue-500"
-                   :href (href ::routes/login)}
-               "Go to log in"]]]]]))})))
+    [form {:form-path form-path
+           :title "Register new account"
+           :submit-name "Register"
+           :on-submit #(rf/dispatch [::events/registration-form-submit form-path])
+           :footer [:a {:class "px-1 font-medium hover:underline text-blue-500"
+                        :href (href ::routes/login)}
+                    "Go to log in"]
+           :explainer explainer}
+     [input {:label "Name"
+             :type "text"
+             :form-path form-path
+             :field-path :name}]
+     [input {:label "Email"
+             :type "email"
+             :form-path form-path
+             :field-path :email}]
+     [input {:label "Password"
+             :type "password"
+             :form-path form-path
+             :field-path :password}]
+     [input {:label "Password once again"
+             :type "password"
+             :form-path form-path
+             :field-path :password-repeat}]]))
 
 (defn registration-view []
-  (let [form-path [:ui-state :view-scope :registration-form]
-        disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
-    [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
-     [registration-form {:form-path form-path}
-      [:button {:class button-style
-                :type "submit"
-                :on-click #(rf/dispatch [::events/registration-form-submit form-path])
-                :disabled (when disabled? true)}
-       "Register"]]]))
+  [:div.h-screen.bg-gradient-to-r.from-green-100.to-blue-200.flex.items-center.justify-center
+   [registration-form {:form-path [:ui-state :view-scope :registration-form]}]])
 
 (defn modal-view [& forms]
   [:div {:class ["h-full w-full z-30 absolute flex justify-center items-center"
