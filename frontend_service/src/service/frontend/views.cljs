@@ -505,7 +505,7 @@
           [:div.flex.flex-row.flex-wrap.gap-x-2.gap-y-0
            (for [author (:authors value)]
              ^{:key [uid author]}
-             [:a.text-md.font-normal {:class link-style}
+             [:button.text-md.font-normal {:class link-style}
               author])]
           [:div.flex.flex-row.flex-wrap.gap-2
            (for [genres (:genres value)]
