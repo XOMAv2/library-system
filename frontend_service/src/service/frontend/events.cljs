@@ -173,7 +173,7 @@
   (fn [{:keys [db]} [_ uid]]
     (if-let [book (get-in db [:entities :books uid])]
       {:dispatch [::init-book-success uid book]}
-      {:dispatch [::gateway/get-book [::init-book-edit-success uid] [::http-failure] uid]})))
+      {:dispatch [::gateway/get-book [::init-book-success uid] [::http-failure] uid]})))
 
 (rf/reg-event-fx ::init-book-success
   (fn [_ [_ uid book]]

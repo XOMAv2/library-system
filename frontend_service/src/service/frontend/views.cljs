@@ -503,17 +503,15 @@
              [icons/trash {:class "stroke-current"}]]]]
           [:p.font-medium.overflow-ellipsis.overflow-hidden.leading-snug (:description value)]
           [:div.flex.flex-row.flex-wrap.gap-x-2.gap-y-0
-           (doall
-            (for [author (:authors value)]
-              ^{:key [uid author]}
-              [:a.text-md.font-normal {:class link-style}
-               author]))]
+           (for [author (:authors value)]
+             ^{:key [uid author]}
+             [:a.text-md.font-normal {:class link-style}
+              author])]
           [:div.flex.flex-row.flex-wrap.gap-2
-           (doall
-            (for [genres (:genres value)]
-              ^{:key [uid genres]}
-              [:button {:class (class-concat chip-style (rand-nth chip-colors))}
-               genres]))]
+           (for [genres (:genres value)]
+             ^{:key [uid genres]}
+             [:button {:class (class-concat chip-style (rand-nth chip-colors))}
+              genres])]
           [:div.flex.flex-row.justify-end
            [:h1.forn-normal.text-xl [:span (:price value) " ₿"]]]]]))
 
@@ -527,11 +525,10 @@
       [:div.h-2]]
      [:div.overflow-y-auto.flex-grow
       [:ul.space-y-2.p-1
-       (doall
-        (for [[uid book] books]
-          ^{:key uid}
-          [:div {:class "w-[30rem]"}
-           [book-item {:value book :uid uid}]]))]]]))
+       (for [[uid book] books]
+         ^{:key uid}
+         [:div {:class "w-[30rem]"}
+          [book-item {:value book :uid uid}]])]]]))
 
 (defn book-panel [{:keys [value uid] :or {uid nil}}]
   (let [uid (or uid (:uid value))]
