@@ -45,6 +45,11 @@
 (def link-style
   "hover:underline text-blue-500")
 
+(def entity-item-style
+  "py-2 px-3 bg-blue-50 rounded-xl space-y-1
+   hover:bg-blue-200 focus:ring-2 focus:ring-offset-2
+   focus:ring-blue-500 focus:outline-none")
+
 (defn three-dot-loader [{:keys [class]}]
   [:div.flex
    [:div {:class (class-concat "h-3 w-3 rounded-full animate-bounce mr-1" class)}]
@@ -293,6 +298,34 @@
     [icons/plus]
     [:span.ml-2 text]]])
 
+(defn library-item [{:keys [uid value] :or {uid nil}}]
+  (let [uid (or uid (:uid value))]
+    [:li [:a {:class (class-concat entity-item-style "block")
+              :href (href ::routes/library {:uid uid})}
+          [:div.flex.flex-row.justify-between.items-center
+           [:h1.font-normal.truncate.text-2xl (:name value)]
+           [:div.flex.flex-row.gap-1
+            [:button {:class icon-button-style
+                      :on-click #(do (.preventDefault %)
+                                     (rf/dispatch [::events/navigate {:route ::routes/library-edit
+                                                                      :path-params {:uid uid}}]))}
+             [icons/pencil]]
+            [:button {:class (class-concat icon-button-style
+                                           "hover:text-red-500 focus:text-red-500")
+                      :on-click #(do (.preventDefault %)
+                                     (rf/dispatch [::gateway/delete-library
+                                                   [::events/dissoc-in-db-entity :libraries]
+                                                   [::events/http-failure]
+                                                   uid]))}
+             [icons/trash {:class "stroke-current"}]]]]
+          [:p.font-medium.truncate.leading-snug (:address value)]
+          [:ul
+           (for [[index item] (map-indexed #(vector % %2) (:schedule value))]
+             ^{:key [uid index item]}
+             [:li [:p {:class ["text-sm text-gray-500 font-light"
+                               (when (> index 0) "leading-tight")]}
+                   item]])]]]))
+
 (defn libraries-panel []
   (let [libraries @(rf/subscribe [::subs/libraries])]
     [:div.h-full.flex.flex-col.relative
@@ -305,33 +338,8 @@
       [:ul.space-y-2.p-1
        (for [[uid library] libraries]
          ^{:key uid}
-         [:li [:a {:class ["w-[30rem] bg-blue-50 rounded-xl space-y-1 py-2 px-3"
-                           "hover:bg-blue-200 focus:ring-2 focus:ring-offset-2"
-                           "focus:ring-blue-500 focus:outline-none block"]
-                   :href (href ::routes/library {:uid uid})}
-               [:div.flex.flex-row.justify-between.items-center
-                [:h1.font-normal.truncate {:class "text-2xl"} (:name library)]
-                [:div.flex.flex-row.gap-1
-                 [:button {:class icon-button-style
-                           :on-click #(do (.preventDefault %)
-                                          (rf/dispatch [::events/navigate {:route ::routes/library-edit
-                                                                           :path-params {:uid uid}}]))}
-                  [icons/pencil]]
-                 [:button {:class (class-concat icon-button-style
-                                                "hover:text-red-500 focus:text-red-500")
-                           :on-click #(do (.preventDefault %)
-                                          (rf/dispatch [::gateway/delete-library
-                                                        [::events/dissoc-in-db-entity :libraries]
-                                                        [::events/http-failure]
-                                                        uid]))}
-                  [icons/trash {:class "stroke-current"}]]]]
-               [:p.font-medium.truncate.leading-snug (:address library)]
-               [:ul
-                (for [[index item] (map-indexed #(vector % %2) (:schedule library))]
-                  ^{:key [uid index item]}
-                  [:li [:p {:class ["text-sm text-gray-500 font-light"
-                                    (when (> index 0) "leading-tight")]}
-                        item]])]]])]]]))
+         [:div {:class "w-[30rem]"}
+          [library-item {:value library :uid uid}]])]]]))
 
 (defn library-generic-form [{:keys [form-path form-value title submit-name
                                     event-ctor explainer disabled?]}]
