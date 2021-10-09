@@ -87,6 +87,9 @@
 (defn- input-number-value [e]
   (-> e .-target .-value js/Number. .valueOf))
 
+(defn- input-checked [e]
+  (-> e .-target .-checked))
+
 (defn input [{:keys [label class type form-path field-path] :as props}]
   (let [props (dissoc props :label :class :type :form-path :field-path)
         value @(rf/subscribe [::forms/get-field-value form-path field-path])
@@ -151,6 +154,44 @@
          (for [e (filter #(and (some? %) (not (coll? %))) errors)]
            ^{:key [form-path field-path e]}
            [:p.text-red-500.text-sm.font-medium e]))])))
+
+(defn select [{:keys [label class form-path field-path key-name-map default-key]
+               :or {default-key nil}}]
+  (let [value @(rf/subscribe [::forms/get-field-value form-path field-path])
+        errors @(rf/subscribe [::forms/get-field-errors form-path field-path])
+        submitted? @(rf/subscribe [::forms/get-form-submitted? form-path])
+        disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])
+        default-key-name (get key-name-map default-key "")
+        index-key-name (->> (dissoc key-name-map default-key)
+                            (map-indexed (fn [i [k n]] [(str i) k n]))
+                            (#(conj % ["-1" default-key default-key-name]))
+                            (vec))
+        index-key (->> (map (fn [[i k _]] [i k]) index-key-name)
+                       (into {}))
+        key-index (->> (map (fn [[i k _]] [k i]) index-key-name)
+                       (into {}))]
+    [:div.space-y-2
+     (when label
+       [:<>
+        [:label.font-medium {:for (-> (str form-path field-path)
+                                      (clojure.string/replace #" " ""))}
+         label]
+        [:br]])
+     [:select {:id (clojure.string/replace (str form-path field-path) #" " "")
+               :class (class-concat outline-button-style class)
+               :disabled (when disabled? true)
+               :value (get key-index value)
+               :on-change #(rf/dispatch [::forms/set-field-value
+                                         form-path field-path
+                                         (->> (input-value %)
+                                              (get index-key))])}
+      (for [[index key name] index-key-name]
+        ^{:key [form-path field-path index key name]}
+        [:option {:value index} name])]
+     (when submitted?
+       (for [e (when (coll? errors) errors)]
+         ^{:key [form-path field-path e]}
+         [:p.text-red-500.text-sm.font-medium e]))]))
 
 (defn form
   [{:keys [form-path form-value title submit-name event-ctor
