@@ -160,7 +160,8 @@
            #_[:div.space-y-4.overflow-y-auto.p-1.max-h-full #_{:class "max-h-[35rem]"}
               inputs]
            (for [input inputs]
-             ^{:key [form-path input]} input)
+             ^{:key [form-path input]}
+             [:div input])
            (when (or submit-name footer)
              [:div.flex.justify-between.items-center
               (when submit-name
@@ -272,7 +273,9 @@
                           (.stopPropagation %)))}
    [:div.py-10.h-full.flex.items-center
     [:div.max-h-full.overflow-y-auto {:on-click #(.stopPropagation %)}
-      [:<> forms]]]])
+     (for [form forms]
+       ^{:key form}
+       [:div form])]]])
 
 (def ^:private sections
   [[icons/user-circle  "My profile" []]
@@ -413,7 +416,7 @@
      [:nav.p-3.w-52.overflow-y-auto.flex-none #_"TODO: think about responsive design."
       [:ul.space-y-2
        (for [[icon section [route path-params query-params]] sections]
-         ^{:key section}
+         ^{:key [route path-params query-params]}
          [:li [:a {:class (if (= route current-route-name)
                             (class-concat outline-button-style "block"
                                           "bg-gradient-to-r from-blue-200 to-green-100"
@@ -424,7 +427,9 @@
                 [icon]
                 [:span.ml-2 section]]]])]]
      [:div.py-3.pr-3.flex-grow
-      [:<> forms]]]))
+      (for [form forms]
+        ^{:key form}
+        [:div form])]]))
 
 (defn main-panel []
   (let [view @(rf/subscribe [::subs/current-view])
