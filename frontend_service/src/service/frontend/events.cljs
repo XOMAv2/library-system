@@ -157,17 +157,59 @@
             [:dispatch [::navigate {:route ::routes/login}]]]})))
 
 (rf/reg-event-fx ::init-books
-  (fn [_ _]
-    {:fx [[:dispatch [::change-modal]]
-          [:dispatch [::change-view [views/navigation-view [views/books-panel]]]]]}))
+  (fn [{:keys [db]} _]
+    {:db (assoc-in db [:entities :books] nil)
+     :fx [[:dispatch [::change-modal]]
+          [:dispatch [::change-view [views/navigation-view [views/books-panel]]]]
+          [:dispatch [::gateway/get-all-books
+                      [::get-all-books-success]
+                      [::http-failure]]]]}))
+
+(rf/reg-event-fx ::get-all-books-success
+  (fn [{:keys [db]} [_ {:keys [books]}]]
+    {:dispatch [::assoc-in-db-entities :books books]}))
 
 (rf/reg-event-fx ::init-book
   (fn [{:keys [db]} [_ uid]]
-    {}))
+    (if-let [book (get-in db [:entities :books uid])]
+      {:dispatch [::init-book-success uid book]}
+      {:dispatch [::gateway/get-book [::init-book-edit-success uid] [::http-failure] uid]})))
+
+(rf/reg-event-fx ::init-book-success
+  (fn [_ [_ uid book]]
+    {:fx [[:dispatch [::change-modal]]
+          [:dispatch [::change-view [views/navigation-view [views/book-panel {:value book :uid uid}]]]]]}))
+
+(rf/reg-event-fx ::init-book-add
+  (fn [{:keys [db]} _]
+    {:fx [[:dispatch [::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/books}]}
+                                      [views/book-add-form {:form-path [:ui-state :modal-scope :add-book-form]}]]]]
+          [:dispatch [::change-view [views/navigation-view [views/books-panel]]]]]}))
+
+(rf/reg-event-fx ::book-add-success
+  (fn [_ [_ form-path book]]
+    (when form-path
+      {:fx [[:dispatch [::assoc-in-db-entity :books book]]
+            [:dispatch [::navigate {:route ::routes/books}]]]})))
 
 (rf/reg-event-fx ::init-book-edit
   (fn [{:keys [db]} [_ uid]]
-    {}))
+    (if-let [book (get-in db [:entities :books uid])]
+      {:dispatch [::init-book-edit-success uid book]}
+      {:dispatch [::gateway/get-book [::init-book-edit-success uid] [::http-failure] uid]})))
+
+(rf/reg-event-fx ::init-book-edit-success
+  (fn [_ [_ uid book]]
+    {:fx [[:dispatch [::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/books}]}
+                                      [views/book-edit-form {:form-path [:ui-state :modal-scope :edit-book-form]
+                                                                :form-value book}]]]]
+          [:dispatch [::change-view [views/navigation-view [views/books-panel]]]]]}))
+
+(rf/reg-event-fx ::book-edit-success
+  (fn [_ [_ form-path book]]
+    (when form-path
+      {:fx [[:dispatch [::assoc-in-db-entity :books book]]
+            [:dispatch [::navigate {:route ::routes/books}]]]})))
 
 (rf/reg-event-fx ::init-libraries
   (fn [{:keys [db]} _]

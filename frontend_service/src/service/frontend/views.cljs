@@ -50,6 +50,19 @@
    hover:bg-blue-200 focus:ring-2 focus:ring-offset-2
    focus:ring-blue-500 focus:outline-none")
 
+(def chip-style
+  "rounded-full px-3 border text-md")
+
+(def chip-colors
+  [["bg-gray-100 border-gray-500 hover:bg-gray-200"]
+   ["bg-red-100  border-red-500 hover:bg-red-200"]
+   ["bg-yellow-100 border-yellow-500 hover:bg-yellow-200"]
+   ["bg-green-100 border-green-500 hover:bg-green-200"]
+   ["bg-blue-100 border-blue-500 hover:bg-blue-200"]
+   ["bg-indigo-100 border-indigo-500 hover:bg-indigo-200"]
+   ["bg-purple-100 border-purple-500 hover:bg-purple-200"]
+   ["bg-pink-100 border-pink-500 hover:bg-pink-200"]])
+
 (defn three-dot-loader [{:keys [class]}]
   [:div.flex
    [:div {:class (class-concat "h-3 w-3 rounded-full animate-bounce mr-1" class)}]
@@ -410,8 +423,121 @@
                          :title "Library info"
                          :disabled? true}])
 
+
+(defn book-generic-form [{:keys [form-path form-value title submit-name
+                                 event-ctor explainer disabled?]}]
+  [form {:form-path form-path
+         :form-value form-value
+         :title title
+         :submit-name submit-name
+         :event-ctor event-ctor
+         :disabled? disabled?
+         :explainer explainer}
+   [input {:label "Name"
+           :type "text"
+           :form-path form-path
+           :field-path :name}]
+   [input {:label "Description"
+           :type "text"
+           :form-path form-path
+           :field-path :description}]
+   [sequential-input {:label "Authors"
+                      :form-path form-path
+                      :field-path :authors}
+    [input {:type "text"}]]
+   [sequential-input {:label "Genres"
+                      :form-path form-path
+                      :field-path :genres}
+    [input {:type "text"}]]
+   [input {:label "Price"
+           :type "number"
+           :form-path form-path
+           :field-path :price
+           :min "0"}]])
+
+(defn book-add-form [{:keys [form-path]}]
+  (let [explainer (m/explainer schemas/book-add)]
+    [book-generic-form {:form-path form-path
+                        :title "Add new book"
+                        :submit-name "Add"
+                        :event-ctor (fn [form-value]
+                                      [::gateway/add-book
+                                       [::events/book-add-success form-path]
+                                       [::events/form-failure form-path]
+                                       form-value])
+                        :explainer explainer}]))
+
+(defn book-edit-form [{:keys [form-path form-value]}]
+  (let [explainer (m/explainer schemas/book-update)]
+    [book-generic-form {:form-path form-path
+                        :form-value form-value
+                        :title "Edit existing book"
+                        :submit-name "Edit"
+                        :event-ctor (fn [form-value]
+                                      [::gateway/update-book
+                                       [::events/book-edit-success form-path]
+                                       [::events/form-failure form-path]
+                                       (:uid form-value)
+                                       form-value])
+                        :explainer explainer}]))
+
+(defn book-item [{:keys [value uid] :or {uid nil}}]
+  (let [uid (or uid (:uid value))]
+    [:li [:a {:class (class-concat entity-item-style "block")
+              :href (href ::routes/book {:uid uid})}
+          [:div.flex.flex-row.justify-between.items-center
+           [:h1.font-normal.truncate.text-2xl (:name value)]
+           [:div.flex.flex-row.gap-1
+            [:button {:class icon-button-style
+                      :on-click #(do (.preventDefault %)
+                                     (rf/dispatch [::events/navigate {:route ::routes/book-edit
+                                                                      :path-params {:uid uid}}]))}
+             [icons/pencil]]
+            [:button {:class (class-concat icon-button-style
+                                           "hover:text-red-500 focus:text-red-500")
+                      :on-click #(do (.preventDefault %)
+                                     (rf/dispatch [::gateway/delete-book
+                                                   [::events/dissoc-in-db-entity :books]
+                                                   [::events/http-failure]
+                                                   uid]))}
+             [icons/trash {:class "stroke-current"}]]]]
+          [:p.font-medium.overflow-ellipsis.overflow-hidden.leading-snug (:description value)]
+          [:div.flex.flex-row.flex-wrap.gap-x-2.gap-y-0
+           (doall
+            (for [author (:authors value)]
+              ^{:key [uid author]}
+              [:a.text-md.font-normal {:class link-style}
+               author]))]
+          [:div.flex.flex-row.flex-wrap.gap-2
+           (doall
+            (for [genres (:genres value)]
+              ^{:key [uid genres]}
+              [:button {:class (class-concat chip-style (rand-nth chip-colors))}
+               genres]))]
+          [:div.flex.flex-row.justify-end
+           [:h1.forn-normal.text-xl [:span (:price value) " ₿"]]]]]))
+
 (defn books-panel []
-  [:div "books"])
+  (let [books @(rf/subscribe [::subs/books])]
+    [:div.h-full.flex.flex-col.relative
+     [:div.px-1.absolute.z-20.bottom-2.right-2
+      [add-button {:text "Add book" :on-click #(rf/dispatch [::events/navigate {:route ::routes/book-add}])}]]
+     [:div.px-1
+      [:input {:type "text" :class [input-style "w-[30rem]"]}]
+      [:div.h-2]]
+     [:div.overflow-y-auto.flex-grow
+      [:ul.space-y-2.p-1
+       (doall
+        (for [[uid book] books]
+          ^{:key uid}
+          [:div {:class "w-[30rem]"}
+           [book-item {:value book :uid uid}]]))]]]))
+
+(defn book-panel [{:keys [value uid] :or {uid nil}}]
+  (let [uid (or uid (:uid value))]
+    [:ul [book-item {:value value :uid uid}]]))
+
+#_(-> @(rf/subscribe [::subs/db]) :entities :libraries vals)
 
 (defn users-panel []
   [:div "users"])

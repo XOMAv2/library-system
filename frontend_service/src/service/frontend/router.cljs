@@ -56,6 +56,11 @@
                                  (when config/debug?
                                    (.log js/console "Entering" ::books))
                                  (rf/dispatch [::events/init-books]))}]}]
+    ["/" {:name ::book-add
+          :controllers [{:start (fn [_]
+                                  (when config/debug?
+                                    (.log js/console "Entering" ::book-add))
+                                  (rf/dispatch [::events/init-book-add]))}]}]
     ["/:uid" {:parameters {:path [:map [:uid uuid?]]}}
      ["" {:name ::book
           :controllers [{:parameters {:path [:uid]}

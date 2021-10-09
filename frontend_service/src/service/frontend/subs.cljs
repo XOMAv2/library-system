@@ -40,6 +40,10 @@
   (fn [db _]
     (-> db :entities :libraries)))
 
+(rf/reg-sub ::books
+  (fn [db _]
+    (-> db :entities :books)))
+
 (rf/reg-sub ::modal?
   :<- [::current-modal]
   (fn [current-modal _]
