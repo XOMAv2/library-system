@@ -562,7 +562,8 @@
                 [icon]
                 [:span.ml-2 section]]]])]]
      [:div.py-3.pr-3.flex-grow
-      (for [form forms]
+      [:<> forms]
+      #_(for [form forms]
         ^{:key form}
         [:div form])]]))
 
