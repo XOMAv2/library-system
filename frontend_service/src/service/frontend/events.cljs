@@ -84,16 +84,22 @@
   (fn [_ [_ response]]
     {:fx (->> (case (:status response)
                 401 [[::effects/local-storage [:tokens nil]]
+                     [::effects/local-storage [:credentials nil]]
                      [::effects/navigate {:route ::routes/login}]]
                 403 [[::effects/navigate {:route ::routes/books}]]
                 nil)
               (into [[::effects/show-alert (or (-> response :response :message)
-                                               (-> response :status-text))]]))}))
+                                               (-> response :status-text))]
+                     [::effects/console-log response]]))}))
 
 (rf/reg-event-fx ::init-db
-  [(rf/inject-cofx ::local-storage :tokens)]
+  [(rf/inject-cofx ::local-storage :tokens)
+   (rf/inject-cofx ::local-storage :credentials)]
   (fn [{:keys [local-storage]} _]
-    {:db (assoc db/default-db :tokens (:tokens local-storage))}))
+    {:db (-> db/default-db
+             (assoc :tokens (-> local-storage :tokens))
+             (assoc :user-uid (-> local-storage :credentials :user-uid))
+             (assoc :user-role (-> local-storage :credentials :user-role)))}))
 
 (rf/reg-event-fx ::navigate
   (fn [_ [_ params]]
@@ -133,9 +139,10 @@
       {:db (assoc db
                   :tokens tokens
                   :user-uid (:uid payload)
-                  #_#_:user-role (:uid payload))
+                  :user-role (:role payload))
        :fx [[:dispatch [::navigate {:route ::routes/books}]]
-            [::effects/local-storage [:tokens tokens]]]})))
+            [::effects/local-storage [:tokens tokens]]
+            [::effects/local-storage [:credentials payload]]]})))
 
 (rf/reg-event-fx ::init-register
   (fn [_ _]
