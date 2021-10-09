@@ -68,18 +68,30 @@
     [:span.mr-2 text]
     [three-dot-loader {:class "bg-white"}]]])
 
-(defn input [{:keys [label class type form-path field-path]}]
-  (let [value @(rf/subscribe [::forms/get-field-value form-path field-path])
+(defn- input-value [e]
+  (-> e .-target .-value))
+
+(defn- input-number-value [e]
+  (-> e .-target .-value js/Number. .valueOf))
+
+(defn input [{:keys [label class type form-path field-path] :as props}]
+  (let [props (dissoc props :label :class :type :form-path :field-path)
+        value @(rf/subscribe [::forms/get-field-value form-path field-path])
         errors @(rf/subscribe [::forms/get-field-errors form-path field-path])
         submitted? @(rf/subscribe [::forms/get-form-submitted? form-path])
         disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
     [:div.space-y-2
      [:label.font-medium label
-      [:input {:class (class-concat input-style (when label "mt-2") class)
-               :disabled (when disabled? true)
-               :type type
-               :value value
-               :on-change #(rf/dispatch [::forms/set-field-value form-path field-path (-> % .-target .-value)])}]]
+      [:input (merge props
+                     {:class (class-concat input-style (when label "mt-2") class)
+                      :disabled (when disabled? true)
+                      :type type
+                      :value value
+                      :on-change #(rf/dispatch [::forms/set-field-value
+                                                form-path field-path
+                                                (if (= type "number")
+                                                  (input-number-value %)
+                                                  (input-value %))])})]]
      (when submitted?
        (for [e (when (coll? errors) errors)]
          ^{:key [form-path field-path e]}
