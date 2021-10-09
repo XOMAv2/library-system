@@ -42,6 +42,9 @@
 (def card-style
   "shadow-md rounded-xl p-6 bg-white w-[26rem]")
 
+(def link-style
+  "hover:underline text-blue-500")
+
 (defn three-dot-loader [{:keys [class]}]
   [:div.flex
    [:div {:class (class-concat "h-3 w-3 rounded-full animate-bounce mr-1" class)}]
@@ -192,7 +195,7 @@
            :on-submit (fn [form-value]
                         (do (rf/dispatch [::forms/set-form-explainer form-path explainer])
                             (rf/dispatch [::events/form-submit form-path (event-ctor form-value)])))
-           :footer [:a {:class "px-1 font-medium hover:underline text-blue-500"
+           :footer [:a {:class (class-concat link-style "px-1 font-medium")
                         :href (href ::routes/register)}
                     "Go to registration"]
            :explainer explainer}
