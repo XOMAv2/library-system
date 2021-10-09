@@ -143,7 +143,8 @@
                                  (library-api/-add-order library-service order))}
          :patch {:roles #{"admin"}
                  :middleware [authorization-middleware]
-                 :parameters {:query schemas/order-query}
+                 :parameters {:query schemas/order-query
+                              :body schemas/order-update}
                  :responses {200 {:body [:map [:orders [:sequential schemas/order-out]]]}
                              422 {:body [:map
                                          [:type {:optional true} string?]

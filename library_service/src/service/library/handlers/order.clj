@@ -65,8 +65,7 @@
   [{{{:keys [uid]}            :path}    :parameters
     {{order-table   :order
       library-table :library} :tables}  :db
-    {book-service             :book
-     session-service          :session} :services}]
+    {book-service             :book} :services}]
   (b/cond
     :let [order (o-ops/-get order-table uid)]
 
@@ -191,9 +190,9 @@
   [{{order-query          :query
      order                :body}   :parameters
     {{order-table :order} :tables} :db}]
-  (try (let [order (o-ops/-update-all-by-keys order-table order-query order)]
+  (try (let [orders (o-ops/-update-all-by-keys order-table order-query order)]
          {:status 200
-          :body order})
+          :body {:orders orders}})
        (catch Exception e
          {:status 422
           :body {:type (-> e type str)

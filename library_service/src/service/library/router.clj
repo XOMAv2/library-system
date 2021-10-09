@@ -126,8 +126,8 @@
                                      404 {:body message}}
                          :handler lb-handlers/delete-library-book}
                 :put {:responses {200 {:body schemas/library-book-out}
-                                   404 {:body message}}
-                       :handler lb-handlers/restore-library-book}
+                                  404 {:body message}}
+                      :handler lb-handlers/restore-library-book}
                 :patch {:parameters {:body schemas/library-book-update}
                         :responses {200 {:body schemas/library-book-out}
                                     422 {:body [:map
@@ -158,7 +158,8 @@
                                           [:response any?]
                                           [:message string?]]}}
                   :handler o-handlers/add-order}
-           :patch {:parameters {:query schemas/order-query}
+           :patch {:parameters {:query schemas/order-query
+                                :body schemas/order-update}
                    :responses {200 {:body [:map [:orders [:sequential schemas/order-out]]]}
                                422 {:body [:map
                                            [:type {:optional true} string?]

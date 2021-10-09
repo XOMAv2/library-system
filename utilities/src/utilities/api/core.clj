@@ -67,12 +67,14 @@
   (let [*service* 'this
         *get-token-fn* '-get-token]
     `(with-relogin [#(->> ~*service* ~*get-token-fn* :body :token (reset! (:token ~*service*)))]
-       (cb-sync-request
-        (:cb ~*service*)
-        (merge {:method ~request-method
-                :url (-> ~*service* :uri remove-trailing-slash (str ~uri))
-                :headers (merge {"Authorization" (->> ~*service* :token deref (str "Bearer "))
-                                 "Accept" "application/edn; charset=utf-8"}
-                                (when ~body {"Content-Type" "application/edn; charset=utf-8"}))}
-               (when ~body {:body (str ~body)})
-               (when ~query-params (:query-params ~query-params)))))))
+       (let [req-map# (merge {:method ~request-method
+                              :url (-> ~*service* :uri remove-trailing-slash (str ~uri))
+                              :headers (merge {"Authorization" (->> ~*service* :token deref (str "Bearer "))
+                                               "Accept" "application/edn; charset=utf-8"}
+                                              (when ~body {"Content-Type" "application/edn; charset=utf-8"}))}
+                             (when ~body
+                               {:body (str ~body)})
+                             (when ~query-params
+                               {:query-params ~query-params}))]
+         #_(spit "make-request.edn" (str req-map# "\n") :append true)
+         (cb-sync-request (:cb ~*service*) req-map#)))))
