@@ -260,12 +260,14 @@
    [registration-form {:form-path [:ui-state :view-scope :registration-form]}]])
 
 (defn modal-view [{:keys [on-close-event]} & forms]
-  [:div {:class ["h-full w-full z-30 absolute flex justify-center items-center"
+  [:div {:class ["h-full w-full z-30 absolute flex justify-center"
                  "backdrop-blur backdrop-brightness-90"]
          :on-click (when on-close-event
-                     #(rf/dispatch on-close-event))}
-   [:div {:on-click #(.stopPropagation %)}
-    [:<> forms]]])
+                     #(do (rf/dispatch on-close-event)
+                          (.stopPropagation %)))}
+   [:div.py-10.h-full.flex.items-center
+    [:div.max-h-full.overflow-y-auto {:on-click #(.stopPropagation %)}
+      [:<> forms]]]])
 
 (def ^:private sections
   [[icons/user-circle  "My profile" []]
