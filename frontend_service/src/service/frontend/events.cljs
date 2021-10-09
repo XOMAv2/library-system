@@ -178,7 +178,7 @@
 (rf/reg-event-fx ::init-library-add
   (fn [{:keys [db]} _]
     {:fx [[:dispatch [::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/libraries}]}
-                                      [views/library-add-form {:form-path [:ui-state :modal-scope :add-librar-form]}]]]]
+                                      [views/library-add-form {:form-path [:ui-state :modal-scope :add-library-form]}]]]]
           [:dispatch [::change-view [views/navigation-view [views/libraries-panel]]]]]}))
 
 (rf/reg-event-fx ::library-add-success
@@ -196,7 +196,7 @@
 (rf/reg-event-fx ::init-library-success
   (fn [_ [_ uid library]]
     {:fx [[:dispatch [::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/libraries}]}
-                                      [views/library-disabled-form {:form-path [:ui-state :modal-scope :disabled-librar-form]
+                                      [views/library-disabled-form {:form-path [:ui-state :modal-scope :disabled-library-form]
                                                                     :form-value library}]]]]
           [:dispatch [::change-view [views/navigation-view [views/libraries-panel]]]]]}))
 
@@ -209,7 +209,7 @@
 (rf/reg-event-fx ::init-library-edit-success
   (fn [_ [_ uid library]]
     {:fx [[:dispatch [::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/libraries}]}
-                                      [views/library-edit-form {:form-path [:ui-state :modal-scope :edit-librar-form]
+                                      [views/library-edit-form {:form-path [:ui-state :modal-scope :edit-library-form]
                                                                 :form-value library}]]]]
           [:dispatch [::change-view [views/navigation-view [views/libraries-panel]]]]]}))
 
