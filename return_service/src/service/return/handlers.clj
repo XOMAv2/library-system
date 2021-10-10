@@ -115,7 +115,7 @@
 
     (nil? user-limit)
     {:status 404
-     :body (str "User limit with user uid `" user-uid "` is not found.")}
+     :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
 
     :let [available-limit (:available-limit user-limit)
           new-available-limit (+ available-limit delta)]
@@ -137,7 +137,7 @@
     
     (nil? user-limit)
     {:status 404
-     :body (str "User limit with user uid `" user-uid "` is not found.")}
+     :body {:message (str "User limit with user uid `" user-uid "` is not found.")}}
     
     :else
     {:status 200
