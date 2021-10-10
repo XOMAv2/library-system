@@ -87,9 +87,7 @@
                :handler (api-fn [{library-book-query :query}]
                                 (library-api/-restore-all-library-books library-service
                                                                         library-book-query))}}]
-    ["/:uid" {:parameters {:path [:map [:uid uuid?]]
-                           
-                           :middleware [authentication-middleware]}
+    ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
 
               :get {:roles nil
                     :middleware [authorization-middleware]
@@ -122,7 +120,9 @@
                                                                          uid
                                                                          library-book))}}]]
 
-   ["/orders" {:swagger {:tags ["orders"]}}
+   ["/orders" {:swagger {:tags ["orders"]}
+               
+               :middleware [authentication-middleware]}
     ["" {:get {:roles nil
                :middleware [authorization-middleware]
                :parameters {:query schemas/order-query}
