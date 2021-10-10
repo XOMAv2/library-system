@@ -151,7 +151,17 @@
                               :start (fn [{{uid :uid} :path}]
                                        (when config/debug?
                                          (.log js/console "Entering" ::order-edit))
-                                       (rf/dispatch [::events/init-order-edit uid]))}]}]]]
+                                       (rf/dispatch [::events/init-order-edit uid]))}]}]
+     ["/return" {:name ::book-return
+                 :parameters {:query [:map [:user-uid uuid?]]}
+                 :controllers [{:parameters {:path [:uid]
+                                             :query [:user-uid]}
+                                :start (fn [{{uid      :uid}      :path
+                                             {user-uid :user-uid} :query}]
+                                         (when config/debug?
+                                           (.log js/console "Entering" ::book-return))
+                                         (rf/dispatch [::events/init-book-return {:order-uid uid
+                                                                                  :user-uid user-uid}]))}]}]]]
    
    ["/stats"
     ["" {:name ::stats

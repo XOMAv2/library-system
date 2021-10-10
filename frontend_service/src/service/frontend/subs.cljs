@@ -62,6 +62,10 @@
           f (fn [kv] (into {} (filter pred kv)))]
       (-> db :entities :library-books f))))
 
+(rf/reg-sub ::orders
+  (fn [db _]
+    (-> db :entities :orders)))
+
 (rf/reg-sub ::modal?
   :<- [::current-modal]
   (fn [current-modal _]

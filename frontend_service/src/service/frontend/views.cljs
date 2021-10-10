@@ -325,7 +325,7 @@
               [:button {:class (class-concat styles/chip-style (rand-nth styles/chip-colors))}
                genres])]]
           [:div.flex.flex-row.justify-end
-           [:span.text-sm "Price " [:span.font-normal.text-xl (:price value) " ₿"]]]]]))
+           [:span.text-sm [:span.italic "Price "] [:span.font-normal.text-xl (:price value) " ₿"]]]]]))
 
 (defn books-panel []
   (let [books @(rf/subscribe [::subs/books])]
@@ -458,22 +458,22 @@
             [:div.flex.flex-col
              (when book [:h1.font-normal.truncate.text-2xl (:name (get libraries (:library-uid value)))])
              (when library [:h1.font-normal.truncate.text-2xl (:name (get books (:book-uid value)))])]
-            [:div.mt-1.flex.flex-row.gap-1
-             [:button {:class styles/icon-button-style
-                       :on-click #(do (.preventDefault %)
-                                      (rf/dispatch [::events/navigate {:route ::routes/book-edit
-                                                                       :path-params {:uid uid}}]))}
-              [icons/pencil]]
-             [:button {:class (class-concat styles/icon-button-style
-                                            "hover:text-red-500 focus:text-red-500")
-                       :on-click #(do (.preventDefault %)
-                                      (rf/dispatch [::gateway/delete-book
-                                                    [::events/dissoc-in-db-entity :books]
-                                                    [::events/http-failure]
-                                                    uid]))}
-              [icons/trash {:class "stroke-current"}]]]]
+            #_[:div.mt-1.flex.flex-row.gap-1
+               [:button {:class styles/icon-button-style
+                         :on-click #(do (.preventDefault %)
+                                        (rf/dispatch [::events/navigate {:route ::routes/book-edit
+                                                                         :path-params {:uid uid}}]))}
+                [icons/pencil]]
+               [:button {:class (class-concat styles/icon-button-style
+                                              "hover:text-red-500 focus:text-red-500")
+                         :on-click #(do (.preventDefault %)
+                                        (rf/dispatch [::gateway/delete-book
+                                                      [::events/dissoc-in-db-entity :books]
+                                                      [::events/http-failure]
+                                                      uid]))}
+                [icons/trash {:class "stroke-current"}]]]]
            [:div.flex.flex-row-reverse.justify-between.items-center
-            [:span.text-sm "Available " [:span.font-normal.text-xl (- total-quantity granted-quantity) "/" total-quantity]]
+            [:span.text-sm [:span.italic "Available "] [:span.font-normal.text-xl (- total-quantity granted-quantity) "/" total-quantity]]
             (when (and (:is-available value)
                        (> total-quantity granted-quantity))
               [:button {:class (class-concat styles/button-style "py-1")
@@ -527,11 +527,138 @@
                               :library library
                               :href nil}]])]]]))
 
+#_(-> @(rf/subscribe [::subs/db]) :entities :libraries)
+
 (defn users-panel []
   [:div "users"])
 
+(defn yyyy-mm-dd [d]
+  (let [yyyy (.getFullYear d)
+        mm (inc (.getMonth d))
+        mm (if (< mm 10) (str "0" mm) mm)
+        dd (.getDate d)
+        dd (if (< dd 10) (str "0" dd) dd)]
+    (clojure.string/join "-" [yyyy mm dd])))
+
+(defn yyyy-mm-dd-hh-mm [d]
+  (let [hh (.getHours d)
+        hh (if (< hh 10) (str "0" hh) hh)
+        mm (.getMinutes d)
+        mm (if (< mm 10) (str "0" mm) mm)]
+    (str (yyyy-mm-dd d) "T" hh ":" mm)))
+
+(defn book-return-form [{:keys [form-path order-uid user-uid]}]
+  (let [explainer (m/explainer [:map [:condition schemas/condition]])]
+    [form {:form-path form-path
+           :title "Return book"
+           :submit-name "Return"
+           :event-ctor (fn [form-value]
+                         [::gateway/update-order
+                          [::events/book-return-success]
+                          [::events/http-failure]
+                          order-uid (-> form-value
+                                        (assoc :return-date (time/now))
+                                        (assoc :user-uid user-uid))])
+           :explainer explainer}
+     [select {:label "Condition"
+              :form-path form-path
+              :field-path :condition
+              :key-name-map {"normal" "normal"
+                             "poor" "poor"
+                             "terrible" "terrible"}}]]))
+
+(defn order-item [{:keys [uid value] :or {uid nil}}]
+  (let [uid (or uid (:uid value))
+        libraries @(rf/subscribe [::subs/libraries])
+        books @(rf/subscribe [::subs/books])
+        users @(rf/subscribe [::subs/users])
+        book-name (->> value :book-uid (get books) :name)
+        library-name (->> value :library-uid (get libraries) :name)
+        user-name (->> value :user-uid (get users) :name)]
+    [:li [:div {:class (class-concat styles/entity-item-style "w-full")
+                :on-click nil}
+          [:div
+           #_[:div.flex.flex-row-reverse.justify-between.items-center
+              [:div.flex.flex-row.gap-1
+               [:button {:class styles/icon-button-style
+                         :on-click #(do (.preventDefault %)
+                                        (rf/dispatch [::events/navigate {:route ::routes/library-edit
+                                                                         :path-params {:uid uid}}]))}
+                [icons/pencil]]
+               [:button {:class (class-concat styles/icon-button-style
+                                              "hover:text-red-500 focus:text-red-500")
+                         :on-click #(do (.preventDefault %)
+                                        (rf/dispatch [::gateway/delete-library
+                                                      [::events/dissoc-in-db-entity :libraries]
+                                                      [::events/http-failure]
+                                                      uid]))}
+                [icons/trash {:class "stroke-current"}]]]]
+           [:div.space-y-1
+            [:div
+             [:p [:span.font-medium.text-md.truncate
+                  [:span.italic.text-sm.font-normal "book "]
+                  [:a {:class styles/link-style
+                       :href (href ::routes/library-books-by-book {:uid (:book-uid value)})}
+                   book-name]]]
+             [:p [:span.font-medium.text-md.truncate
+                  [:span.italic.text-sm.font-normal "from library "]
+                  [:a {:class styles/link-style
+                       :href (href ::routes/library {:uid (:library-uid value)})}
+                   library-name]]]
+             [:p [:span.font-medium.text-md.truncate
+                  [:span.italic.text-sm.font-normal "by user "]
+                  [:a {:class styles/link-style
+                       :href (href ::routes/users {:uid (:user-uid value)})}
+                   user-name]]]
+             [:p [:span.font-medium.text-sm
+                  (if (:booking-date value)
+                    (yyyy-mm-dd-hh-mm (:booking-date value))
+                    "---")
+                  " / "
+                  (if (:receiving-date value)
+                    (yyyy-mm-dd-hh-mm (:receiving-date value))
+                    "---")
+                  " / "
+                  (if (:return-date value)
+                    (yyyy-mm-dd-hh-mm (:return-date value))
+                    "---")]]]
+            
+            (when (:condition value)
+              [:p.font-medium.overflow-ellipsis.overflow-hidden (:condition value)])
+            [:div.flex.flex-row.items-center.gap-2
+
+             (when (and (:booking-date value)
+                        (not (:receiving-date value))
+                        (not (:return-date value)))
+               [:button {:class (class-concat styles/button-style "py-1")
+                         :type "button"
+                         :on-click #(rf/dispatch [::gateway/update-order
+                                                  [::events/assoc-in-db-entity :orders]
+                                                  [::events/http-failure]
+                                                  uid {:receiving-date (time/now)}])}
+                "Checked out"])
+             (when (and (:booking-date value)
+                        (:receiving-date value)
+                        (not (:return-date value)))
+               [:button {:class (class-concat styles/button-style "py-1")
+                         :type "button"
+                         :on-click #(rf/dispatch [::events/navigate {:route ::routes/book-return
+                                                                     :path-params {:uid uid}
+                                                                     :query-params {:user-uid (:user-uid value)}}])}
+                "Return"])]]]]]))
+
 (defn orders-panel []
-  [:div "orders"])
+  (let [orders @(rf/subscribe [::subs/orders])]
+    [:div.h-full.flex.flex-col
+     [:div.px-1
+      [:input {:type "text" :class [styles/input-style "w-[30rem]"]}]
+      [:div.h-2]]
+     [:div.overflow-y-auto.flex-grow
+      [:ul.space-y-2.p-1
+       (for [[uid order] orders]
+         ^{:key uid}
+         [:div {:class "w-[30rem]"}
+          [order-item {:value order :uid uid}]])]]]))
 
 (defn stats-panel []
   [:div "statistics"])

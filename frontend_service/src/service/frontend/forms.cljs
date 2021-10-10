@@ -52,7 +52,6 @@
             form-value (get-in db (conj form-path :value))
             form-errors (-> form-value explainer malli.error/humanize)]
         (.log js/console [form-path explainer form-value form-errors])
-        (def kekolol [form-path explainer form-value form-errors])
         {:db (assoc-in db (conj form-path :errors) form-errors)}))))
 
 (rf/reg-event-fx ::set-form-submitted?

@@ -491,9 +491,22 @@
     {}))
 
 (rf/reg-event-fx ::init-orders
-  (fn [_ _]
-    {:fx [[:dispatch [::change-modal]]
-          [:dispatch [::change-view [views/navigation-view [views/orders-panel]]]]]}))
+  (fn [{:keys [db]} _]
+    {:db (-> db
+             (assoc-in [:entities :orders] nil)
+             (assoc-in [:entities :libraries] nil)
+             (assoc-in [:entities :books] nil)
+             (assoc-in [:entities :users] nil))
+     :fx [[:dispatch [::change-modal]]
+          [:dispatch [::change-view [views/navigation-view [views/orders-panel]]]]
+          [:dispatch [::gateway/get-all-orders    [::get-all-orders-success]    [::http-failure]]]
+          [:dispatch [::gateway/get-all-libraries [::get-all-libraries-success] [::http-failure]]]
+          [:dispatch [::gateway/get-all-books     [::get-all-books-success]     [::http-failure]]]
+          [:dispatch [::gateway/get-all-users     [::get-all-users-success]     [::http-failure]]]]}))
+
+(rf/reg-event-fx ::get-all-orders-success
+  (fn [_ [_ {:keys [orders]}]]
+    {:dispatch [::assoc-in-db-entities :orders orders]}))
 
 (rf/reg-event-fx ::init-order
   (fn [{:keys [db]} [_ uid]]
@@ -532,12 +545,29 @@
 (rf/reg-event-fx ::order-add-success
   (fn [_ [_ order]]
     {:dispatch-n [[::assoc-in-db-entity :orders order]
-                  [::assoc-in-db-entities :library-books nil]
                   [::navigate {:route ::routes/orders}]]}))
 
 (rf/reg-event-fx ::init-order-edit
   (fn [{:keys [db]} [_ uid]]
     {}))
+
+(rf/reg-event-fx ::init-book-return
+  (fn [{:keys [db]} [_ {:keys [order-uid user-uid]}]]
+    {:dispatch [::init-book-return-success {:order-uid order-uid
+                                            :user-uid user-uid}]}))
+
+(rf/reg-event-fx ::init-book-return-success
+  (fn [_ [_ {:keys [order-uid user-uid]}]]
+    {:dispatch-n [[::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/orders}]}
+                                   [views/book-return-form {:form-path [:ui-state :modal-scope :return-book-form]
+                                                            :order-uid order-uid
+                                                            :user-uid user-uid}]]]
+                  [::change-view [views/navigation-view [views/orders-panel]]]]}))
+
+(rf/reg-event-fx ::book-return-success
+  (fn [_ [_ order]]
+    {:dispatch-n [[::assoc-in-db-entity :orders order]
+                  [::navigate {:route ::routes/orders}]]}))
 
 (rf/reg-event-fx ::init-stats
   (fn [_ _]
