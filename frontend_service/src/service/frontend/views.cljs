@@ -4,7 +4,7 @@
             [clojure.string]
             [utilities.schemas :as schemas]
             [reagent.core :as reagent]
-            [utilities.core :refer [class-concat any-or-coll->coll remove-nth dissoc-in]]
+            [utilities.core :refer [class-concat any-or-coll->coll]]
             [service.frontend.subs :as subs]
             [service.frontend.config :as config]
             [service.frontend.forms :as forms]
@@ -12,256 +12,9 @@
             [service.frontend.icons.outline :as icons]
             [service.frontend.events :as-alias events]
             [service.frontend.router :as-alias routes]
-            [reitit.frontend.easy :refer [href]]))
-
-(def input-style
-  "block w-full py-2 px-3 border-2 border-blue-500 text-sm
-   font-medium rounded-md focus:ring-2 focus:ring-offset-2
-   focus:ring-blue-500 focus:outline-none bg-blue-50
-   disabled:bg-gray-100 disabled:text-gray-500")
-
-(def icon-button-style
-  "rounded-xl transform hover:scale-125 focus:scale-125 focus:outline-none
-   disabled:text-gray-500"
-  #_"TODO: tailwind combine prefixes"
-  #_"hover:disabled:scale-100")
-
-(def button-style
-  "py-2 px-4 text-sm font-medium rounded-md text-white
-   bg-blue-500 hover:bg-blue-600 focus:outline-none
-   focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-   disabled:bg-blue-400")
-
-(def outline-button-style
-  "py-2 px-3 text-sm rounded-md
-   font-medium focus:ring-2 focus:ring-offset-2
-   focus:ring-blue-500 focus:outline-none
-   bg-blue-50 hover:bg-blue-200
-   disabled:bg-gray-100 disabled:text-gray-500")
-
-(def card-style
-  "shadow-md rounded-xl p-6 bg-white w-[26rem]")
-
-(def link-style
-  "hover:underline text-blue-500")
-
-(def entity-item-style
-  "py-2 px-3 bg-blue-50 rounded-xl space-y-1
-   hover:bg-blue-200 focus:ring-2 focus:ring-offset-2
-   focus:ring-blue-500 focus:outline-none")
-
-(def chip-style
-  "rounded-full px-3 border text-md")
-
-(def chip-colors
-  [["bg-gray-100 border-gray-500 hover:bg-gray-200"]
-   ["bg-red-100  border-red-500 hover:bg-red-200"]
-   ["bg-yellow-100 border-yellow-500 hover:bg-yellow-200"]
-   ["bg-green-100 border-green-500 hover:bg-green-200"]
-   ["bg-blue-100 border-blue-500 hover:bg-blue-200"]
-   ["bg-indigo-100 border-indigo-500 hover:bg-indigo-200"]
-   ["bg-purple-100 border-purple-500 hover:bg-purple-200"]
-   ["bg-pink-100 border-pink-500 hover:bg-pink-200"]])
-
-(defn three-dot-loader [{:keys [class]}]
-  [:div.flex
-   [:div {:class (class-concat "h-3 w-3 rounded-full animate-bounce mr-1" class)}]
-   [:div {:class (class-concat "h-3 w-3 rounded-full animate-bounce200 mr-1" class)}]
-   [:div {:class (class-concat "h-3 w-3 rounded-full animate-bounce400" class)}]])
-
-(defn three-dot-card-layer [{:keys [class modal?]}]
-  [:div {:class (class-concat "h-full w-full absolute flex justify-center items-center"
-                              "rounded-xl backdrop-blur-sm backdrop-brightness-95"
-                              (if modal? "z-40" "z-10"))}
-   [three-dot-loader {:class (class-concat "bg-blue-500" class)}]])
-
-(defn loader-button [{:keys [text]}]
-  [:button {:class button-style}
-   [:div.flex.flex-row.items-center
-    [:span.mr-2 text]
-    [three-dot-loader {:class "bg-white"}]]])
-
-(defn- input-value [e]
-  (-> e .-target .-value))
-
-(defn- input-number-value [e]
-  (-> e .-target .-value js/Number. .valueOf))
-
-(defn- input-checked [e]
-  (-> e .-target .-checked))
-
-(defn input [{:keys [label class type form-path field-path] :as props}]
-  (let [props (dissoc props :label :class :type :form-path :field-path)
-        value @(rf/subscribe [::forms/get-field-value form-path field-path])
-        errors @(rf/subscribe [::forms/get-field-errors form-path field-path])
-        submitted? @(rf/subscribe [::forms/get-form-submitted? form-path])
-        disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
-    [:div.space-y-2
-     [:label.font-medium label
-      [:input (merge props
-                     {:class (class-concat input-style (when label "mt-2") class)
-                      :disabled (when disabled? true)
-                      :type (case type
-                              "uuid" "text"
-                              type)
-                      :value value
-                      :on-change #(rf/dispatch [::forms/set-field-value
-                                                form-path field-path
-                                                (case type
-                                                  "number" (input-number-value %)
-                                                  "uuid" (uuid (input-number-value %))
-                                                  (input-value %))])})]]
-     (when submitted?
-       (for [e (when (coll? errors) errors)]
-         ^{:key [form-path field-path e]}
-         [:p.text-red-500.text-sm.font-medium e]))]))
-
-(defn sequential-input [{:keys [label form-path field-path]} [input-component input-props]]
-  (let [errors @(rf/subscribe [::forms/get-field-errors form-path field-path])
-        submitted? @(rf/subscribe [::forms/get-form-submitted? form-path])
-        disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])]
-    (let [value @(rf/subscribe [::forms/get-field-value form-path field-path])]
-      [:div.space-y-2
-       [:label.font-medium label
-        (for [[index item] (map-indexed #(vector % %2) value)]
-          ^{:key [form-path field-path index]}
-          [:div.relative.mt-2
-           [input-component (-> input-props
-                                (assoc :form-path form-path)
-                                (assoc :field-path (conj (any-or-coll->coll field-path) index)))]
-           [:div.absolute.top-2.right-2
-            [:button {:class (class-concat icon-button-style
-                                           "flex-none hover:text-red-500 focus:text-red-500")
-                      :on-click #(rf/dispatch
-                                  [::forms/update-form-value
-                                   form-path (fn [m]
-                                               (if field-path
-                                                 (let [path (any-or-coll->coll field-path)
-                                                       update-fn (fn [c] (vec (remove-nth index c)))
-                                                       m (update-in m path update-fn)
-                                                       new-val-empty? (empty? (get-in m path))
-                                                       m (if new-val-empty? (dissoc-in m path) m)]
-                                                   m)
-                                                 m))])
-                      :disabled (when disabled? true)}
-             [icons/trash {:class "stroke-current"}]]]])
-        [:div.mt-2
-         [:button {:class (class-concat outline-button-style "w-full")
-                   :on-click #(rf/dispatch [::forms/update-field-value
-                                            form-path field-path
-                                            (fn [m] (vec (conj m nil)))])
-                   :disabled (when disabled? true)}
-          [:div.flex.justify-center.items-center
-           [icons/plus]]]]]
-       (when submitted?
-         (for [e (filter #(and (some? %) (not (coll? %))) errors)]
-           ^{:key [form-path field-path e]}
-           [:p.text-red-500.text-sm.font-medium e]))])))
-
-(defn select [{:keys [label class form-path field-path key-name-map default-key]
-               :or {default-key nil}}]
-  (reagent/create-class
-   {:component-did-mount
-    (fn [_]
-      (rf/dispatch [::forms/set-field-value form-path field-path default-key]))
-
-    :reagent-render
-    (fn [{:keys [label class form-path field-path key-name-map default-key]
-          :or {default-key nil}}]
-      (let [value @(rf/subscribe [::forms/get-field-value form-path field-path])
-            errors @(rf/subscribe [::forms/get-field-errors form-path field-path])
-            submitted? @(rf/subscribe [::forms/get-form-submitted? form-path])
-            disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])
-            default-key-name (get key-name-map default-key "")
-            index-key-name (->> (dissoc key-name-map default-key)
-                                (map-indexed (fn [i [k n]] [(str i) k n]))
-                                (#(conj % ["-1" default-key default-key-name]))
-                                (vec))
-            index-key (->> (map (fn [[i k _]] [i k]) index-key-name)
-                           (into {}))
-            key-index (->> (map (fn [[i k _]] [k i]) index-key-name)
-                           (into {}))]
-        [:div.space-y-2
-         [:label.font-medium label
-          [:select {:class (class-concat outline-button-style "block w-full"
-                                         (when label "mt-2") class)
-                    :disabled (when disabled? true)
-                    :value (get key-index value)
-                    :on-change #(rf/dispatch [::forms/set-field-value
-                                              form-path field-path
-                                              (->> (input-value %)
-                                                   (get index-key))])}
-           (for [[index key name] index-key-name]
-             ^{:key [form-path field-path index key name]}
-             [:option {:value index} name])]]
-
-         (when submitted?
-           (for [e (when (coll? errors) errors)]
-             ^{:key [form-path field-path e]}
-             [:p.text-red-500.text-sm.font-medium e]))]))}))
-
-(defn form
-  [{:keys [form-path form-value title submit-name event-ctor
-           footer explainer disabled? on-submit]} & inputs]
-  (reagent/create-class
-   {:component-did-mount
-    (fn [_]
-      (let [select-defaults (->> inputs
-                                 (filter (fn [[component props]] (= select component)))
-                                 (map (fn [[_ props]]
-                                        (when (= form-path (:form-path props))
-                                          [(:field-path props) (:default-key props)])))
-                                 (into {}))
-            form-value (merge select-defaults form-value)]
-        (rf/dispatch [::forms/set-form-value form-path form-value]))
-      (rf/dispatch [::forms/set-form-explainer form-path explainer])
-      (rf/dispatch [::forms/set-form-disabled? form-path disabled?]))
-
-    :reagent-render
-    (fn [{:keys [form-path title submit-name event-ctor
-                 footer explainer disabled? on-submit]} & inputs]
-      (let [value @(rf/subscribe [::forms/get-form-value form-path])
-            errors @(rf/subscribe [::forms/get-form-level-errors form-path])
-            submitted? @(rf/subscribe [::forms/get-form-submitted? form-path])
-            disabled? @(rf/subscribe [::forms/get-form-disabled? form-path])
-            modal? @(rf/subscribe [::subs/modal?])
-            loading? @(rf/subscribe [::forms/get-form-loading? form-path])]
-        [:div.relative
-         (when loading?
-           [three-dot-card-layer {:modal? modal?}])
-         [:div {:class card-style}
-
-          [:form.space-y-4 {:on-change #(rf/dispatch [::forms/explain-form form-path])
-                            :on-submit #(.preventDefault %)}
-           (when title
-             [:h2.text-center.text-3xl.font-extrabold.text-gray-900
-              title])
-           #_"TODO: form body overflow scroll"
-           #_[:div.space-y-4.overflow-y-auto.p-1.max-h-full #_{:class "max-h-[35rem]"}
-              inputs]
-           (for [input inputs]
-             ^{:key [form-path input]}
-             [:div input])
-           (when (or submit-name footer)
-             [:div.flex.justify-between.items-center
-              (when submit-name
-                [:button {:class button-style
-                          :type "submit"
-                          :on-click (if on-submit
-                                      #(on-submit value)
-                                      #(do (.log js/console "submit" value)
-                                           (rf/dispatch [::events/form-submit
-                                                         form-path
-                                                         (if event-ctor
-                                                           (event-ctor value)
-                                                           [::events/form-failure form-path])])))
-                          :disabled (when disabled? true)}
-                 submit-name])
-              footer])
-           (when submitted?
-             (for [e (when (coll? errors) errors)]
-               ^{:key [form-path e]}
-               [:p.text-red-500.text-sm.font-medium e]))]]]))}))
+            [reitit.frontend.easy :refer [href]]
+            [service.frontend.ui.basic :as basic :refer [input form select sequential-input]]
+            [service.frontend.ui.styles :as styles]))
 
 (defn login-form [{:keys [form-path]}]
   (let [schema [:map
@@ -281,7 +34,7 @@
            :on-submit (fn [form-value]
                         (do (rf/dispatch [::forms/set-form-explainer form-path explainer])
                             (rf/dispatch [::events/form-submit form-path (event-ctor form-value)])))
-           :footer [:a {:class (class-concat link-style "px-1 font-medium")
+           :footer [:a {:class (class-concat styles/link-style "px-1 font-medium")
                         :href (href ::routes/register)}
                     "Go to registration"]
            :explainer explainer}
@@ -373,7 +126,8 @@
    "Пн: 10:00-19:00"])
 
 (defn add-button [{:keys [text on-click]}]
-  [:button {:class (class-concat (clojure.string/replace button-style #"\srounded-md\s" " ")
+  [:button {:class (class-concat "text-white"
+                                 (clojure.string/replace styles/button-style #"\srounded-md\s" " ")
                                  "shadow-3xl text-lg rounded-full")
             :type "button"
             :on-click on-click}
@@ -381,19 +135,19 @@
     [icons/plus]
     [:span.ml-2 text]]])
 
-(defn library-item [{:keys [uid value] :or {uid nil}}]
+(defn library-item [{:keys [uid value href] :or {uid nil}}]
   (let [uid (or uid (:uid value))]
-    [:li [:a {:class (class-concat entity-item-style "block")
-              :href (href ::routes/library {:uid uid})}
+    [:li [:a {:class (class-concat styles/entity-item-style "block")
+              :href href}
           [:div.flex.flex-row.justify-between.items-center
            [:h1.font-normal.truncate.text-2xl (:name value)]
            [:div.flex.flex-row.gap-1
-            [:button {:class icon-button-style
+            [:button {:class styles/icon-button-style
                       :on-click #(do (.preventDefault %)
                                      (rf/dispatch [::events/navigate {:route ::routes/library-edit
                                                                       :path-params {:uid uid}}]))}
              [icons/pencil]]
-            [:button {:class (class-concat icon-button-style
+            [:button {:class (class-concat styles/icon-button-style
                                            "hover:text-red-500 focus:text-red-500")
                       :on-click #(do (.preventDefault %)
                                      (rf/dispatch [::gateway/delete-library
@@ -415,14 +169,16 @@
      [:div.px-1.absolute.z-20.bottom-2.right-2
       [add-button {:text "Add library" :on-click #(rf/dispatch [::events/navigate {:route ::routes/library-add}])}]]
      [:div.px-1
-      [:input {:type "text" :class [input-style "w-[30rem]"]}]
+      [:input {:type "text" :class [styles/input-style "w-[30rem]"]}]
       [:div.h-2]]
      [:div.overflow-y-auto.flex-grow
       [:ul.space-y-2.p-1
        (for [[uid library] libraries]
          ^{:key uid}
          [:div {:class "w-[30rem]"}
-          [library-item {:value library :uid uid}]])]]]))
+          [library-item {:value library
+                         :uid uid
+                         :href (href ::routes/library {:uid uid})}]])]]]))
 
 (defn library-generic-form [{:keys [form-path form-value title submit-name
                                     event-ctor explainer disabled?]}]
@@ -477,7 +233,6 @@
                          :form-value form-value
                          :title "Library info"
                          :disabled? true}])
-
 
 (defn book-generic-form [{:keys [form-path form-value title submit-name
                                  event-ctor explainer disabled?]}]
@@ -536,39 +291,40 @@
                                        form-value])
                         :explainer explainer}]))
 
-(defn book-item [{:keys [value uid] :or {uid nil}}]
+(defn book-item [{:keys [value uid href] :or {uid nil}}]
   (let [uid (or uid (:uid value))]
-    [:li [:a {:class (class-concat entity-item-style "block")
-              :href (href ::routes/book {:uid uid})}
-          [:div.flex.flex-row.justify-between.items-center
-           [:h1.font-normal.truncate.text-2xl (:name value)]
-           [:div.flex.flex-row.gap-1
-            [:button {:class icon-button-style
-                      :on-click #(do (.preventDefault %)
-                                     (rf/dispatch [::events/navigate {:route ::routes/book-edit
-                                                                      :path-params {:uid uid}}]))}
-             [icons/pencil]]
-            [:button {:class (class-concat icon-button-style
-                                           "hover:text-red-500 focus:text-red-500")
-                      :on-click #(do (.preventDefault %)
-                                     (rf/dispatch [::gateway/delete-book
-                                                   [::events/dissoc-in-db-entity :books]
-                                                   [::events/http-failure]
-                                                   uid]))}
-             [icons/trash {:class "stroke-current"}]]]]
-          [:p.font-medium.overflow-ellipsis.overflow-hidden.leading-snug (:description value)]
-          [:div.flex.flex-row.flex-wrap.gap-x-2.gap-y-0
-           (for [author (:authors value)]
-             ^{:key [uid author]}
-             [:button.text-md.font-normal {:class link-style}
-              author])]
-          [:div.flex.flex-row.flex-wrap.gap-2
-           (for [genres (:genres value)]
-             ^{:key [uid genres]}
-             [:button {:class (class-concat chip-style (rand-nth chip-colors))}
-              genres])]
+    [:li [:a {:class (class-concat styles/entity-item-style "block")
+              :href href}
+          [:div.space-y-1
+           [:div.flex.flex-row.justify-between.items-center
+            [:h1.font-normal.truncate.text-2xl (:name value)]
+            [:div.flex.flex-row.gap-1
+             [:button {:class styles/icon-button-style
+                       :on-click #(do (.preventDefault %)
+                                      (rf/dispatch [::events/navigate {:route ::routes/book-edit
+                                                                       :path-params {:uid uid}}]))}
+              [icons/pencil]]
+             [:button {:class (class-concat styles/icon-button-style
+                                            "hover:text-red-500 focus:text-red-500")
+                       :on-click #(do (.preventDefault %)
+                                      (rf/dispatch [::gateway/delete-book
+                                                    [::events/dissoc-in-db-entity :books]
+                                                    [::events/http-failure]
+                                                    uid]))}
+              [icons/trash {:class "stroke-current"}]]]]
+           [:p.font-medium.overflow-ellipsis.overflow-hidden.leading-snug (:description value)]
+           [:div.flex.flex-row.flex-wrap.gap-x-2.gap-y-0
+            (for [author (:authors value)]
+              ^{:key [uid author]}
+              [:button.text-md.font-normal {:class styles/link-style}
+               author])]
+           [:div.flex.flex-row.flex-wrap.gap-2
+            (for [genres (:genres value)]
+              ^{:key [uid genres]}
+              [:button {:class (class-concat styles/chip-style (rand-nth styles/chip-colors))}
+               genres])]]
           [:div.flex.flex-row.justify-end
-           [:h1.forn-normal.text-xl [:span (:price value) " ₿"]]]]]))
+           [:span.text-sm "Price " [:span.font-normal.text-xl (:price value) " ₿"]]]]]))
 
 (defn books-panel []
   (let [books @(rf/subscribe [::subs/books])]
@@ -576,18 +332,17 @@
      [:div.px-1.absolute.z-20.bottom-2.right-2
       [add-button {:text "Add book" :on-click #(rf/dispatch [::events/navigate {:route ::routes/book-add}])}]]
      [:div.px-1
-      [:input {:type "text" :class [input-style "w-[30rem]"]}]
+      [:input {:type "text" :class [styles/input-style "w-[30rem]"]}]
       [:div.h-2]]
      [:div.overflow-y-auto.flex-grow
       [:ul.space-y-2.p-1
        (for [[uid book] books]
          ^{:key uid}
          [:div {:class "w-[30rem]"}
-          [book-item {:value book :uid uid}]])]]]))
+          [book-item {:value book
+                      :uid uid
+                      :href (href ::routes/library-books-by-book {:uid uid})}]])]]]))
 
-(defn book-panel [{:keys [value uid] :or {uid nil}}]
-  (let [uid (or uid (:uid value))]
-    [:ul [book-item {:value value :uid uid}]]))
 
 #_(-> @(rf/subscribe [::subs/db]) :entities :libraries vals)
 
@@ -608,10 +363,10 @@
        (for [[icon section [route path-params query-params]] sections]
          ^{:key [route path-params query-params]}
          [:li [:a {:class (if (= route current-route-name)
-                            (class-concat outline-button-style "block"
+                            (class-concat styles/outline-button-style "block"
                                           "bg-gradient-to-r from-blue-200 to-green-100"
                                           "hover:to-blue-200")
-                            (class-concat outline-button-style "block"))
+                            (class-concat styles/outline-button-style "block"))
                    :href (href route path-params query-params)}
                [:div.flex.items-center
                 [icon]
