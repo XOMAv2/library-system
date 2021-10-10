@@ -58,6 +58,10 @@
                                (any-or-coll->coll path)
                                [(:uid entity)]))}))
 
+(rf/reg-event-fx ::dispatch-n
+  (fn [_ [_ & events]]
+    {:dispatch-n events}))
+
 (rf/reg-event-fx ::form-submit
   (fn [_ [_ form-path event-to-dispatch]]
     (when form-path
