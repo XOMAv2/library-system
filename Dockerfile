@@ -1,11 +1,14 @@
+FROM clojure:openjdk-11-lein-slim-buster AS utils
+ARG APPNAME
+
+WORKDIR /usr/src/utilities/
+COPY ./utilities/ ./
+RUN lein do install, deps
+
 FROM clojure:openjdk-11-lein-slim-buster AS build
 ARG APPNAME
 
-#COPY --from=utils /root/.m2/ /root/.m2/
-WORKDIR /usr/src/utilities/
-COPY ./utilities/ ./
-RUN lein install
-
+COPY --from=utils /root/.m2/ /root/.m2/
 WORKDIR /usr/src/$APPNAME/
 COPY ./$APPNAME/project.clj ./
 RUN lein deps
