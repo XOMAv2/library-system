@@ -103,8 +103,8 @@
   (fn [{:keys [local-storage]} _]
     {:db (-> db/default-db
              (assoc :tokens (-> local-storage :tokens))
-             (assoc :user-uid (-> local-storage :credentials :user-uid))
-             (assoc :user-role (-> local-storage :credentials :user-role)))}))
+             (assoc :user-uid (-> local-storage :credentials :uid))
+             (assoc :user-role (-> local-storage :credentials :role)))}))
 
 (rf/reg-event-fx ::navigate
   (fn [_ [_ params]]
