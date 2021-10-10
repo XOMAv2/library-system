@@ -7,6 +7,7 @@
                 [metosin/malli "0.6.2"]
                 [utilities "0.1.0-SNAPSHOT"]
                 [day8.re-frame/http-fx "0.2.3"]
+                [day8.re-frame/async-flow-fx "0.3.0"]
                 [metosin/reitit "0.5.15"]]
 
  :dev-http {8280 "resources/public"

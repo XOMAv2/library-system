@@ -41,18 +41,38 @@
                        :vec-strategy :java})))))
 
 #?(:clj (defmacro def-request-event [event-kw args request-map]
-          `(re-frame.core/reg-event-fx ~event-kw
-             [(re-frame.core/inject-cofx (keyword (namespace ~event-kw) "uri"))
-              (re-frame.core/inject-cofx (keyword (namespace ~event-kw) "tokens-path"))]
-             (fn [{:keys [~'db ~'uri ~'tokens-path]} [~'_ ~'on-success ~'on-failure ~@args]]
-               {:dispatch [::with-relogin {:on-success ~'on-success
-                                           :on-failure ~'on-failure
-                                           :retry-count 3
-                                           :login-event-kw (keyword (namespace ~event-kw) "refresh-tokens")
-                                           :tokens-path-vec (if (vector? ~'tokens-path)
-                                                              ~'tokens-path
-                                                              [~'tokens-path])
-                                           :request-map ~request-map}]}))))
+          `(do
+             (re-frame.core/reg-event-fx (keyword (namespace ~event-kw) (str (name ~event-kw) "-success"))
+               (fn [~'_ [~'_ ~'response]]
+                 {}))
+             
+             (re-frame.core/reg-event-fx (keyword (namespace ~event-kw) (str (name ~event-kw) "-failure"))
+               (fn [~'_ [~'_ ~'response]]
+                 {}))
+             
+             (re-frame.core/reg-event-fx ~event-kw
+               [(re-frame.core/inject-cofx (keyword (namespace ~event-kw) "uri"))
+                (re-frame.core/inject-cofx (keyword (namespace ~event-kw) "tokens-path"))]
+               (fn [{:keys [~'db ~'uri ~'tokens-path]} [~'_ ~'on-success ~'on-failure ~@args]]
+                 {:dispatch [::with-relogin {:on-success [::dispatch-dummy
+                                                          [(keyword (namespace ~event-kw)
+                                                                    (str (name ~event-kw) "-success"))]
+                                                          ~'on-success]
+                                             :on-failure [::dispatch-dummy
+                                                          [(keyword (namespace ~event-kw)
+                                                                    (str (name ~event-kw) "-failure"))]
+                                                          ~'on-failure]
+                                             :retry-count 3
+                                             :login-event-kw (keyword (namespace ~event-kw) "refresh-tokens")
+                                             :tokens-path-vec (if (vector? ~'tokens-path)
+                                                                ~'tokens-path
+                                                                [~'tokens-path])
+                                             :request-map ~request-map}]})))))
+
+#?(:cljs (rf/reg-event-fx ::dispatch-dummy
+           (fn [_ [_ dummy-event user-event response]]
+             {:fx [[:dispatch (conj dummy-event response)]
+                   [:dispatch (conj user-event response)]]})))
 
 #?(:cljs (rf/reg-event-fx ::with-relogin
            (fn [{:keys [db]} [_ {:keys [on-success on-failure
