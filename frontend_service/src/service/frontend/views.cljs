@@ -206,7 +206,14 @@
   (reagent/create-class
    {:component-did-mount
     (fn [_]
-      (rf/dispatch [::forms/set-form-value-if-empty form-path (or form-value {})])
+      (let [select-defaults (->> inputs
+                                 (filter (fn [[component props]] (= select component)))
+                                 (map (fn [[_ props]]
+                                        (when (= form-path (:form-path props))
+                                          [(:field-path props) (:default-key props)])))
+                                 (into {}))
+            form-value (merge select-defaults form-value)]
+        (rf/dispatch [::forms/set-form-value form-path form-value]))
       (rf/dispatch [::forms/set-form-explainer form-path explainer])
       (rf/dispatch [::forms/set-form-disabled? form-path disabled?]))
 
