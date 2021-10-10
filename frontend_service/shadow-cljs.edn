@@ -6,6 +6,8 @@
                 [com.teknql/shadow-cljs-tailwind-jit "0.2.2"]
                 [metosin/malli "0.6.2"]
                 [utilities "0.1.0-SNAPSHOT"]
+                [cljc.java-time "0.1.16"]
+                [cljsjs/js-joda-timezone "2.2.0-0"]
                 [day8.re-frame/http-fx "0.2.3"]
                 [day8.re-frame/async-flow-fx "0.3.0"]
                 [metosin/reitit "0.5.15"]]

@@ -19,6 +19,8 @@
                  [com.novemberain/langohr "5.2.0"]
                  [org.clojure/core.match "1.0.0"]
                  [http-kit "2.5.3"]
+                 [cljc.java-time "0.1.16"]
+                 [cljsjs/js-joda-timezone "2.2.0-0"]
                  [diehard "0.10.4"]
                  [com.github.seancorfield/honeysql "2.0.783"]]
   :repl-options {:init-ns utilities.core})
