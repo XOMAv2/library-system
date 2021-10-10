@@ -58,7 +58,7 @@
            (fn [{:keys [db]} [_ {:keys [on-success on-failure
                                         retry-count login-event-kw
                                         tokens-path-vec request-map]} new-tokens]]
-             (let [tokens (when new-tokens
+             (let [tokens (if new-tokens
                             new-tokens
                             (get-in db tokens-path-vec))
                    _ (when config/debug?

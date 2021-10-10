@@ -52,7 +52,9 @@
                       :handler (api-fn [{{:keys [uid]} :path library :body}]
                                        (library-api/-update-library library-service uid library))}}]]
 
-   ["/library-books" {:swagger {:tags ["library-books"]}}
+   ["/library-books" {:swagger {:tags ["library-books"]}
+                      
+                      :middleware [authentication-middleware]}
     ["" {:get {:roles nil
                :middleware [authorization-middleware]
                :parameters {:query schemas/library-book-query}
@@ -85,7 +87,9 @@
                :handler (api-fn [{library-book-query :query}]
                                 (library-api/-restore-all-library-books library-service
                                                                         library-book-query))}}]
-    ["/:uid" {:parameters {:path [:map [:uid uuid?]]}
+    ["/:uid" {:parameters {:path [:map [:uid uuid?]]
+                           
+                           :middleware [authentication-middleware]}
 
               :get {:roles nil
                     :middleware [authorization-middleware]
