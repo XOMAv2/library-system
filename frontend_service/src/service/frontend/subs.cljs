@@ -44,6 +44,24 @@
   (fn [db _]
     (-> db :entities :books)))
 
+(rf/reg-sub ::library-books
+  (fn [db [_ {:keys [library-uid book-uid]}]]
+    (let [pred (cond
+                 (and (some? library-uid) (some? book-uid))
+                 (fn [[k v]] (and (= library-uid (:library-uid v))
+                              (= book-uid (:book-uid v))))
+
+                 (some? library-uid)
+                 (fn [[k v]] (= library-uid (:library-uid v)))
+
+                 (some? book-uid)
+                 (fn [[k v]] (= book-uid (:book-uid v)))
+
+                 :else
+                 (constantly true))
+          f (fn [kv] (into {} (filter pred kv)))]
+      (-> db :entities :library-books f))))
+
 (rf/reg-sub ::modal?
   :<- [::current-modal]
   (fn [current-modal _]

@@ -8,6 +8,7 @@
             [service.frontend.forms :as forms]
             [cljs.reader :refer [read-string]]
             [utilities.core :refer [dissoc-in]]
+            [utilities.time :as time]
             [day8.re-frame.async-flow-fx :as async-flow-fx]
             [utilities.core :refer [any-or-coll->coll]]
             [service.frontend.api.gateway :as gateway]))
@@ -59,7 +60,7 @@
                                [(:uid entity)]))}))
 
 (rf/reg-event-fx ::dispatch-n
-  (fn [_ [_ & events]]
+  (fn [_ [_ events]]
     {:dispatch-n events}))
 
 (rf/reg-event-fx ::form-submit
@@ -174,16 +175,219 @@
   (fn [{:keys [db]} [_ {:keys [books]}]]
     {:dispatch [::assoc-in-db-entities :books books]}))
 
-(rf/reg-event-fx ::init-book
-  (fn [{:keys [db]} [_ uid]]
-    (if-let [book (get-in db [:entities :books uid])]
-      {:dispatch [::init-book-success uid book]}
-      {:dispatch [::gateway/get-book [::init-book-success uid] [::http-failure] uid]})))
+(rf/reg-event-fx ::init-library-books-by-book
+  (fn [{:keys [db]} [_ {:keys [book-uid]}]]
+    (let [book (get-in db [:entities :books book-uid])
+          libraries (get-in db [:entities :libraries])
+          library-books (get-in db [:entities :library-books])]
+      (case [(some? book) (not-empty libraries) (not-empty library-books)]
+        [true true true]
+        {:dispatch [::init-library-books-by-book-success book-uid]}
 
-(rf/reg-event-fx ::init-book-success
-  (fn [_ [_ uid book]]
-    {:fx [[:dispatch [::change-modal]]
-          [:dispatch [::change-view [views/navigation-view [views/book-panel {:value book :uid uid}]]]]]}))
+        [true true false]
+        {:async-flow {:first-dispatch [::gateway/get-all-library-books
+                                       [::get-all-library-books-success]
+                                       [::http-failure]]
+                      :rules [{:when :seen?
+                               :events ::gateway/get-all-library-books-success
+                               :dispatch [::init-library-books-by-book-success book-uid]
+                               :halt? true}
+                              {:when :seen?
+                               :events ::gateway/get-all-library-books-failure
+                               :dispatch [::async-flow-fx/notify]
+                               :halt? true}]}}
+
+        [true false true]
+        {:async-flow {:first-dispatch [::gateway/get-all-libraries
+                                       [::get-all-libraries-success :books]
+                                       [::http-failure]]
+                      :rules [{:when :seen?
+                               :events ::gateway/get-all-libraries-success
+                               :dispatch [::init-library-books-by-book-success book-uid]
+                               :halt? true}
+                              {:when :seen?
+                               :events ::gateway/get-all-libraries-failure
+                               :dispatch [::async-flow-fx/notify]
+                               :halt? true}]}}
+
+        [true false false]
+        {:async-flow {:first-dispatch [::dispatch-n
+                                       [[::gateway/get-all-libraries
+                                         [::get-all-libraries-success :books]
+                                         [::http-failure]]
+                                        [::gateway/get-all-library-books
+                                         [::get-all-library-books-success]
+                                         [::http-failure]]]]
+                      :rules [{:when :seen-both?
+                               :events [::gateway/get-all-libraries-success
+                                        ::gateway/get-all-library-books-success]
+                               :dispatch [::init-library-books-by-book-success book-uid]
+                               :halt? true}
+                              {:when :seen-any-of?
+                               :events [::gateway/get-all-libraries-failure
+                                        ::gateway/get-all-library-books-failure]
+                               :dispatch [::async-flow-fx/notify]
+                               :halt? true}]}}
+
+        [false true true]
+        {:async-flow {:first-dispatch [::gateway/get-book
+                                       [::assoc-in-db-entity :books]
+                                       [::http-failure]
+                                       book-uid]
+                      :rules [{:when :seen?
+                               :events ::gateway/get-book-success
+                               :dispatch [::init-library-books-by-book-success book-uid]
+                               :halt? true}
+                              {:when :seen?
+                               :events ::gateway/get-book-failure
+                               :dispatch [::async-flow-fx/notify]
+                               :halt? true}]}}
+
+        [false true false]
+        {:async-flow {:first-dispatch [::dispatch-n
+                                       [[::gateway/get-book
+                                         [::assoc-in-db-entity :books]
+                                         [::http-failure]
+                                         book-uid]
+                                       [::gateway/get-all-library-books
+                                        [::get-all-library-books-success]
+                                        [::http-failure]]]]
+                      :rules [{:when :seen-both?
+                               :events [::gateway/get-book-success
+                                        ::gateway/get-all-library-books-success]
+                               :dispatch [::init-library-books-by-book-success book-uid]
+                               :halt? true}
+                              {:when :seen-any-of?
+                               :events [::gateway/get-book-failure
+                                        ::gateway/get-all-library-books-failure]
+                               :dispatch [::async-flow-fx/notify]
+                               :halt? true}]}}
+
+        [false false true]
+        {:async-flow {:first-dispatch [::dispatch-n
+                                       [[::gateway/get-book
+                                         [::assoc-in-db-entity :books]
+                                         [::http-failure]
+                                         book-uid]
+                                        [::gateway/get-all-libraries
+                                         [::get-all-libraries-success]
+                                         [::http-failure]]]]
+                      :rules [{:when :seen-both?
+                               :events [::gateway/get-book-success
+                                        ::gateway/get-all-libraries-success]
+                               :dispatch [::init-library-books-by-book-success book-uid]
+                               :halt? true}
+                              {:when :seen-any-of?
+                               :events [::gateway/get-book-failure
+                                        ::gateway/get-all-libraries-failure]
+                               :dispatch [::async-flow-fx/notify]
+                               :halt? true}]}}
+
+        {:async-flow {:first-dispatch [::dispatch-n
+                                       [[::gateway/get-book
+                                         [::assoc-in-db-entity :books]
+                                         [::http-failure]
+                                         book-uid]
+                                        [::gateway/get-all-libraries
+                                         [::get-all-libraries-success]
+                                         [::http-failure]]
+                                        [::gateway/get-all-library-books
+                                         [::get-all-library-books-success]
+                                         [::http-failure]]]]
+                      :rules [{:when :seen-all-of?
+                               :events [::gateway/get-book-success
+                                        ::gateway/get-all-libraries-success
+                                        ::gateway/get-all-library-books-success]
+                               :dispatch [::init-library-books-by-book-success book-uid]
+                               :halt? true}
+                              {:when :seen-any-of?
+                               :events [::gateway/get-book-failure
+                                        ::gateway/get-all-libraries-failure
+                                        ::gateway/get-all-library-books-failure]
+                               :dispatch [::async-flow-fx/notify]
+                               :halt? true}]}}))))
+
+(rf/reg-event-fx ::get-all-library-books-success
+  (fn [_ [_ {:keys [library-books]}]]
+    {:dispatch [::assoc-in-db-entities :library-books library-books]}))
+
+(rf/reg-event-fx ::init-library-books-by-book-success
+  (fn [{:keys [db]} [_ book-uid]]
+    (let [book (-> db :entities :books (get book-uid))]
+      {:dispatch-n [[::change-modal]
+                    [::change-view [views/navigation-view [views/library-books-panel {:book book}]]]]})))
+
+(rf/reg-event-fx ::init-library-book-by-book-add
+  (fn [{:keys [db]} [_ {:keys [book-uid]}]]
+    (let [book (get-in db [:entities :books book-uid])
+          libraries (get-in db [:entities :libraries])]
+      (cond
+        (and book (not-empty libraries))
+        {:dispatch [::init-library-book-by-book-add-success book-uid]}
+
+        book #_"load libraries"
+        {:async-flow {:first-dispatch [::gateway/get-all-libraries
+                                       [::get-all-libraries-success]
+                                       [::http-failure]]
+                      :rules [{:when :seen?
+                               :events ::gateway/get-all-libraries-success
+                               :dispatch [::init-library-book-by-book-add-success book-uid]
+                               :halt? true}
+                              {:when :seen?
+                               :events ::gateway/get-all-libraries-failure
+                               :dispatch [::async-flow-fx/notify]
+                               :halt? true}]}}
+
+        (not-empty libraries) #_"load book"
+        {:async-flow {:first-dispatch [::gateway/get-book
+                                       [::assoc-in-db-entity :books]
+                                       [::http-failure]
+                                       book-uid]
+                      :rules [{:when :seen?
+                               :events ::gateway/get-book-success
+                               :dispatch [::init-library-book-by-book-add-success book-uid]
+                               :halt? true}
+                              {:when :seen?
+                               :events ::gateway/get-book-failure
+                               :dispatch [::async-flow-fx/notify]
+                               :halt? true}]}}
+
+        :else #_"load both"
+        {:async-flow {:first-dispatch [::dispatch-n
+                                       [[::gateway/get-book
+                                         [::assoc-in-db-entity :books]
+                                         [::http-failure]
+                                         book-uid]
+                                        [::gateway/get-all-libraries
+                                         [::get-all-libraries-success]
+                                         [::http-failure]]]]
+                      :rules [{:when :seen-both?
+                               :events [::gateway/get-book-success
+                                        ::gateway/get-all-libraries-success]
+                               :dispatch [::init-library-book-by-book-add-success book-uid]
+                               :halt? true}
+                              {:when :seen-any-of?
+                               :events [::gateway/get-book-failure
+                                        ::gateway/get-all-libraries-failure]
+                               :dispatch [::async-flow-fx/notify]
+                               :halt? true}]}}))))
+
+(rf/reg-event-fx ::init-library-book-by-book-add-success
+  (fn [{:keys [db]} [_ book-uid]]
+    (let [book (get-in db [:entities :books book-uid])]
+      {:dispatch-n [[::change-modal
+                     [views/modal-view {:on-close-event [::navigate {:route ::routes/library-books-by-book
+                                                                     :path-params {:uid book-uid}}]}
+                      [views/library-book-add-form {:form-path [:ui-state :modal-scope :add-library-book-by-book-form]
+                                                    :book book}]]]
+                    [::change-view [views/navigation-view [views/library-books-panel {:book book}]]]]})))
+
+(rf/reg-event-fx ::library-book-by-book-add-success
+  (fn [_ [_ form-path book-uid library-book]]
+    (when form-path
+      {:dispatch-n [[::assoc-in-db-entity :library-books library-book]
+                    [::navigate {:route ::routes/library-books-by-book
+                                 :path-params {:uid book-uid}}]]})))
 
 (rf/reg-event-fx ::init-book-add
   (fn [{:keys [db]} _]
@@ -207,7 +411,7 @@
   (fn [_ [_ uid book]]
     {:fx [[:dispatch [::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/books}]}
                                       [views/book-edit-form {:form-path [:ui-state :modal-scope :edit-book-form]
-                                                                :form-value book}]]]]
+                                                             :form-value book}]]]]
           [:dispatch [::change-view [views/navigation-view [views/books-panel]]]]]}))
 
 (rf/reg-event-fx ::book-edit-success
@@ -226,7 +430,7 @@
                       [::http-failure]]]]}))
 
 (rf/reg-event-fx ::get-all-libraries-success
-  (fn [{:keys [db]} [_ {:keys [libraries]}]]
+  (fn [_ [_ {:keys [libraries]}]]
     {:dispatch [::assoc-in-db-entities :libraries libraries]}))
 
 (rf/reg-event-fx ::init-library-add
@@ -294,6 +498,42 @@
 (rf/reg-event-fx ::init-order
   (fn [{:keys [db]} [_ uid]]
     {}))
+
+(rf/reg-event-fx ::init-order-add
+  (fn [{:keys [db]} [_ {:keys [book-uid library-uid]}]]
+    (if (-> db :user-role (= "admin"))
+      {:db (assoc-in db [:entities :users] nil)
+       :dispatch [::gateway/get-all-users
+                  [::init-order-add-success {:book-uid book-uid
+                                             :library-uid library-uid}]
+                  [::http-failure]]}
+      (let [order {:book-uid book-uid
+                   :library-uid library-uid
+                   :user-uid (:user-uid db)
+                   :booking-date (time/now)}]
+         {:dispatch [::gateway/add-order
+                     [::dispatch [::order-add-success]]
+                     [::http-failure]
+                     order]}))))
+
+(rf/reg-event-fx ::init-order-add-success
+  (fn [_ [_ {:keys [book-uid library-uid]} response]]
+    {:fx [[:dispatch [::get-all-users-success response]]
+          [:dispatch [::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/orders}]}
+                                      [views/order-add-form {:form-path [:ui-state :modal-scope :add-order-form]
+                                                             :book-uid book-uid
+                                                             :library-uid library-uid}]]]]
+          [:dispatch [::change-view [views/navigation-view [views/orders-panel]]]]]}))
+
+(rf/reg-event-fx ::get-all-users-success
+  (fn [_ [_ {:keys [users]}]]
+    {:dispatch [::assoc-in-db-entities :users users]}))
+
+(rf/reg-event-fx ::order-add-success
+  (fn [_ [_ order]]
+    {:dispatch-n [[::assoc-in-db-entity :orders order]
+                  [::assoc-in-db-entities :library-books nil]
+                  [::navigate {:route ::routes/orders}]]}))
 
 (rf/reg-event-fx ::init-order-edit
   (fn [{:keys [db]} [_ uid]]

@@ -14,7 +14,8 @@
             [service.frontend.router :as-alias routes]
             [reitit.frontend.easy :refer [href]]
             [service.frontend.ui.basic :as basic :refer [input form select sequential-input]]
-            [service.frontend.ui.styles :as styles]))
+            [service.frontend.ui.styles :as styles]
+            [utilities.time :as time]))
 
 (defn login-form [{:keys [form-path]}]
   (let [schema [:map
@@ -343,8 +344,188 @@
                       :uid uid
                       :href (href ::routes/library-books-by-book {:uid uid})}]])]]]))
 
+(defn library-book-generic-form [{:keys [form-path form-value title submit-name
+                                         books default-book-key libraries default-library-key
+                                         event-ctor explainer disabled?]}]
+  [form {:form-path form-path
+         :form-value form-value
+         :title title
+         :submit-name submit-name
+         :event-ctor event-ctor
+         :disabled? disabled?
+         :explainer explainer}
+   [select {:label "Library"
+            :form-path form-path
+            :field-path :library-uid
+            :key-name-map (->> libraries
+                               (map (fn [[k v]] [k (:name v)]))
+                               (into {}))
+            :default-key default-library-key}]
+   [select {:label "Book"
+            :form-path form-path
+            :field-path :book-uid
+            :key-name-map (->> books
+                               (map (fn [[k v]] [k (:name v)]))
+                               (into {}))
+            :default-key default-book-key}]
+   [input {:label "Total quantity"
+           :type "number"
+           :form-path form-path
+           :field-path :total-quantity
+           :min "0"}]
+   [input {:label "Granted quantity"
+           :type "number"
+           :form-path form-path
+           :field-path :granted-quantity
+           :min "0"}]
+   [select {:label "Is available"
+            :form-path form-path
+            :field-path :is-available
+            :key-name-map {true "yes" false "no"}}]])
 
-#_(-> @(rf/subscribe [::subs/db]) :entities :libraries vals)
+(defn library-book-add-form [{:keys [form-path book library]}]
+  (let [books (if book
+                {(:uid book) book}
+                @(rf/subscribe [::subs/books]))
+        libraries (if library
+                    {(:uid library) library}
+                    @(rf/subscribe [::subs/libraries]))
+        explainer (m/explainer schemas/library-book-add)]
+    [library-book-generic-form {:form-path form-path
+                                :title "Add new library book"
+                                :submit-name "Add"
+                                :books books
+                                :default-book-key (when book (:uid book))
+                                :libraries libraries
+                                :default-library-key (when library (:uid library))
+                                :event-ctor (fn [form-value]
+                                              [::gateway/add-library-book
+                                               (case [(some? book) (some? library)]
+                                                 [true false]
+                                                 [::events/library-book-by-book-add-success form-path (:uid book)]
+                                                 
+                                                 #_#_[false true]
+                                                 [::events/library-book-by-library-add-success form-path (:uid library)]
+                                                 
+                                                 [::events/navigate {:route ::routes/books}])
+                                               [::events/form-failure form-path]
+                                               form-value])
+                                :explainer explainer}]))
+
+(defn order-add-form [{:keys [form-path book-uid library-uid]}]
+  (let [users @(rf/subscribe [::subs/users])
+        explainer (m/explainer [:map
+                                [:user-uid uuid?]
+                                [:received? boolean?]])]
+    [form {:form-path form-path
+           :title "Add new booking"
+           :submit-name "Book"
+           :event-ctor (fn [form-value]
+                         (let [now (time/now)
+                               order (merge {:book-uid book-uid
+                                             :library-uid library-uid
+                                             :user-uid (:user-uid form-value)
+                                             :booking-date now}
+                                            (when (:received? form-value)
+                                              {:receiving-date now}))]
+                           [::gateway/add-order
+                            [::events/order-add-success]
+                            [::events/form-failure form-path]
+                            order]))
+           :explainer explainer}
+     [select {:label "User"
+              :form-path form-path
+              :field-path :user-uid
+              :key-name-map (->> users
+                                 (map (fn [[k v]] [k (:name v)]))
+                                 (into {}))}]
+     [select {:label "Received now"
+              :form-path form-path
+              :field-path :received?
+              :key-name-map {true "yes" false "no"}}]]))
+
+(defn library-book-item [{:keys [value uid href book library]
+                          :or {uid nil book nil library nil}}]
+  (let [uid (or uid (:uid value))
+        total-quantity (:total-quantity value)
+        granted-quantity (:granted-quantity value)
+        libraries @(rf/subscribe [::subs/libraries])
+        books @(rf/subscribe [::subs/books])]
+    [:li [:a {:class (class-concat styles/entity-item-style "block")
+              :href href}
+          [:div.space-y-2
+           [:div.flex.flex-row.justify-between.items-start
+            [:div.flex.flex-col
+             (when book [:h1.font-normal.truncate.text-2xl (:name (get libraries (:library-uid value)))])
+             (when library [:h1.font-normal.truncate.text-2xl (:name (get books (:book-uid value)))])]
+            [:div.mt-1.flex.flex-row.gap-1
+             [:button {:class styles/icon-button-style
+                       :on-click #(do (.preventDefault %)
+                                      (rf/dispatch [::events/navigate {:route ::routes/book-edit
+                                                                       :path-params {:uid uid}}]))}
+              [icons/pencil]]
+             [:button {:class (class-concat styles/icon-button-style
+                                            "hover:text-red-500 focus:text-red-500")
+                       :on-click #(do (.preventDefault %)
+                                      (rf/dispatch [::gateway/delete-book
+                                                    [::events/dissoc-in-db-entity :books]
+                                                    [::events/http-failure]
+                                                    uid]))}
+              [icons/trash {:class "stroke-current"}]]]]
+           [:div.flex.flex-row-reverse.justify-between.items-center
+            [:span.text-sm "Available " [:span.font-normal.text-xl (- total-quantity granted-quantity) "/" total-quantity]]
+            (when (and (:is-available value)
+                       (> total-quantity granted-quantity))
+              [:button {:class (class-concat styles/button-style "py-1")
+                        :type "button"
+                        :on-click #(rf/dispatch [::events/navigate {:route ::routes/order-add
+                                                                    :query-params {:book-uid (:book-uid value)
+                                                                                   :library-uid (:library-uid value)}}])}
+               "Book here"])]]]]))
+
+(defn library-books-panel [{:keys [book library]}]
+  (let [library-books-params (merge (when book
+                                      {:book-uid (:uid book)})
+                                    (when library
+                                      {:library-uid (:uid book)}))
+        library-books @(rf/subscribe [::subs/library-books {:book-uid #uuid "c8afee7d-0663-4dd6-aad9-0c673e884b0d"}#_library-books-params])
+        on-click (cond
+                   (and book library) nil
+                   book #(rf/dispatch [::events/navigate {:route ::routes/library-book-by-book-add
+                                                          :path-params {:uid (:uid book)}}])
+                   library #(rf/dispatch [::events/navigate {:route ::routes/library-book-by-library-add
+                                                             :path-params {:uid (:uid library)}}]))]
+    [:div.h-full.flex.flex-col.relative
+     [:div.px-1.absolute.z-20.bottom-2.right-2
+      [add-button {:text "Add library book"
+                   :on-click on-click}]]
+     (when book
+       [:div.px-1
+        [:ul.py-1
+         [:div {:class "w-[30rem]"}
+          [book-item {:value book
+                      :href nil}]]]
+        [:div.h-2]])
+     (when library
+       [:div.px-1
+        [:ul.py-1
+         [:div {:class "w-[30rem]"}
+          [library-item {:value library
+                         :href nil}]]]
+        [:div.h-2]])
+     [:div.px-1
+      [:input {:type "text" :class [styles/input-style "w-[30rem]"]}]
+      [:div.h-2]]
+     [:div.overflow-y-auto.flex-grow
+      [:ul.space-y-2.p-1
+       (for [[uid library-book] library-books]
+         ^{:key uid}
+         [:div {:class "w-[30rem]"}
+          [library-book-item {:value library-book
+                              :uid uid
+                              :book book
+                              :library library
+                              :href nil}]])]]]))
 
 (defn users-panel []
   [:div "users"])

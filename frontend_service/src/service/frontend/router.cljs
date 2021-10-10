@@ -62,12 +62,40 @@
                                     (.log js/console "Entering" ::book-add))
                                   (rf/dispatch [::events/init-book-add]))}]}]
     ["/:uid" {:parameters {:path [:map [:uid uuid?]]}}
-     ["" {:name ::book
+     ["" {:name ::library-books-by-book
           :controllers [{:parameters {:path [:uid]}
-                         :start (fn [{{uid :uid} :path}]
+                         :start (fn [{{book-uid :uid} :path}]
                                   (when config/debug?
-                                    (.log js/console "Entering" ::book))
-                                  (rf/dispatch [::events/init-book uid]))}]}]
+                                    (.log js/console "Entering" ::library-books-by-book))
+                                  (rf/dispatch [::events/init-library-books-by-book
+                                                {:book-uid book-uid}]))}]}]
+     ["/libraries"
+      ["/" {:name ::library-book-by-book-add
+            :controllers [{:parameters {:path [:uid]}
+                           :start (fn [{{book-uid :uid} :path}]
+                                    (when config/debug?
+                                      (.log js/console "Entering" ::library-book-by-book-add))
+                                    (rf/dispatch [::events/init-library-book-by-book-add
+                                                  {:book-uid book-uid}]))}]}]
+      ["/:library-uid" {:parameters {:path [:map [:library-uid uuid?]]}}
+       ["" {:name ::library-book-by-book
+            :controllers [{:parameters {:path [:uid :library-uid]}
+                           :start (fn [{{book-uid    :uid
+                                         library-uid :library-uid} :path}]
+                                    (when config/debug?
+                                      (.log js/console "Entering" ::library-book-by-book))
+                                    (rf/dispatch [::events/init-library-book-by-book
+                                                  {:uid library-uid
+                                                   :book-uid book-uid}]))}]}]
+       ["/edit" {:name ::library-book-by-book-edit
+                 :controllers [{:parameters {:path [:uid :library-uid]}
+                                :start (fn [{{book-uid    :uid
+                                              library-uid :library-uid} :path}]
+                                         (when config/debug?
+                                           (.log js/console "Entering" ::library-book-by-book-edit))
+                                         (rf/dispatch [::events/init-library-book-by-book-edit
+                                                       {:uid library-uid
+                                                        :book-uid book-uid}]))}]}]]]
      ["/edit" {:name ::book-edit
                :controllers [{:parameters {:path [:uid]}
                               :start (fn [{{uid :uid} :path}]
@@ -101,6 +129,16 @@
                                  (when config/debug?
                                    (.log js/console "Entering" ::orders))
                                  (rf/dispatch [::events/init-orders]))}]}]
+    ["/" {:name ::order-add
+          :parameters {:query [:map
+                               [:book-uid uuid?]
+                               [:library-uid uuid?]]}
+          :controllers [{:parameters {:query [:book-uid :library-uid]}
+                         :start (fn [{{book-uid :book-uid library-uid :library-uid} :query}]
+                                  (when config/debug?
+                                    (.log js/console "Entering" ::order-add))
+                                  (rf/dispatch [::events/init-order-add {:book-uid book-uid
+                                                                         :library-uid library-uid}]))}]}]
     ["/:uid" {:parameters {:path [:map [:uid uuid?]]}}
      ["" {:name ::order
           :controllers [{:parameters {:path [:uid]}
