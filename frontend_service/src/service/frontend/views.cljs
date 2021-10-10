@@ -101,12 +101,15 @@
       [:input (merge props
                      {:class (class-concat input-style (when label "mt-2") class)
                       :disabled (when disabled? true)
-                      :type type
+                      :type (case type
+                              "uuid" "text"
+                              type)
                       :value value
                       :on-change #(rf/dispatch [::forms/set-field-value
                                                 form-path field-path
-                                                (if (= type "number")
-                                                  (input-number-value %)
+                                                (case type
+                                                  "number" (input-number-value %)
+                                                  "uuid" (uuid (input-number-value %))
                                                   (input-value %))])})]]
      (when submitted?
        (for [e (when (coll? errors) errors)]
