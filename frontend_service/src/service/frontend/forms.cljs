@@ -10,6 +10,14 @@
     (when form-path
       {:db (assoc-in db (conj (any-or-coll->coll form-path) :value) value)})))
 
+(rf/reg-event-fx ::set-form-value-if-empty
+  (fn [{:keys [db]} [_ form-path value]]
+    (when form-path
+      (let [path (conj (any-or-coll->coll form-path) :value)
+            prev-value (get-in db path)]
+        (when (empty? prev-value)
+          {:db (assoc-in db path value)})))))
+
 (rf/reg-event-fx ::set-field-value
   (fn [{:keys [db]} [_ form-path field-path value]]
     (when (and form-path field-path)
