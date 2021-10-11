@@ -109,6 +109,11 @@
                                  (when config/debug?
                                    (.log js/console "Entering" ::users))
                                  (rf/dispatch [::events/init-users]))}]}]
+    ["/" {:name ::user-add
+         :controllers [{:start (fn [_]
+                                 (when config/debug?
+                                   (.log js/console "Entering" ::user-add))
+                                 (rf/dispatch [::events/init-user-add]))}]}]
     ["/:uid" {:parameters {:path [:map [:uid uuid?]]}}
      ["" {:name ::user
           :controllers [{:parameters {:path [:uid]}

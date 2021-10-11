@@ -30,6 +30,14 @@
   (fn [db _]
     (-> db :entities :users)))
 
+(rf/reg-sub ::user-limits
+  (fn [db _]
+    (-> db :entities :user-limits)))
+
+(rf/reg-sub ::user-ratings
+  (fn [db _]
+    (-> db :entities :user-ratings)))
+
 (rf/reg-sub ::user
   :<- [::user-uid]
   :<- [::users]

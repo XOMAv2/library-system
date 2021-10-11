@@ -479,30 +479,104 @@
 
 (rf/reg-event-fx ::init-users
   (fn [_ _]
-    {:fx [[:dispatch [::change-modal]]
-          [:dispatch [::change-view [views/navigation-view [views/users-panel]]]]]}))
+    {:async-flow {:first-dispatch [::dispatch-n
+                                   [[::gateway/get-all-users        [::get-all-users-success]        [::http-failure]]
+                                    [::gateway/get-all-user-limits  [::get-all-user-limits-success]  [::http-failure]]
+                                    [::gateway/get-all-user-ratings [::get-all-user-ratings-success] [::http-failure]]]]
+                  :rules [{:when :seen-all-of?
+                           :events [::gateway/get-all-users-success
+                                    ::gateway/get-all-user-limits-success
+                                    ::gateway/get-all-user-ratings-success]
+                           :dispatch [::init-users-success]
+                           :halt? true}
+                          {:when :seen-any-of?
+                           :events [::gateway/get-all-users-failure
+                                    ::gateway/get-all-user-limits-failure
+                                    ::gateway/get-all-user-ratings-failure]
+                           :dispatch [::async-flow-fx/notify]
+                           :halt? true}]}}))
+
+(rf/reg-event-fx ::init-users-success
+  (fn [_ _]
+    {:dispatch-n [[::change-modal]
+                  [::change-view [views/navigation-view [views/users-panel]]]]}))
+
+(rf/reg-event-fx ::get-all-user-limits-success
+  (fn [_ [_ {:keys [limits]}]]
+    {:dispatch [::assoc-in-db-entities :user-limits limits]}))
+
+(rf/reg-event-fx ::get-all-user-ratings-success
+  (fn [_ [_ {:keys [ratings]}]]
+    {:dispatch [::assoc-in-db-entities :user-ratings ratings]}))
 
 (rf/reg-event-fx ::init-user
   (fn [{:keys [db]} [_ uid]]
-    {}))
+    (if-let [user (get-in db [:entities :users uid])]
+      {:dispatch [::init-user-success uid user]}
+      {:dispatch [::gateway/get-user [::init-user-success uid] [::http-failure] uid]})))
+
+(rf/reg-event-fx ::init-user-success
+  (fn [_ [_ uid user]]
+    {:dispatch-n [[::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/users}]}
+                                   [views/user-disabled-form {:form-path [:ui-state :modal-scope :disabled-user-form]
+                                                              :form-value user}]]]
+                  [::change-view [views/navigation-view [views/users-panel]]]]}))
+
+(rf/reg-event-fx ::init-user-add
+  (fn [_ _]
+    {:dispatch-n [[::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/users}]}
+                                   [views/user-add-form {:form-path [:ui-state :modal-scope :add-user-form]}]]]
+                  [::change-view [views/navigation-view [views/users-panel]]]]}))
+
+(rf/reg-event-fx ::user-add-success
+  (fn [_ [_ user]]
+    {:dispatch-n [[::assoc-in-db-entity :users user]
+                  [::navigate {:route ::routes/users}]]}))
 
 (rf/reg-event-fx ::init-user-edit
   (fn [{:keys [db]} [_ uid]]
-    {}))
+    (if-let [user (get-in db [:entities :users uid])]
+      {:dispatch [::init-user-edit-success uid user]}
+      {:dispatch [::gateway/get-user [::init-user-edit-success uid] [::http-failure] uid]})))
+
+(rf/reg-event-fx ::init-user-edit-success
+  (fn [_ [_ uid user]]
+    {:dispatch-n [[::change-modal [views/modal-view {:on-close-event [::navigate {:route ::routes/users}]}
+                                   [views/user-edit-form {:form-path [:ui-state :modal-scope :edit-user-form]
+                                                          :form-value user}]]]
+                  [::change-view [views/navigation-view [views/users-panel]]]]}))
+
+(rf/reg-event-fx ::user-edit-success
+  (fn [_ [_ user]]
+    {:dispatch-n [[::assoc-in-db-entity :users user]
+                  [::navigate {:route ::routes/users}]]}))
 
 (rf/reg-event-fx ::init-orders
-  (fn [{:keys [db]} _]
-    {:db (-> db
-             (assoc-in [:entities :orders] nil)
-             (assoc-in [:entities :libraries] nil)
-             (assoc-in [:entities :books] nil)
-             (assoc-in [:entities :users] nil))
-     :fx [[:dispatch [::change-modal]]
-          [:dispatch [::change-view [views/navigation-view [views/orders-panel]]]]
-          [:dispatch [::gateway/get-all-orders    [::get-all-orders-success]    [::http-failure]]]
-          [:dispatch [::gateway/get-all-libraries [::get-all-libraries-success] [::http-failure]]]
-          [:dispatch [::gateway/get-all-books     [::get-all-books-success]     [::http-failure]]]
-          [:dispatch [::gateway/get-all-users     [::get-all-users-success]     [::http-failure]]]]}))
+  (fn [_ _]
+    {:async-flow {:first-dispatch [::dispatch-n
+                                   [[::gateway/get-all-orders    [::get-all-orders-success]    [::http-failure]]
+                                    [::gateway/get-all-libraries [::get-all-libraries-success] [::http-failure]]
+                                    [::gateway/get-all-books     [::get-all-books-success]     [::http-failure]]
+                                    [::gateway/get-all-users     [::get-all-users-success]     [::http-failure]]]]
+                  :rules [{:when :seen-all-of?
+                           :events [::gateway/get-all-orders-success
+                                    ::gateway/get-all-libraries-success
+                                    ::gateway/get-all-books-success
+                                    ::gateway/get-all-users-success]
+                           :dispatch [::init-orders-success]
+                           :halt? true}
+                          {:when :seen-any-of?
+                           :events [::gateway/get-all-orders-failure
+                                    ::gateway/get-all-libraries-failure
+                                    ::gateway/get-all-books-failure
+                                    ::gateway/get-all-users-failure]
+                           :dispatch [::async-flow-fx/notify]
+                           :halt? true}]}}))
+
+(rf/reg-event-fx ::init-orders-success
+  (fn [_ _]
+    {:dispatch-n [[::change-modal]
+                  [::change-view [views/navigation-view [views/orders-panel]]]]}))
 
 (rf/reg-event-fx ::get-all-orders-success
   (fn [_ [_ {:keys [orders]}]]

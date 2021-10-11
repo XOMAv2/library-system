@@ -112,12 +112,12 @@
        [:div form])]]])
 
 (def ^:private sections
-  [[icons/user-circle  "My profile" []]
-   [icons/users        "Users"      [::routes/users]]
-   [icons/book-open    "Books"      [::routes/books]]
-   [icons/library      "Libraries"  [::routes/libraries]]
-   [icons/shopping-bag "Orders"     [::routes/orders]]
-   [icons/trending-up  "Statistics" [::routes/stats]]])
+  [[icons/user-circle  "My profile" ::routes/user]
+   [icons/users        "Users"      ::routes/users]
+   [icons/book-open    "Books"      ::routes/books]
+   [icons/library      "Libraries"  ::routes/libraries]
+   [icons/shopping-bag "Orders"     ::routes/orders]
+   [icons/trending-up  "Statistics" ::routes/stats]])
 
 (def ^:private schedule
   ["Пн: 10:00-19:00"
@@ -529,8 +529,123 @@
 
 #_(-> @(rf/subscribe [::subs/db]) :entities :libraries)
 
+(defn user-generic-form [{:keys [form-path form-value title submit-name
+                                 event-ctor explainer disabled? remove-password-field?]}]
+  [form {:form-path form-path
+         :form-value form-value
+         :title title
+         :submit-name submit-name
+         :event-ctor event-ctor
+         :disabled? disabled?
+         :explainer explainer}
+   [input {:label "Name"
+           :type "text"
+           :form-path form-path
+           :field-path :name}]
+   [input {:label "Email"
+           :type "email"
+           :form-path form-path
+           :field-path :email}]
+   (when-not remove-password-field?
+     [input {:label "Password"
+             :type "text"
+             :form-path form-path
+             :field-path :password}])
+   [select {:label "Role"
+            :form-path form-path
+            :field-path :role
+            :key-name-map {"reader" "reader"
+                           "admin" "admin"}}]])
+
+(defn user-add-form [{:keys [form-path]}]
+  (let [explainer (m/explainer schemas/user-add)]
+    [user-generic-form {:form-path form-path
+                        :title "Add new user"
+                        :submit-name "Add"
+                        :event-ctor (fn [form-value]
+                                      [::gateway/add-user
+                                       [::events/user-add-success]
+                                       [::events/form-failure form-path]
+                                       form-value])
+                        :explainer explainer}]))
+
+(defn user-edit-form [{:keys [form-path form-value]}]
+  (let [explainer (m/explainer schemas/user-update)]
+    [user-generic-form {:form-path form-path
+                        :form-value form-value
+                        :title "Edit existing user"
+                        :submit-name "Edit"
+                        :event-ctor (fn [form-value]
+                                      [::gateway/update-user
+                                       [::events/user-edit-success]
+                                       [::events/form-failure form-path]
+                                       (:uid form-value)
+                                       form-value])
+                        :explainer explainer}]))
+
+(defn user-disabled-form [{:keys [form-path form-value]}]
+  (let [explainer (m/explainer schemas/user-update)]
+    [user-generic-form {:form-path form-path
+                        :form-value form-value
+                        :title "User info"
+                        :remove-password-field? true
+                        :disabled? true}]))
+
+(defn user-item [{:keys [uid value href] :or {uid nil}}]
+  (let [uid (or uid (:uid value))
+        user-limits @(rf/subscribe [::subs/user-limits])
+        user-ratings @(rf/subscribe [::subs/user-ratings])
+        user-limit (->> user-limits
+                        (filter (fn [[k v]] (= uid (:user-uid v))))
+                        first
+                        second)
+        user-rating (->> user-ratings
+                         (filter (fn [[k v]] (= uid (:user-uid v))))
+                         first
+                         second)]
+    [:li [:a {:class (class-concat styles/entity-item-style "block")
+              :href href}
+          [:div.gap-0
+           [:div.flex.flex-row.justify-between.items-center
+            [:h1.font-normal.truncate.text-2xl (:name value)]
+            [:div.flex.flex-row.gap-1
+             [:button {:class styles/icon-button-style
+                       :on-click #(do (.preventDefault %)
+                                      (rf/dispatch [::events/navigate {:route ::routes/user-edit
+                                                                       :path-params {:uid uid}}]))}
+              [icons/pencil]]
+             #_"TODO: 404 investigation."
+             #_[:button {:class (class-concat styles/icon-button-style
+                                            "hover:text-red-500 focus:text-red-500")
+                       :on-click #(do (.preventDefault %)
+                                      (rf/dispatch [::gateway/delete-user
+                                                    [::events/dissoc-in-db-entity :users]
+                                                    [::events/http-failure]
+                                                    uid]))}
+              [icons/trash {:class "stroke-current"}]]]]
+           [:p.font-medium.truncate.mt-1 (:email value)]
+           [:div.flex.flex-row-reverse.justify-between.items-center
+            [:span.text-sm [:span.italic "Limit "] [:span.font-normal.text-xl (:available-limit user-limit) "/" (:total-limit user-limit)]]
+            [:span (:role value)]
+            [:span.text-sm [:span.italic "Rating "] [:span.font-normal.text-xl (:rating user-rating)]]]]]]))
+
 (defn users-panel []
-  [:div "users"])
+  (let [users @(rf/subscribe [::subs/users])]
+    [:div.h-full.flex.flex-col.relative
+     [:div.px-1.absolute.z-20.bottom-2.right-2
+      [add-button {:text "Add user"
+                   :on-click #(rf/dispatch [::events/navigate {:route ::routes/user-add}])}]]
+     [:div.px-1
+      [:input {:type "text" :class [styles/input-style "w-[30rem]"]}]
+      [:div.h-2]]
+     [:div.overflow-y-auto.flex-grow
+      [:ul.space-y-2.p-1
+       (for [[uid user] users]
+         ^{:key uid}
+         [:div {:class "w-[30rem]"}
+          [user-item {:value user
+                      :uid uid
+                      :href (href ::routes/user {:uid uid})}]])]]]))
 
 (defn yyyy-mm-dd [d]
   (let [yyyy (.getFullYear d)
@@ -610,18 +725,19 @@
                   [:a {:class styles/link-style
                        :href (href ::routes/users {:uid (:user-uid value)})}
                    user-name]]]
-             [:p [:span.font-medium.text-sm
-                  (if (:booking-date value)
-                    (yyyy-mm-dd-hh-mm (:booking-date value))
-                    "---")
-                  " / "
-                  (if (:receiving-date value)
-                    (yyyy-mm-dd-hh-mm (:receiving-date value))
-                    "---")
-                  " / "
-                  (if (:return-date value)
-                    (yyyy-mm-dd-hh-mm (:return-date value))
-                    "---")]]]
+             [:div.grid.grid-cols-3.justify-between
+              [:div.flex.justify-start
+               [:span.font-medium.text-sm (if (:booking-date value)
+                                            (yyyy-mm-dd-hh-mm (:booking-date value))
+                                            "---")]]
+              [:div.flex.justify-center
+               [:span.font-medium.text-sm  (if (:receiving-date value)
+                                             (yyyy-mm-dd-hh-mm (:receiving-date value))
+                                             "---")]]
+              [:dev.flex.justify-end
+               [:span.font-medium.text-sm (if (:return-date value)
+                                            (yyyy-mm-dd-hh-mm (:return-date value))
+                                            "---")]]]]
             
             (when (:condition value)
               [:p.font-medium.overflow-ellipsis.overflow-hidden (:condition value)])
@@ -664,18 +780,22 @@
   [:div "statistics"])
 
 (defn navigation-view [& forms]
-  (let [current-route-name @(rf/subscribe [::subs/current-route-name])]
+  (let [current-route-name @(rf/subscribe [::subs/current-route-name])
+        user-uid @(rf/subscribe [::subs/user-uid])
+        path-params {:uid user-uid}]
     [:div.flex.flex-row.h-screen
      [:nav.p-3.w-52.overflow-y-auto.flex-none #_"TODO: think about responsive design."
       [:ul.space-y-2
-       (for [[icon section [route path-params query-params]] sections]
-         ^{:key [route path-params query-params]}
+       (for [[icon section route] sections]
+         ^{:key route}
          [:li [:a {:class (if (= route current-route-name)
                             (class-concat styles/outline-button-style "block"
                                           "bg-gradient-to-r from-blue-200 to-green-100"
                                           "hover:to-blue-200")
                             (class-concat styles/outline-button-style "block"))
-                   :href (href route path-params query-params)}
+                   :href (if (= ::routes/user route)
+                           (href route path-params)
+                           (href route))}
                [:div.flex.items-center
                 [icon]
                 [:span.ml-2 section]]]])]]
