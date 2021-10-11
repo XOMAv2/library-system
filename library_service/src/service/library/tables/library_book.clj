@@ -54,6 +54,7 @@
                  "granted_quantity int NOT NULL CHECK (granted_quantity >= 0 AND granted_quantity <= total_quantity)"
                  "is_available     boolean NOT NULL"
                  "is_deleted       boolean NOT NULL"
+                 "UNIQUE (library_uid, book_uid)"
                  (str "FOREIGN KEY (library_uid) "
                       "REFERENCES " (-> #'library/tname var-get name) " (uid) "
                       "ON DELETE CASCADE")]
