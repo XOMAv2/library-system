@@ -17,7 +17,6 @@
               :role "admin"
               :controllers [{:identity (comp :role :data)
                              :start (fn [e]
-                                      (.log js/console :kek e)
                                       :unauthorized)}
                             {:start (fn [_]
                                       (when config/debug?
