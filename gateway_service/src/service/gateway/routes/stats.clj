@@ -11,7 +11,7 @@
              :roles #{"admin"}
              :middleware [authentication-middleware
                           authorization-middleware]}
-   ["" {:get {:parameters {:query [:map [:service {:optional true} schemas/non-empty-string]]}
+   ["" {:get {:parameters {:query [:map [:service {:optional true} [:maybe schemas/non-empty-string]]]}
               :responses {200 {:body [:map [:stats [:sequential schemas/stat-record-out]]]}}
               #_"TODO: check is it work when service is nil."
               :handler (api-fn [{{:keys [service]} :query}]
