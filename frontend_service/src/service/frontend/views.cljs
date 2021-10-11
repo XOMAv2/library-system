@@ -776,8 +776,65 @@
          [:div {:class "w-[30rem]"}
           [order-item {:value order :uid uid}]])]]]))
 
+(defn delete-all-button [{:keys [text on-click class]}]
+  [:button {:class (class-concat (clojure.string/replace styles/button-danger-style #"\srounded-md\s" " ")
+                                 "shadow-3xl text-lg rounded-full"
+                                 class)
+            :type "button"
+            :on-click on-click}
+   [:div.flex.items-center
+    [icons/trash]
+    [:span.ml-2 text]]])
+
+(defn stat-record-item [{:keys [uid value href] :or {uid nil}}]
+  (let [uid (or uid (:uid value))]
+    [:li [:a {:class (class-concat styles/entity-item-style "block")
+              :href href}
+          [:div.gap-1
+           [:div.flex.flex-row.justify-between.items-center
+            [:h1.font-normal.truncate.text-2xl (:service value)]
+            #_[:div.flex.flex-row.gap-1
+               [:button {:class styles/icon-button-style
+                         :on-click #(do (.preventDefault %)
+                                        (rf/dispatch [::events/navigate {:route ::routes/user-edit
+                                                                         :path-params {:uid uid}}]))}
+                [icons/pencil]]
+               [:button {:class (class-concat styles/icon-button-style
+                                              "hover:text-red-500 focus:text-red-500")
+                         :on-click #(do (.preventDefault %)
+                                        (rf/dispatch [::gateway/delete-user
+                                                      [::events/dissoc-in-db-entity :users]
+                                                      [::events/http-failure]
+                                                      uid]))}
+                [icons/trash {:class "stroke-current"}]]]]
+           [:h2.font-normal.truncate.text-lg (:content-type value)]
+           [:p.font-medium.text-sm.overflow-ellipsis.overflow-hidden.font-mono.select-all.whitespace-pre-line
+            (try (-> (:body value)
+                     (cljs.reader/read-string)
+                     (cljs.pprint/pprint)
+                     (with-out-str))
+                 (catch :default _ (:body value)))]
+           [:div.grid.grid-cols-2.justify-between.mt-1
+            [:div.flex.justify-start
+             [:span.font-medium.text-sm (yyyy-mm-dd-hh-mm (:send-time value))]]
+            [:div.flex.justify-end
+             [:span.font-medium.text-sm (yyyy-mm-dd-hh-mm (:receive-time value))]]]]]]))
+
 (defn stats-panel []
-  [:div "statistics"])
+  (let [stat-records @(rf/subscribe [::subs/stat-records])]
+    [:div.h-full.flex.flex-col.relative
+     [:div.px-1.absolute.z-20.bottom-2.right-2
+      [delete-all-button {:text "Delete all stats"
+                          :on-click nil}]]
+     [:div.px-1
+      [:input {:type "text" :class [styles/input-style "w-[60rem]"]}]
+      [:div.h-2]]
+     [:div.overflow-y-auto.flex-grow
+      [:ul.space-y-2.p-1
+       (for [[uid stat-record] stat-records]
+         ^{:key uid}
+         [:div {:class "w-[60rem]"}
+          [stat-record-item {:value stat-record :uid uid}]])]]]))
 
 (defn navigation-view [& forms]
   (let [current-route-name @(rf/subscribe [::subs/current-route-name])

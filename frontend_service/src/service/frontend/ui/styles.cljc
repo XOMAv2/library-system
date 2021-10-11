@@ -18,6 +18,12 @@
    focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
    disabled:bg-blue-400")
 
+(def button-danger-style
+  "py-2 px-4 text-sm font-medium rounded-md text-white
+   bg-red-500 hover:bg-red-600 focus:outline-none
+   focus:ring-2 focus:ring-offset-2 focus:ring-red-500
+   disabled:bg-red-400")
+
 (def outline-button-style
   "py-2 px-3 text-sm rounded-md
    font-medium focus:ring-2 focus:ring-offset-2

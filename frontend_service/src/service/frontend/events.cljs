@@ -645,8 +645,28 @@
 
 (rf/reg-event-fx ::init-stats
   (fn [_ _]
-    {:fx [[:dispatch [::change-modal]]
-          [:dispatch [::change-view [views/navigation-view [views/stats-panel]]]]]}))
+    {:async-flow {:first-dispatch [::gateway/get-all-stat-records
+                                   [::get-all-stat-records-success]
+                                   [::http-failure]
+                                   "gateway"]
+                  :rules [{:when :seen?
+                           :events ::gateway/get-all-stat-records-success
+                           :dispatch [::init-stats-success]
+                           :halt? true}
+                          {:when :seen?
+                           :events ::gateway/get-all-stat-records-failure
+                           :dispatch [::async-flow-fx/notify]
+                           :halt? true}]}}))
+
+(rf/reg-event-fx ::init-stats-success
+  (fn [_ _]
+    {:dispatch-n [[::change-modal]
+                  [::change-view [views/navigation-view [views/stats-panel]]]]}))
+
+(rf/reg-event-fx ::get-all-stat-records-success
+  (fn [_ [_ {:keys [stats]}]]
+    (.log js/console :stats stats)
+    {:dispatch [::assoc-in-db-entities :stat-records stats]}))
 
 (rf/reg-event-fx ::init-stat
   (fn [{:keys [db]} [_ uid]]

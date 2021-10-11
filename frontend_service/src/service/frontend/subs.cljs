@@ -74,6 +74,10 @@
   (fn [db _]
     (-> db :entities :orders)))
 
+(rf/reg-sub ::stat-records
+  (fn [db _]
+    (-> db :entities :stat-records)))
+
 (rf/reg-sub ::modal?
   :<- [::current-modal]
   (fn [current-modal _]
