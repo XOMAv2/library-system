@@ -28,7 +28,7 @@ jobs:
           host: ${{ secrets.AWS_HOST }}
           username: ${{ secrets.AWS_USER_NAME }}
           key: ${{ secrets.AWS_PASSWORD }}
-          source: "test/kube.sh"
+          source: "test/docker-compose.yml"
           target: "/home/ubuntu/"
           strip_components: 1
       - name: Transfer test file to server
@@ -37,7 +37,7 @@ jobs:
           host: ${{ secrets.AWS_HOST }}
           username: ${{ secrets.AWS_USER_NAME }}
           key: ${{ secrets.AWS_PASSWORD }}
-          source: "test/docker-compose.yml"
+          source: "test/kube.sh"
           target: "/home/ubuntu/"
           strip_components: 1
       - name: DockerHub Login
