@@ -35,7 +35,11 @@ jobs:
           username: ${{ secrets.AWS_USER_NAME }}
           key: ${{ secrets.AWS_PASSWORD }}
           script: |
+            cd ./build
+            sudo docker-compose down
+            cd ..
             rm -rf ./build
             tar -xvf deploy.tar
+            rm -rf ./deploy.tar
             cd ./build
             sudo docker-compose up -d --build
