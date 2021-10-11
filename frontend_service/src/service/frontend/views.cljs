@@ -734,7 +734,7 @@
                [:span.font-medium.text-sm  (if (:receiving-date value)
                                              (yyyy-mm-dd-hh-mm (:receiving-date value))
                                              "---")]]
-              [:dev.flex.justify-end
+              [:div.flex.justify-end
                [:span.font-medium.text-sm (if (:return-date value)
                                             (yyyy-mm-dd-hh-mm (:return-date value))
                                             "---")]]]]
