@@ -1,6 +1,7 @@
 (ns service.library.handlers.order
   (:require [service.library.tables.order :as o-ops]
             [service.library.tables.library :as l-ops]
+            [service.library.tables.library-book :as lb-ops]
             [utilities.core :refer [remove-trailing-slash]]
             [utilities.time :as time]
             [utilities.api.book :as book-api]
@@ -9,11 +10,14 @@
             [better-cond.core :as b]
             [clojure.core.match :refer [match]]))
 
+#_"TODO: check library books when processing orders."
+
 (defn add-order
-  [{{order                  :body}    :parameters
-    {{order-table   :order} :tables}  :db
-    {service-uri            :order}   :services-uri
-    {return-service         :return} :services}]
+  [{{order                              :body}    :parameters
+    {{order-table        :order
+      library-book-table :library-book} :tables}  :db
+    {service-uri                        :order}   :services-uri
+    {return-service                     :return} :services}]
   (b/cond
     :let [order (merge {:booking-date (time/now)
                         :receiving-date nil
@@ -21,9 +25,9 @@
                         :condition nil}
                        order)
           user-uid (:user-uid order)]
-    
+
     :let [return-resp (return-api/-update-available-limit-by-user-uid return-service user-uid -1)]
-    
+
     (not= 200 (:status return-resp))
     (match (:status return-resp)
       (:or 500 503) {:status 502
@@ -39,7 +43,7 @@
       :else         {:status 500
                      :body {:message "Error during the return service call."
                             :response return-resp}})
-    
+
     :let [order (try (o-ops/-add order-table order)
                      (catch Exception e e))]
 
@@ -94,11 +98,12 @@
 
 (defn update-order
   "Only the first setting of the condition field value will affect the user rating."
-  [{{{:keys [uid]}        :path
-     order                :body}    :parameters
-    {{order-table :order} :tables}  :db
-    {return-service       :return
-     rating-service       :rating} :services}]
+  [{{{:keys [uid]}                      :path
+     order                              :body}    :parameters
+    {{order-table        :order
+      library-book-table :library-book} :tables}  :db
+    {return-service                     :return
+     rating-service                     :rating} :services}]
   (b/cond
     :let [prev-order (o-ops/-get order-table uid)
           {prev-return-date :return-date
@@ -187,9 +192,10 @@
 
 (defn update-all-orders
   "Condition field update will not affect the user rating."
-  [{{order-query          :query
-     order                :body}   :parameters
-    {{order-table :order} :tables} :db}]
+  [{{order-query                        :query
+     order                              :body}   :parameters
+    {{order-table        :order
+      library-book-table :library-book} :tables} :db}]
   (try (let [orders (o-ops/-update-all-by-keys order-table order-query order)]
          {:status 200
           :body {:orders orders}})
@@ -199,8 +205,9 @@
                  :message (ex-message e)}})))
 
 (defn delete-order
-  [{{{:keys [uid]}        :path}   :parameters
-    {{order-table :order} :tables} :db}]
+  [{{{:keys [uid]}                      :path}   :parameters
+    {{order-table        :order
+      library-book-table :library-book} :tables} :db}]
   (if-let [order (o-ops/-delete order-table uid)]
     {:status 200
      :body order}
