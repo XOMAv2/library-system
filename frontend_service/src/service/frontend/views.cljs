@@ -616,18 +616,21 @@
               [icons/pencil]]
              #_"TODO: 404 investigation."
              #_[:button {:class (class-concat styles/icon-button-style
-                                            "hover:text-red-500 focus:text-red-500")
-                       :on-click #(do (.preventDefault %)
-                                      (rf/dispatch [::gateway/delete-user
-                                                    [::events/dissoc-in-db-entity :users]
-                                                    [::events/http-failure]
-                                                    uid]))}
-              [icons/trash {:class "stroke-current"}]]]]
+                                              "hover:text-red-500 focus:text-red-500")
+                         :on-click #(do (.preventDefault %)
+                                        (rf/dispatch [::gateway/delete-user
+                                                      [::events/dissoc-in-db-entity :users]
+                                                      [::events/http-failure]
+                                                      uid]))}
+                [icons/trash {:class "stroke-current"}]]]]
            [:p.font-medium.truncate.mt-1 (:email value)]
-           [:div.flex.flex-row-reverse.justify-between.items-center
-            [:span.text-sm [:span.italic "Limit "] [:span.font-normal.text-xl (:available-limit user-limit) "/" (:total-limit user-limit)]]
-            [:span (:role value)]
-            [:span.text-sm [:span.italic "Rating "] [:span.font-normal.text-xl (:rating user-rating)]]]]]]))
+           [:div.grid.grid-cols-3.justify-between
+            [:div.flex.justify-start
+             [:span.text-sm [:span.italic "Rating "] [:span.font-normal.text-xl (:rating user-rating)]]]
+            [:div.flex.justify-center
+             [:span (:role value)]]
+            [:div.flex.justify-end
+             [:span.text-sm [:span.italic "Limit "] [:span.font-normal.text-xl (:available-limit user-limit) "/" (:total-limit user-limit)]]]]]]]))
 
 (defn users-panel []
   (let [users @(rf/subscribe [::subs/users])]
