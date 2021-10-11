@@ -488,7 +488,7 @@
                                       {:book-uid (:uid book)})
                                     (when library
                                       {:library-uid (:uid book)}))
-        library-books @(rf/subscribe [::subs/library-books {:book-uid #uuid "c8afee7d-0663-4dd6-aad9-0c673e884b0d"}#_library-books-params])
+        library-books @(rf/subscribe [::subs/library-books library-books-params])
         on-click (cond
                    (and book library) nil
                    book #(rf/dispatch [::events/navigate {:route ::routes/library-book-by-book-add
