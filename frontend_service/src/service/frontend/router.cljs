@@ -14,7 +14,12 @@
 
 (def routes
   [["/login" {:name ::login
-              :controllers [{:start (fn [_]
+              :role "admin"
+              :controllers [{:identity (comp :role :data)
+                             :start (fn [e]
+                                      (.log js/console :kek e)
+                                      :unauthorized)}
+                            {:start (fn [_]
                                       (when config/debug?
                                         (.log js/console "Entering" ::login))
                                       (rf/dispatch [::events/init-login]))}]}]
@@ -217,4 +222,4 @@
    router
    (fn [match]
      (rf/dispatch [::events/on-route-match (coerce-match match)]))
-   {:use-fragment true}))
+   {:use-fragment false}))

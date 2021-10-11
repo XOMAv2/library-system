@@ -1,6 +1,16 @@
 version: "3"
 
 services:
+    frontend:
+        build:
+            context: ./
+            dockerfile: ./frontend_service.Dockerfile
+        depends_on: [gateway]
+        container_name: frontend
+        ports: ["5000:5000"]
+        networks:
+            - gateway_network
+    
     book_db:
         image: postgres
         restart: always
@@ -39,6 +49,7 @@ services:
         networks:
             - service_network
             - rabbitmq_network
+            - gateway_network
 
     library_db:
         image: postgres
@@ -191,6 +202,7 @@ volumes:
 networks:
     service_network: {driver: bridge}
     book_network: {driver: bridge}
+    gateway_network: {driver: bridge}
     library_network: {driver: bridge}
     rating_network: {driver: bridge}
     return_network: {driver: bridge}

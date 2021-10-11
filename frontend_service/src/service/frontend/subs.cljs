@@ -82,3 +82,7 @@
   :<- [::current-modal]
   (fn [current-modal _]
     (some? current-modal)))
+
+(rf/reg-sub ::admin?
+  (fn [db _]
+    (-> db :user-role (= "admin"))))

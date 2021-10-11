@@ -22,7 +22,7 @@
 
 (rf/reg-cofx ::gateway/uri
   (fn [coeffects _]
-    (assoc coeffects :uri "http://localhost:3001")))
+    (assoc coeffects :uri "http://gateway:3000")))
 
 (rf/reg-cofx ::gateway/tokens-path
   (fn [coeffects _]

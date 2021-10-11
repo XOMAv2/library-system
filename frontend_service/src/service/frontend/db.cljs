@@ -7,6 +7,7 @@
               :modal nil
               :modal-scope nil}
    :user-uid nil
+   :user-role nil
    :tokens {:access-token nil
             :refresh-token nil}
    :entities {:users {}
