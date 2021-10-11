@@ -11,12 +11,12 @@ jobs:
     name: Deploy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2.3.4
       - name: Upload sh file
         uses: actions/upload-artifact@v2
         with:
           name: test
-          path: ./kube.sh
+          path: ./build/kube.sh
       - name: Upload yaml file
         uses: actions/upload-artifact@v2
         with:
@@ -28,7 +28,7 @@ jobs:
           host: ${{ secrets.AWS_HOST }}
           username: ${{ secrets.AWS_USER_NAME }}
           key: ${{ secrets.AWS_PASSWORD }}
-          source: "test/docker-compose.yml"
+          source: "test/kube.sh"
           target: "/home/ubuntu/"
           strip_components: 1
       - name: Transfer test file to server
@@ -37,7 +37,7 @@ jobs:
           host: ${{ secrets.AWS_HOST }}
           username: ${{ secrets.AWS_USER_NAME }}
           key: ${{ secrets.AWS_PASSWORD }}
-          source: "test/kube.sh"
+          source: "test/docker-compose.yml"
           target: "/home/ubuntu/"
           strip_components: 1
       - name: DockerHub Login
