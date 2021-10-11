@@ -333,3 +333,9 @@
 (def server-options
   [:map
    [:port nat-int?]])
+
+(def stats-query
+  [:map
+   [:service {:optional true
+              :decode/string #(when-not (and (string? %) (empty? %)) %)}
+    [:maybe non-empty-string]]])

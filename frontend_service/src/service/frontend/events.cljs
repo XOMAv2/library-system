@@ -647,8 +647,7 @@
   (fn [_ _]
     {:async-flow {:first-dispatch [::gateway/get-all-stat-records
                                    [::get-all-stat-records-success]
-                                   [::http-failure]
-                                   "gateway"]
+                                   [::http-failure]]
                   :rules [{:when :seen?
                            :events ::gateway/get-all-stat-records-success
                            :dispatch [::init-stats-success]
