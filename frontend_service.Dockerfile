@@ -26,7 +26,7 @@ RUN npm install &&\
 
 
 FROM clojure:openjdk-11-lein-slim-buster
-WORKDIR /usr/src/frontend_service/server/resources
-COPY --from=build /usr/src/frontend_service ./resources
+WORKDIR /usr/src/frontend_service/server/
+COPY --from=build /usr/src/frontend_service/resources/ ./resources/
 
 CMD ["lein", "run"]
