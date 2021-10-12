@@ -7,7 +7,9 @@
             [malli.transform :as mt]
             [utilities.db.core :as udb]
             [utilities.db.crud.soft :as crud]
-            [service.library.tables.library :as library]))
+            [honey.sql :as h]
+            [service.library.tables.library :as library]
+            [clojure.math.numeric-tower :refer [abs]]))
 
 (defprotocol LibraryBookTableOperations
   (-create [this]
@@ -27,6 +29,8 @@
   (-update [this id entity]
     "Returns updated entity if it's found, returns nil otherwise.
      Throws exception if entity is malformed.")
+  (-update-granted-quantity-by-book-uid-and-library-uid [this {:keys [book-uid library-uid]} delta]
+    "")
   (-delete [this id]
     "Returns deleted entity if it's found, returns nil otherwise.")
   (-delete-all-by-keys [this keys]
@@ -74,6 +78,16 @@
     (crud/get-all-entities-by-keys db tname keys sanitize))
   (-update [this id entity]
     (crud/update-entity db tname id entity sanitize))
+  (-update-granted-quantity-by-book-uid-and-library-uid [this {:keys [book-uid library-uid]} delta]
+    (let [sign (if (neg? delta) :- :+)
+          query (h/format {:update tname
+                           :set {:granted-quantity [sign :granted-quantity (abs delta)]}
+                           :where [:and
+                                   [:= :is-deleted false]
+                                   [:= :book-uid book-uid]
+                                   [:= :library-uid library-uid]]})]
+      (-> (jdbc/execute-one! db query udb/jdbc-opts)
+          (sanitize))))
   (-delete [this id]
     (crud/delete-entity db tname id sanitize))
   (-delete-all-by-keys [this keys]

@@ -15,7 +15,8 @@
                  [buddy/buddy-auth "3.0.1"]
                  [camel-snake-kebab "0.4.2"]
                  [better-cond "2.1.0"]
-                 [org.clojure/core.match "1.0.0"]]
+                 [org.clojure/core.match "1.0.0"]
+                 [org.clojure/math.numeric-tower "0.0.4"]]
   :main ^:skip-aot service.library.system
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all

@@ -24,31 +24,73 @@
                         :return-date nil
                         :condition nil}
                        order)
-          user-uid (:user-uid order)]
+          {:keys [user-uid library-uid book-uid]} order]
+
+    :let [lb-prev (->> {:library-uid library-uid
+                        :book-uid book-uid}
+                       (lb-ops/-get-all-by-keys library-book-table)
+                       first)]
+
+    (nil? lb-prev)
+    {:status 404
+     :body {:message (str "Book with uid `" (:book-uid order) "` in"
+                          "library with uid `" (:library-uid order) "` is not found.")}}
+
+    (not (and (:is-available lb-prev)
+              (> (:total-quantity lb-prev) (:granted-quantity lb-prev))))
+    {:status 409
+     :body {:message "Can't create order due to book unavailability."}}
+
+    :let [library-book (try (-> library-book-table
+                                (lb-ops/-update (:uid lb-prev)
+                                                {:granted-quantity (inc (:granted-quantity lb-prev))}))
+                            (catch Exception e e))]
+
+    (instance? Exception library-book)
+    (let [e library-book]
+      {:status 422
+       :body {:type (-> e type str)
+              :message (ex-message e)}})
+
+    (nil? library-book)
+    {:status 404
+     :body {:message (str "Library book with uid `" (:uid lb-prev) "` is not found.")}}
 
     :let [return-resp (return-api/-update-available-limit-by-user-uid return-service user-uid -1)]
 
     (not= 200 (:status return-resp))
-    (match (:status return-resp)
-      (:or 500 503) {:status 502
-                     :body {:message "Error during the return service call."
-                            :response return-resp}}
-      (:or 401 403) {:status 500
-                     :body {:message "Unable to access the return service due to invalid credentials."
-                            :response return-resp}}
-      404           {:status 404
-                     :body (:body return-resp)}
-      422           {:status 422
-                     :body (:body return-resp)}
-      :else         {:status 500
-                     :body {:message "Error during the return service call."
-                            :response return-resp}})
+    (do (when (nil? (try (lb-ops/-update library-book-table
+                                         (:uid lb-prev)
+                                         {:granted-quantity (:granted-quantity lb-prev)})
+                         (catch Exception _ nil)))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        (match (:status return-resp)
+          (:or 500 503) {:status 502
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}
+          (:or 401 403) {:status 500
+                         :body {:message "Unable to access the return service due to invalid credentials."
+                                :response return-resp}}
+          404           {:status 404
+                         :body (:body return-resp)}
+          422           {:status 422
+                         :body (:body return-resp)}
+          :else         {:status 500
+                         :body {:message "Error during the return service call."
+                                :response return-resp}}))
 
     :let [order (try (o-ops/-add order-table order)
                      (catch Exception e e))]
 
     (instance? Exception order)
-    (do (when (not= 200 (-> return-service
+    (do (when (nil? (try (lb-ops/-update library-book-table
+                                         (:uid lb-prev)
+                                         {:granted-quantity (:granted-quantity lb-prev)})
+                         (catch Exception _ nil)))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        (when (not= 200 (-> return-service
                             (return-api/-update-available-limit-by-user-uid user-uid 1)
                             :status))
           #_"TODO: do something when api call returns bad response and "
@@ -114,7 +156,8 @@
     {:status 404
      :body {:message (str "Order with uid `" uid "` is not found.")}}
 
-    :let [return-resp (if (and (nil? prev-return-date) return-date)
+    :let [returning? (and (nil? prev-return-date) return-date)
+          return-resp (if returning?
                         (return-api/-update-available-limit-by-user-uid return-service user-uid 1)
                         {:status 200})]
 
@@ -134,11 +177,47 @@
                      :body {:message "Error during the return service call."
                             :response return-resp}})
 
+    :let [library-book (if returning?
+                         (try (lb-ops/-update-granted-quantity-by-book-uid-and-library-uid
+                               library-book-table
+                               (select-keys prev-order [:book-uid :library-uid])
+                               -1)
+                              (catch Exception e e))
+                         {:status 200})]
+
+    (nil? library-book)
+    (do (when (not= 200 (-> return-service
+                            (return-api/-update-available-limit-by-user-uid user-uid -1)
+                            :status))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        {:status 404
+         :body {:message (str "Book with uid `" (:book-uid prev-order) "` in"
+                              "library with uid `" (:library-uid prev-order) "` is not found.")}})
+
+    (instance? Exception library-book)
+    (do (when (not= 200 (-> return-service
+                            (return-api/-update-available-limit-by-user-uid user-uid -1)
+                            :status))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        (let [e library-book]
+          {:status 422
+           :body {:type (-> e type str)
+                  :message (ex-message e)}}))
+
     :let [order (try (o-ops/-update order-table uid order)
                      (catch Exception e e))]
 
     (instance? Exception order)
-    (do (when (not= 200 (-> return-service
+    (do (when (nil? (try (lb-ops/-update-granted-quantity-by-book-uid-and-library-uid
+                          library-book-table
+                          (select-keys prev-order [:book-uid :library-uid])
+                          1)
+                         (catch Exception _ nil)))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        (when (not= 200 (-> return-service
                             (return-api/-update-available-limit-by-user-uid user-uid -1)
                             :status))
           #_"TODO: do something when api call returns bad response and "
@@ -149,7 +228,14 @@
                   :message (ex-message e)}}))
 
     (nil? order)
-    (do (when (not= 200 (-> return-service
+    (do (when (nil? (try (lb-ops/-update-granted-quantity-by-book-uid-and-library-uid
+                          library-book-table
+                          (select-keys prev-order [:book-uid :library-uid])
+                          1)
+                         (catch Exception _ nil)))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        (when (not= 200 (-> return-service
                             (return-api/-update-available-limit-by-user-uid user-uid -1)
                             :status))
           #_"TODO: do something when api call returns bad response and "
@@ -162,7 +248,14 @@
                         {:status 200})]
 
     (not= 200 (:status rating-resp))
-    (do (when (not= 200 (-> return-service
+    (do (when (nil? (try (lb-ops/-update-granted-quantity-by-book-uid-and-library-uid
+                          library-book-table
+                          (select-keys prev-order [:book-uid :library-uid])
+                          1)
+                         (catch Exception _ nil)))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        (when (not= 200 (-> return-service
                             (return-api/-update-available-limit-by-user-uid user-uid -1)
                             :status))
           #_"TODO: do something when api call returns bad response and "
@@ -208,8 +301,40 @@
   [{{{:keys [uid]}                      :path}   :parameters
     {{order-table        :order
       library-book-table :library-book} :tables} :db}]
-  (if-let [order (o-ops/-delete order-table uid)]
-    {:status 200
-     :body order}
+  (b/cond
+    :let [prev-order (o-ops/-get order-table uid)]
+
+    (nil? prev-order)
     {:status 404
-     :body {:message (str "Order with uid `" uid "` is not found.")}}))
+     :body {:message (str "Order with uid `" uid "` is not found.")}}
+
+    :let [library-book (try (lb-ops/-update-granted-quantity-by-book-uid-and-library-uid
+                             library-book-table
+                             (select-keys prev-order [:book-uid :library-book])
+                             -1)
+                            (catch Exception e e))]
+
+    (instance? Exception library-book)
+    (let [e library-book]
+      {:status 422
+       :body {:type (-> e type str)
+              :message (ex-message e)}})
+
+    :let [order (o-ops/-delete order-table uid)]
+
+    (nil? order)
+    (do (when (and library-book
+                   (instance? Exception
+                              (try (lb-ops/-update-granted-quantity-by-book-uid-and-library-uid
+                                    library-book-table
+                                    (select-keys prev-order [:book-uid :library-book])
+                                    1)
+                                   (catch Exception e e))))
+          #_"TODO: do something when api call returns bad response and "
+          #_"we are already processing bad response branch.")
+        {:status 404
+         :body {:message (str "Order with uid `" uid "` is not found.")}})
+
+    :else
+    {:status 200
+     :body order}))

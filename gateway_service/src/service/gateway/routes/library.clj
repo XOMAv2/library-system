@@ -136,6 +136,7 @@
                 :responses {201 {:body schemas/order-out
                                  :headers {"Location" {:schema {:type "string"}}}}
                             404 {:body message}
+                            409 {:body message}
                             422 {:body [:map
                                         [:type {:optional true} string?]
                                         [:message string?]]}
@@ -168,7 +169,10 @@
               :delete {:roles #{"admin"}
                        :middleware [authorization-middleware]
                        :responses {200 {:body schemas/order-out}
-                                   404 {:body message}}
+                                   404 {:body message}
+                                   422 {:body [:map
+                                               [:type {:optional true} string?]
+                                               [:message string?]]}}
                        :handler (api-fn [{{:keys [uid]} :path}]
                                         (library-api/-delete-order library-service uid))}
               :patch {:roles #{"admin"}
