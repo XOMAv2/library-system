@@ -88,7 +88,7 @@ jobs:
           strip_components: 1
 
       - name: DockerHub Login
-        run: echo ${{ secrets.DOCKERHUB_PASSWORD }} | docker login -u ${{ secrets.DOCKERHUB_DOCKER_ID }} --password-stdin
+        run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u ${{ secrets.DOCKERHUB_DOCKER_ID }} --password-stdin
 
       - name: Build Docker Images
         run: docker-compose -f docker-compose.yml up --build -d
