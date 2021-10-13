@@ -154,7 +154,7 @@
     {{user-rating-table :user-rating} :tables} :db
     {return-service                   :return} :services}]
   (b/cond
-    :let [user-rating-prev (ur-ops/-get-by-user-uid user-uid)]
+    :let [user-rating-prev (ur-ops/-get-by-user-uid user-rating-table user-uid)]
 
     (nil? user-rating-prev)
     {:status 404
