@@ -221,4 +221,4 @@
    router
    (fn [match]
      (rf/dispatch [::events/on-route-match (coerce-match match)]))
-   {:use-fragment true}))
+   {:use-fragment false}))

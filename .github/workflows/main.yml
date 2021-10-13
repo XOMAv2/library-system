@@ -37,12 +37,15 @@ jobs:
           script: |
             cd /home/nikita/build
             sudo docker-compose down
+            sudo docker rm -f frontend
             cd /home/nikita
             rm -rf ./build
             tar -xvf deploy.tar
             rm -rf ./deploy.tar
             cd /home/nikita/build
             sudo docker-compose up -d --build
+            sudo docker build -t frontend -f frontend_service.Dockerfile .
+            sudo docker run --name frontend -dp 5000:5000 frontend
 
 #  aws-1:
 #    name: Deploy direct

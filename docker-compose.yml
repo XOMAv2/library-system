@@ -1,16 +1,16 @@
 version: "3"
 
 services:
-    frontend:
-        image: xomav2/frontend
-        build:
-            context: ./
-            dockerfile: ./frontend_service.Dockerfile
-        depends_on: [gateway]
-        container_name: frontend
-        ports: ["5000:5000"]
-        networks:
-            - gateway_network
+#    frontend:
+#        image: xomav2/frontend
+#        build:
+#            context: ./
+#            dockerfile: ./frontend_service.Dockerfile
+#        depends_on: [gateway]
+#        container_name: frontend
+#        ports: ["5000:5000"]
+#        networks:
+#            - gateway_network
     
     book_db:
         image: postgres

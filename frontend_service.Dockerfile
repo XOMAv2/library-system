@@ -10,12 +10,12 @@ COPY ./frontend_service/ ./
 RUN npm install &&\
     npx shadow-cljs release app
 
-#FROM node:alpine
+FROM node:alpine
 #WORKDIR /usr/src/frontend_service/
 
-#COPY --from=build /usr/src/frontend_service/resources/public ./
-#RUN npm install serve
-#CMD ["npx", "serve"]
+COPY --from=build /usr/src/frontend_service/resources/public ./
+RUN npm install serve
+CMD ["npx", "serve"]
 
 #COPY --from=build /usr/src/frontend_service/ ./
 #CMD ["npx", "http-server", "./resources/public", "-p", "5000", "--proxy", "http://localhost:5000?", "--cors"]
@@ -25,8 +25,9 @@ RUN npm install &&\
 #CMD ["ws", "--spa", "index.html", "--cors.origin", "http://0.0.0.0:5000"]
 
 
-FROM clojure:openjdk-11-lein-slim-buster
-WORKDIR /usr/src/frontend_service/server/
-COPY --from=build /usr/src/frontend_service/resources/ ./resources/
+#FROM clojure:openjdk-11-lein-slim-buster
+#WORKDIR /usr/src/frontend_service/server/
+#COPY --from=build /usr/src/frontend_service/server/ ./
+#COPY --from=build /usr/src/frontend_service/resources/ ./resources/
 
-CMD ["lein", "run"]
+#CMD ["lein", "run"]
