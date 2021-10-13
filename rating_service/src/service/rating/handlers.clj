@@ -16,8 +16,8 @@
 (defn condition->delta [c]
   (case c
     "normal" 2
-    "poor" 5
-    "terrible" 10
+    "poor" -2
+    "terrible" -5
     (throw (Exception. "Unknown book condition."))))
 
 (defn add-user-rating
@@ -154,7 +154,17 @@
     {{user-rating-table :user-rating} :tables} :db
     {return-service                   :return} :services}]
   (b/cond
+    :let [user-rating-prev (ur-ops/-get-by-user-uid user-uid)]
+
+    (nil? user-rating-prev)
+    {:status 404
+     :body {:message (str "User rating with user uid `" user-uid "` is not found.")}}
+   
     :let [delta (condition->delta condition)
+          delta (let [delta2 (+ (:rating user-rating-prev) delta)]
+                  (if (neg? delta2)
+                    (- delta delta2)
+                    delta))
           user-rating (try (ur-ops/-update-rating-by-user-uid user-rating-table
                                                               user-uid delta)
                            (catch Exception e e))]
