@@ -11,8 +11,7 @@ RUN npm install &&\
     npx shadow-cljs release app
 
 FROM node:alpine
-#WORKDIR /usr/src/frontend_service/
-
+WORKDIR /usr/src/frontend_service/
 COPY --from=build /usr/src/frontend_service/resources/public ./
 RUN npm install serve
 CMD ["npx", "serve"]
