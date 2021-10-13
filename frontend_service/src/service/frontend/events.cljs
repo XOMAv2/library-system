@@ -6,6 +6,7 @@
             [service.frontend.router :as routes]
             [service.frontend.views :as views]
             [service.frontend.forms :as forms]
+            [service.frontend.config :as config]
             [cljs.reader :refer [read-string]]
             [utilities.core :refer [dissoc-in]]
             [utilities.time :as time]
@@ -22,7 +23,7 @@
 
 (rf/reg-cofx ::gateway/uri
   (fn [coeffects _]
-    (assoc coeffects :uri "http://130.193.36.70:3001")))
+    (assoc coeffects :uri config/gateway-uri)))
 
 (rf/reg-cofx ::gateway/tokens-path
   (fn [coeffects _]

@@ -1,10 +1,10 @@
 (ns service.frontend.config)
 
 (def debug?
-  ^boolean goog.DEBUG)
+  false)
 
 (def gateway-uri
-  "http://localhost:3001")
+  "http://130.193.36.70:3001")
 
 (def use-fragment
-  true)
+  false)
