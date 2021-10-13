@@ -250,9 +250,9 @@
                                          [::assoc-in-db-entity :books]
                                          [::http-failure]
                                          book-uid]
-                                       [::gateway/get-all-library-books
-                                        [::get-all-library-books-success]
-                                        [::http-failure]]]]
+                                        [::gateway/get-all-library-books
+                                         [::get-all-library-books-success]
+                                         [::http-failure]]]]
                       :rules [{:when :seen-both?
                                :events [::gateway/get-book-success
                                         ::gateway/get-all-library-books-success]
@@ -479,23 +479,41 @@
             [:dispatch [::navigate {:route ::routes/libraries}]]]})))
 
 (rf/reg-event-fx ::init-users
-  (fn [_ _]
-    {:async-flow {:first-dispatch [::dispatch-n
-                                   [[::gateway/get-all-users        [::get-all-users-success]        [::http-failure]]
-                                    [::gateway/get-all-user-limits  [::get-all-user-limits-success]  [::http-failure]]
-                                    [::gateway/get-all-user-ratings [::get-all-user-ratings-success] [::http-failure]]]]
-                  :rules [{:when :seen-all-of?
-                           :events [::gateway/get-all-users-success
-                                    ::gateway/get-all-user-limits-success
-                                    ::gateway/get-all-user-ratings-success]
-                           :dispatch [::init-users-success]
-                           :halt? true}
-                          {:when :seen-any-of?
-                           :events [::gateway/get-all-users-failure
-                                    ::gateway/get-all-user-limits-failure
-                                    ::gateway/get-all-user-ratings-failure]
-                           :dispatch [::async-flow-fx/notify]
-                           :halt? true}]}}))
+  (fn [{:keys [db]} _]
+    (let [{:keys [user-uid user-role]} db]
+      (if (= "admin" user-role)
+        {:async-flow {:first-dispatch [::dispatch-n
+                                       [[::gateway/get-all-users        [::get-all-users-success]        [::http-failure]]
+                                        [::gateway/get-all-user-limits  [::get-all-user-limits-success]  [::http-failure]]
+                                        [::gateway/get-all-user-ratings [::get-all-user-ratings-success] [::http-failure]]]]
+                      :rules [{:when :seen-all-of?
+                               :events [::gateway/get-all-users-success
+                                        ::gateway/get-all-user-limits-success
+                                        ::gateway/get-all-user-ratings-success]
+                               :dispatch [::init-users-success]
+                               :halt? true}
+                              {:when :seen-any-of?
+                               :events [::gateway/get-all-users-failure
+                                        ::gateway/get-all-user-limits-failure
+                                        ::gateway/get-all-user-ratings-failure]
+                               :dispatch [::async-flow-fx/notify]
+                               :halt? true}]}}
+        {:async-flow {:first-dispatch [::dispatch-n
+                                       [[::gateway/get-user                    [::assoc-in-db-entity :users]        [::http-failure] user-uid]
+                                        [::gateway/get-user-limit-by-user-uid  [::assoc-in-db-entity :user-limits]  [::http-failure] user-uid]
+                                        [::gateway/get-user-rating-by-user-uid [::assoc-in-db-entity :user-ratings] [::http-failure] user-uid]]]
+                      :rules [{:when :seen-all-of?
+                               :events [::gateway/get-user-success
+                                        ::gateway/get-user-limit-by-user-uid-success
+                                        ::gateway/get-user-rating-by-user-uid-success]
+                               :dispatch [::init-users-success]
+                               :halt? true}
+                              {:when :seen-any-of?
+                               :events [::gateway/get-user-failure
+                                        ::gateway/get-user-limit-by-user-uid-failure
+                                        ::gateway/get-user-rating-by-user-uid-failure]
+                               :dispatch [::async-flow-fx/notify]
+                               :halt? true}]}}))))
 
 (rf/reg-event-fx ::init-users-success
   (fn [_ _]
@@ -553,26 +571,33 @@
                   [::navigate {:route ::routes/users}]]}))
 
 (rf/reg-event-fx ::init-orders
-  (fn [_ _]
-    {:async-flow {:first-dispatch [::dispatch-n
-                                   [[::gateway/get-all-orders    [::get-all-orders-success]    [::http-failure]]
-                                    [::gateway/get-all-libraries [::get-all-libraries-success] [::http-failure]]
-                                    [::gateway/get-all-books     [::get-all-books-success]     [::http-failure]]
-                                    [::gateway/get-all-users     [::get-all-users-success]     [::http-failure]]]]
-                  :rules [{:when :seen-all-of?
-                           :events [::gateway/get-all-orders-success
-                                    ::gateway/get-all-libraries-success
-                                    ::gateway/get-all-books-success
-                                    ::gateway/get-all-users-success]
-                           :dispatch [::init-orders-success]
-                           :halt? true}
-                          {:when :seen-any-of?
-                           :events [::gateway/get-all-orders-failure
-                                    ::gateway/get-all-libraries-failure
-                                    ::gateway/get-all-books-failure
-                                    ::gateway/get-all-users-failure]
-                           :dispatch [::async-flow-fx/notify]
-                           :halt? true}]}}))
+  (fn [{:keys [db]} _]
+    (let [{:keys [user-uid user-role]} db]
+      {:async-flow {:first-dispatch [::dispatch-n
+                                     [[::gateway/get-all-orders    [::get-all-orders-success]    [::http-failure]]
+                                      [::gateway/get-all-libraries [::get-all-libraries-success] [::http-failure]]
+                                      [::gateway/get-all-books     [::get-all-books-success]     [::http-failure]]
+                                      (if (= "admin" user-role)
+                                        [::gateway/get-all-users     [::get-all-users-success]     [::http-failure]]
+                                        [::gateway/get-user          [::assoc-in-db-entity :users] [::http-failure] user-uid])]]
+                    :rules [{:when :seen-all-of?
+                             :events [::gateway/get-all-orders-success
+                                      ::gateway/get-all-libraries-success
+                                      ::gateway/get-all-books-success
+                                      (if (= "admin" user-role)
+                                        ::gateway/get-all-users-success
+                                        ::gateway/get-user-success)]
+                             :dispatch [::init-orders-success]
+                             :halt? true}
+                            {:when :seen-any-of?
+                             :events [::gateway/get-all-orders-failure
+                                      ::gateway/get-all-libraries-failure
+                                      ::gateway/get-all-books-failure
+                                      (if (= "admin" user-role)
+                                        ::gateway/get-all-users-failure
+                                        ::gateway/get-user-failure)]
+                             :dispatch [::async-flow-fx/notify]
+                             :halt? true}]}})))
 
 (rf/reg-event-fx ::init-orders-success
   (fn [_ _]
@@ -599,10 +624,10 @@
                    :library-uid library-uid
                    :user-uid (:user-uid db)
                    :booking-date (time/now)}]
-         {:dispatch [::gateway/add-order
-                     [::dispatch [::order-add-success]]
-                     [::http-failure]
-                     order]}))))
+        {:dispatch [::gateway/add-order
+                    [::order-add-success]
+                    [::http-failure]
+                    order]}))))
 
 (rf/reg-event-fx ::init-order-add-success
   (fn [_ [_ {:keys [book-uid library-uid]} response]]

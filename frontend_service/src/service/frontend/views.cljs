@@ -112,12 +112,12 @@
        [:div form])]]])
 
 (def ^:private sections
-  [[icons/user-circle  "My profile" ::routes/user]
-   [icons/users        "Users"      ::routes/users]
-   [icons/book-open    "Books"      ::routes/books]
-   [icons/library      "Libraries"  ::routes/libraries]
-   [icons/shopping-bag "Orders"     ::routes/orders]
-   [icons/trending-up  "Statistics" ::routes/stats]])
+  [[icons/user-circle  "My profile" ::routes/user      nil]
+   [icons/users        "Users"      ::routes/users     "admin"]
+   [icons/book-open    "Books"      ::routes/books     nil]
+   [icons/library      "Libraries"  ::routes/libraries nil]
+   [icons/shopping-bag "Orders"     ::routes/orders    nil]
+   [icons/trending-up  "Statistics" ::routes/stats     "admin"]])
 
 (def ^:private schedule
   ["Пн: 10:00-19:00"
@@ -137,25 +137,27 @@
     [:span.ml-2 text]]])
 
 (defn library-item [{:keys [uid value href] :or {uid nil}}]
-  (let [uid (or uid (:uid value))]
+  (let [uid (or uid (:uid value))
+        admin? @(rf/subscribe [::subs/admin?])]
     [:li [:a {:class (class-concat styles/entity-item-style "block")
               :href href}
           [:div.flex.flex-row.justify-between.items-center
            [:h1.font-normal.truncate.text-2xl (:name value)]
-           [:div.flex.flex-row.gap-1
-            [:button {:class styles/icon-button-style
-                      :on-click #(do (.preventDefault %)
-                                     (rf/dispatch [::events/navigate {:route ::routes/library-edit
-                                                                      :path-params {:uid uid}}]))}
-             [icons/pencil]]
-            [:button {:class (class-concat styles/icon-button-style
-                                           "hover:text-red-500 focus:text-red-500")
-                      :on-click #(do (.preventDefault %)
-                                     (rf/dispatch [::gateway/delete-library
-                                                   [::events/dissoc-in-db-entity :libraries]
-                                                   [::events/http-failure]
-                                                   uid]))}
-             [icons/trash {:class "stroke-current"}]]]]
+           (when admin?
+             [:div.flex.flex-row.gap-1
+              [:button {:class styles/icon-button-style
+                        :on-click #(do (.preventDefault %)
+                                       (rf/dispatch [::events/navigate {:route ::routes/library-edit
+                                                                        :path-params {:uid uid}}]))}
+               [icons/pencil]]
+              [:button {:class (class-concat styles/icon-button-style
+                                             "hover:text-red-500 focus:text-red-500")
+                        :on-click #(do (.preventDefault %)
+                                       (rf/dispatch [::gateway/delete-library
+                                                     [::events/dissoc-in-db-entity :libraries]
+                                                     [::events/http-failure]
+                                                     uid]))}
+               [icons/trash {:class "stroke-current"}]]])]
           [:p.font-medium.truncate.leading-snug (:address value)]
           [:ul
            (for [[index item] (map-indexed #(vector % %2) (:schedule value))]
@@ -165,10 +167,12 @@
                    item]])]]]))
 
 (defn libraries-panel []
-  (let [libraries @(rf/subscribe [::subs/libraries])]
+  (let [libraries @(rf/subscribe [::subs/libraries])
+        admin? @(rf/subscribe [::subs/admin?])]
     [:div.h-full.flex.flex-col.relative
-     [:div.px-1.absolute.z-20.bottom-2.right-2
-      [add-button {:text "Add library" :on-click #(rf/dispatch [::events/navigate {:route ::routes/library-add}])}]]
+     (when admin?
+       [:div.px-1.absolute.z-20.bottom-2.right-2
+        [add-button {:text "Add library" :on-click #(rf/dispatch [::events/navigate {:route ::routes/library-add}])}]])
      [:div.px-1
       [:input {:type "text" :class [styles/input-style "w-[30rem]"]}]
       [:div.h-2]]
@@ -293,26 +297,28 @@
                         :explainer explainer}]))
 
 (defn book-item [{:keys [value uid href] :or {uid nil}}]
-  (let [uid (or uid (:uid value))]
+  (let [uid (or uid (:uid value))
+        admin? @(rf/subscribe [::subs/admin?])]
     [:li [:a {:class (class-concat styles/entity-item-style "block")
               :href href}
           [:div.space-y-1
            [:div.flex.flex-row.justify-between.items-center
             [:h1.font-normal.truncate.text-2xl (:name value)]
-            [:div.flex.flex-row.gap-1
-             [:button {:class styles/icon-button-style
-                       :on-click #(do (.preventDefault %)
-                                      (rf/dispatch [::events/navigate {:route ::routes/book-edit
-                                                                       :path-params {:uid uid}}]))}
-              [icons/pencil]]
-             [:button {:class (class-concat styles/icon-button-style
-                                            "hover:text-red-500 focus:text-red-500")
-                       :on-click #(do (.preventDefault %)
-                                      (rf/dispatch [::gateway/delete-book
-                                                    [::events/dissoc-in-db-entity :books]
-                                                    [::events/http-failure]
-                                                    uid]))}
-              [icons/trash {:class "stroke-current"}]]]]
+            (when admin?
+              [:div.flex.flex-row.gap-1
+               [:button {:class styles/icon-button-style
+                         :on-click #(do (.preventDefault %)
+                                        (rf/dispatch [::events/navigate {:route ::routes/book-edit
+                                                                         :path-params {:uid uid}}]))}
+                [icons/pencil]]
+               [:button {:class (class-concat styles/icon-button-style
+                                              "hover:text-red-500 focus:text-red-500")
+                         :on-click #(do (.preventDefault %)
+                                        (rf/dispatch [::gateway/delete-book
+                                                      [::events/dissoc-in-db-entity :books]
+                                                      [::events/http-failure]
+                                                      uid]))}
+                [icons/trash {:class "stroke-current"}]]])]
            [:p.font-medium.overflow-ellipsis.overflow-hidden.leading-snug (:description value)]
            [:div.flex.flex-row.flex-wrap.gap-x-2.gap-y-0
             (for [author (:authors value)]
@@ -328,10 +334,12 @@
            [:span.text-sm [:span.italic "Price "] [:span.font-normal.text-xl (:price value) " ₿"]]]]]))
 
 (defn books-panel []
-  (let [books @(rf/subscribe [::subs/books])]
+  (let [books @(rf/subscribe [::subs/books])
+        admin? @(rf/subscribe [::subs/admin?])]
     [:div.h-full.flex.flex-col.relative
-     [:div.px-1.absolute.z-20.bottom-2.right-2
-      [add-button {:text "Add book" :on-click #(rf/dispatch [::events/navigate {:route ::routes/book-add}])}]]
+     (when admin?
+       [:div.px-1.absolute.z-20.bottom-2.right-2
+        [add-button {:text "Add book" :on-click #(rf/dispatch [::events/navigate {:route ::routes/book-add}])}]])
      [:div.px-1
       [:input {:type "text" :class [styles/input-style "w-[30rem]"]}]
       [:div.h-2]]
@@ -489,6 +497,7 @@
                                     (when library
                                       {:library-uid (:uid book)}))
         library-books @(rf/subscribe [::subs/library-books library-books-params])
+        admin? @(rf/subscribe [::subs/admin?])
         on-click (cond
                    (and book library) nil
                    book #(rf/dispatch [::events/navigate {:route ::routes/library-book-by-book-add
@@ -496,9 +505,10 @@
                    library #(rf/dispatch [::events/navigate {:route ::routes/library-book-by-library-add
                                                              :path-params {:uid (:uid library)}}]))]
     [:div.h-full.flex.flex-col.relative
-     [:div.px-1.absolute.z-20.bottom-2.right-2
-      [add-button {:text "Add library book"
-                   :on-click on-click}]]
+     (when admin?
+       [:div.px-1.absolute.z-20.bottom-2.right-2
+        [add-button {:text "Add library book"
+                     :on-click on-click}]])
      (when book
        [:div.px-1
         [:ul.py-1
@@ -593,6 +603,7 @@
 
 (defn user-item [{:keys [uid value href] :or {uid nil}}]
   (let [uid (or uid (:uid value))
+        admin? @(rf/subscribe [::subs/admin?])
         user-limits @(rf/subscribe [::subs/user-limits])
         user-ratings @(rf/subscribe [::subs/user-ratings])
         user-limit (->> user-limits
@@ -608,21 +619,22 @@
           [:div.gap-0
            [:div.flex.flex-row.justify-between.items-center
             [:h1.font-normal.truncate.text-2xl (:name value)]
-            [:div.flex.flex-row.gap-1
-             [:button {:class styles/icon-button-style
-                       :on-click #(do (.preventDefault %)
-                                      (rf/dispatch [::events/navigate {:route ::routes/user-edit
-                                                                       :path-params {:uid uid}}]))}
-              [icons/pencil]]
-             #_"TODO: 404 investigation."
-             #_[:button {:class (class-concat styles/icon-button-style
-                                              "hover:text-red-500 focus:text-red-500")
+            (when admin?
+              [:div.flex.flex-row.gap-1
+               [:button {:class styles/icon-button-style
                          :on-click #(do (.preventDefault %)
-                                        (rf/dispatch [::gateway/delete-user
-                                                      [::events/dissoc-in-db-entity :users]
-                                                      [::events/http-failure]
-                                                      uid]))}
-                [icons/trash {:class "stroke-current"}]]]]
+                                        (rf/dispatch [::events/navigate {:route ::routes/user-edit
+                                                                         :path-params {:uid uid}}]))}
+                [icons/pencil]]
+               #_"TODO: 404 investigation."
+               #_[:button {:class (class-concat styles/icon-button-style
+                                                "hover:text-red-500 focus:text-red-500")
+                           :on-click #(do (.preventDefault %)
+                                          (rf/dispatch [::gateway/delete-user
+                                                        [::events/dissoc-in-db-entity :users]
+                                                        [::events/http-failure]
+                                                        uid]))}
+                  [icons/trash {:class "stroke-current"}]]])]
            [:p.font-medium.truncate.mt-1 (:email value)]
            [:div.grid.grid-cols-3.justify-between
             [:div.flex.justify-start
@@ -633,11 +645,13 @@
              [:span.text-sm [:span.italic "Limit "] [:span.font-normal.text-xl (:available-limit user-limit) "/" (:total-limit user-limit)]]]]]]]))
 
 (defn users-panel []
-  (let [users @(rf/subscribe [::subs/users])]
+  (let [users @(rf/subscribe [::subs/users])
+        admin? @(rf/subscribe [::subs/admin?])]
     [:div.h-full.flex.flex-col.relative
-     [:div.px-1.absolute.z-20.bottom-2.right-2
-      [add-button {:text "Add user"
-                   :on-click #(rf/dispatch [::events/navigate {:route ::routes/user-add}])}]]
+     (when admin?
+       [:div.px-1.absolute.z-20.bottom-2.right-2
+        [add-button {:text "Add user"
+                     :on-click #(rf/dispatch [::events/navigate {:route ::routes/user-add}])}]])
      [:div.px-1
       [:input {:type "text" :class [styles/input-style "w-[30rem]"]}]
       [:div.h-2]]
@@ -690,6 +704,7 @@
         libraries @(rf/subscribe [::subs/libraries])
         books @(rf/subscribe [::subs/books])
         users @(rf/subscribe [::subs/users])
+        admin? @(rf/subscribe [::subs/admin?])
         book-name (->> value :book-uid (get books) :name)
         library-name (->> value :library-uid (get libraries) :name)
         user-name (->> value :user-uid (get users) :name)]
@@ -744,37 +759,41 @@
             
             (when (:condition value)
               [:p.font-medium.overflow-ellipsis.overflow-hidden (:condition value)])
-            [:div.flex.flex-row.items-center.gap-2
+            (when admin?
+              [:div.flex.flex-row.items-center.gap-2
 
-             (when (and (:booking-date value)
-                        (not (:receiving-date value))
-                        (not (:return-date value)))
-               [:button {:class (class-concat styles/button-style "py-1")
-                         :type "button"
-                         :on-click #(rf/dispatch [::gateway/update-order
-                                                  [::events/assoc-in-db-entity :orders]
-                                                  [::events/http-failure]
-                                                  uid {:receiving-date (time/now)}])}
-                "Checked out"])
-             (when (and (:booking-date value)
-                        (:receiving-date value)
-                        (not (:return-date value)))
-               [:button {:class (class-concat styles/button-style "py-1")
-                         :type "button"
-                         :on-click #(rf/dispatch [::events/navigate {:route ::routes/book-return
-                                                                     :path-params {:uid uid}
-                                                                     :query-params {:user-uid (:user-uid value)}}])}
-                "Return"])]]]]]))
+               (when (and (:booking-date value)
+                          (not (:receiving-date value))
+                          (not (:return-date value)))
+                 [:button {:class (class-concat styles/button-style "py-1")
+                           :type "button"
+                           :on-click #(rf/dispatch [::gateway/update-order
+                                                    [::events/assoc-in-db-entity :orders]
+                                                    [::events/http-failure]
+                                                    uid {:receiving-date (time/now)}])}
+                  "Checked out"])
+               (when (and (:booking-date value)
+                          (:receiving-date value)
+                          (not (:return-date value)))
+                 [:button {:class (class-concat styles/button-style "py-1")
+                           :type "button"
+                           :on-click #(rf/dispatch [::events/navigate {:route ::routes/book-return
+                                                                       :path-params {:uid uid}
+                                                                       :query-params {:user-uid (:user-uid value)}}])}
+                  "Return"])])]]]]))
 
 (defn orders-panel []
-  (let [orders @(rf/subscribe [::subs/orders])]
+  (let [orders @(rf/subscribe [::subs/orders])
+        user-uid @(rf/subscribe [::subs/user-uid])
+        admin? @(rf/subscribe [::subs/admin?])]
     [:div.h-full.flex.flex-col
      [:div.px-1
       [:input {:type "text" :class [styles/input-style "w-[30rem]"]}]
       [:div.h-2]]
      [:div.overflow-y-auto.flex-grow
       [:ul.space-y-2.p-1
-       (for [[uid order] orders]
+       (for [[uid order] orders
+             :when (or admin? (= user-uid (:user-uid order)))]
          ^{:key uid}
          [:div {:class "w-[30rem]"}
           [order-item {:value order :uid uid}]])]]]))
@@ -826,9 +845,9 @@
 (defn stats-panel []
   (let [stat-records @(rf/subscribe [::subs/stat-records])]
     [:div.h-full.flex.flex-col.relative
-     [:div.px-1.absolute.z-20.bottom-2.right-2
-      [delete-all-button {:text "Delete all stats"
-                          :on-click nil}]]
+     #_[:div.px-1.absolute.z-20.bottom-2.right-2
+        [delete-all-button {:text "Delete all stats"
+                            :on-click nil}]]
      [:div.px-1
       [:input {:type "text" :class [styles/input-style "w-[60rem]"]}]
       [:div.h-2]]
@@ -841,12 +860,14 @@
 
 (defn navigation-view [& forms]
   (let [current-route-name @(rf/subscribe [::subs/current-route-name])
+        user-role @(rf/subscribe [::subs/user-role])
         user-uid @(rf/subscribe [::subs/user-uid])
         path-params {:uid user-uid}]
     [:div.flex.flex-row.h-screen
      [:nav.p-3.w-52.overflow-y-auto.flex-none #_"TODO: think about responsive design."
       [:ul.space-y-2
-       (for [[icon section route] sections]
+       (for [[icon section route role] sections
+             :when (or (nil? role) (= role user-role))]
          ^{:key route}
          [:li [:a {:class (if (= route current-route-name)
                             (class-concat styles/outline-button-style "block"
