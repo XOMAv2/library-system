@@ -296,6 +296,16 @@
                                        form-value])
                         :explainer explainer}]))
 
+(defn book-query-form [{:keys [form-path form-value]}]
+  (let [explainer (m/explainer schemas/book-query)]
+    [book-generic-form {:form-path form-path
+                        :form-value form-value
+                        :title "Filter books"
+                        :submit-name "Filter"
+                        :event-ctor (fn [form-value]
+                                      (rf/dispatch [::events/book-query-success form-value]))
+                        :explainer explainer}]))
+
 (defn book-item [{:keys [value uid href] :or {uid nil}}]
   (let [uid (or uid (:uid value))
         admin? @(rf/subscribe [::subs/admin?])]
@@ -340,9 +350,13 @@
      (when admin?
        [:div.px-1.absolute.z-20.bottom-2.right-2
         [add-button {:text "Add book" :on-click #(rf/dispatch [::events/navigate {:route ::routes/book-add}])}]])
-     [:div.px-1
+     [:div.relative.px-1 {:class "w-[30rem]"}
       [:input {:type "text" :class [styles/input-style "w-[30rem]"]}]
-      [:div.h-2]]
+      [:div.h-2]
+      [:div.absolute.top-2.right-2
+       [:button {:class styles/icon-button-style
+                 :on-click #(rf/dispatch [::events/init-book-query])}
+        [icons/filter {:class "stroke-current"}]]]]
      [:div.overflow-y-auto.flex-grow
       [:ul.space-y-2.p-1
        (for [[uid book] books]

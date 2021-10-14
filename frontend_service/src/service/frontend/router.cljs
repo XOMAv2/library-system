@@ -4,6 +4,7 @@
             [reitit.coercion]
             [reitit.frontend.easy]
             [service.frontend.config :as config]
+            [utilities.schemas :as schemas]
             [reitit.spec]
             [malli.core :as m]
             [malli.util :as mu]
@@ -56,10 +57,12 @@
    
    ["/books"
     ["" {:name ::books
-         :controllers [{:start (fn [_]
+         :parameters {:query [:maybe schemas/book-query]}
+         :controllers [{:parameters {:query [:name :authors :genres :description :price]}
+                        :start (fn [{:keys [query]}]
                                  (when config/debug?
                                    (.log js/console "Entering" ::books))
-                                 (rf/dispatch [::events/init-books]))}]}]
+                                 (rf/dispatch [::events/init-books query]))}]}]
     ["/" {:name ::book-add
           :controllers [{:start (fn [_]
                                   (when config/debug?

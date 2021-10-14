@@ -164,13 +164,16 @@
             [:dispatch [::navigate {:route ::routes/login}]]]})))
 
 (rf/reg-event-fx ::init-books
-  (fn [{:keys [db]} _]
-    {:db (assoc-in db [:entities :books] nil)
-     :fx [[:dispatch [::change-modal]]
-          [:dispatch [::change-view [views/navigation-view [views/books-panel]]]]
-          [:dispatch [::gateway/get-all-books
-                      [::get-all-books-success]
-                      [::http-failure]]]]}))
+  (fn [{:keys [db]} [_ query]]
+    (let [query (when (not-empty query)
+                  query)]
+      {:db (assoc-in db [:entities :books] nil)
+       :fx [[:dispatch [::change-modal]]
+            [:dispatch [::change-view [views/navigation-view [views/books-panel]] {:book-query query}]]
+            [:dispatch [::gateway/get-all-books
+                        [::get-all-books-success]
+                        [::http-failure]
+                        query]]]})))
 
 (rf/reg-event-fx ::get-all-books-success
   (fn [{:keys [db]} [_ {:keys [books]}]]
@@ -401,6 +404,20 @@
     (when form-path
       {:fx [[:dispatch [::assoc-in-db-entity :books book]]
             [:dispatch [::navigate {:route ::routes/books}]]]})))
+
+(rf/reg-event-fx ::init-book-query
+  (fn [_ _]
+    {:dispatch-n [[::change-modal [views/modal-view {:on-close-event [::change-modal]}
+                                   [views/book-query-form {:form-path [:ui-state :modal-scope :query-book-form]}]]]]}))
+
+(rf/reg-event-fx ::book-query-success
+  (fn [{:keys [db]} [_ query]]
+    (let [query (when (not-empty query)
+                  query)
+          query-prev (-> db :ui-state :view-scope :book-query)]
+      (if (not= query query-prev)
+        {:dispatch [::navigate {:route ::routes/books :query-params query}]}
+        {:dispatch [::change-modal]}))))
 
 (rf/reg-event-fx ::init-book-edit
   (fn [{:keys [db]} [_ uid]]
