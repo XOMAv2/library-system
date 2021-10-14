@@ -345,7 +345,8 @@
 
 (defn books-panel []
   (let [books @(rf/subscribe [::subs/books])
-        admin? @(rf/subscribe [::subs/admin?])]
+        admin? @(rf/subscribe [::subs/admin?])
+        book-filter-applied? @(rf/subscribe [::subs/book-filter-applied?])]
     [:div.h-full.flex.flex-col.relative
      (when admin?
        [:div.px-1.absolute.z-20.bottom-2.right-2
@@ -353,10 +354,14 @@
      [:div.relative.px-1 {:class "w-[30rem]"}
       [:input {:type "text" :class [styles/input-style "w-[30rem]"]}]
       [:div.h-2]
-      [:div.absolute.top-2.right-2
+      [:div.flex.flex-row.gap-1.absolute.top-2.right-2
        [:button {:class styles/icon-button-style
                  :on-click #(rf/dispatch [::events/init-book-query])}
-        [icons/filter {:class "stroke-current"}]]]]
+        [icons/filter {:class "stroke-current"}]]
+       (when book-filter-applied?
+         [:button {:class styles/icon-button-style
+                   :on-click #(rf/dispatch [::events/navigate {:route ::routes/books}])}
+          [icons/x {:class "stroke-current"}]])]]
      [:div.overflow-y-auto.flex-grow
       [:ul.space-y-2.p-1
        (for [[uid book] books]

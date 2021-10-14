@@ -1,6 +1,7 @@
 (ns service.frontend.forms
   (:require [utilities.core :refer [any-or-coll->coll]]
             [malli.error]
+            [service.frontend.config :as config]
             [re-frame.core :as rf]))
 
 #_"=============== EVENTS ==============="
@@ -51,7 +52,8 @@
             explainer (get-in db (conj form-path :explainer))
             form-value (get-in db (conj form-path :value))
             form-errors (-> form-value explainer malli.error/humanize)]
-        (.log js/console [form-path explainer form-value form-errors])
+        (when config/debug?
+          (.log js/console [form-path explainer form-value form-errors]))
         {:db (assoc-in db (conj form-path :errors) form-errors)}))))
 
 (rf/reg-event-fx ::set-form-submitted?

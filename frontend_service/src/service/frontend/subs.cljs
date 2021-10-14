@@ -52,6 +52,15 @@
   (fn [db _]
     (-> db :entities :books)))
 
+(rf/reg-sub ::book-query
+  (fn [db _]
+    (-> db :ui-state :view-scope :book-query)))
+
+(rf/reg-sub ::book-filter-applied?
+  :<- [::book-query]
+  (fn [book-query _]
+    (not-empty book-query)))
+
 (rf/reg-sub ::library-books
   (fn [db [_ {:keys [library-uid book-uid]}]]
     (let [pred (cond
